@@ -48,8 +48,8 @@ job "at-demo" {
 
       driver = "docker"
       config {
-        load  = "at-image.tar"
-        image = "at-image:latest"
+        load  = "{{ at_demo_task_config_load }}"
+        image = "{{ at_demo_task_config_image }}"
         ports = ["at-http"]
       }
 
