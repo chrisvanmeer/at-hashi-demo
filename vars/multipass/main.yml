@@ -1,15 +1,15 @@
 ---
 multipass_binary: "/usr/local/bin/multipass"
 multipass_instances:
+  servers:
+    - server1
+    - server2
+    - server3
   clients:
     - client1
     - client2
     - client3
     - client4
-  servers:
-    - server1
-    - server2
-    - server3
 
 cloud_init_location: "~"
 cloud_init_full_path: "{{ cloud_init_location }}/at-cloud-init.yml"
