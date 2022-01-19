@@ -7,6 +7,8 @@ traefik_demo_docker_image: "traefik:v2.6"
 
 at_demo_job_template_location: "templates/hashicorp/nomad/demo-jobs/at-demo.nomad.j2"
 at_demo_group_count: "3"
+at_demo_env_favicon: "https://www.atcomputing.nl/assets/img/favicon.png"
+at_demo_env_img_source: "https://www.atcomputing.nl/assets/img/atcomputing_white.png"
 at_demo_service_tag_traefik_rule: "Host(`{{ demo_fqdn }}`)"
 at_demo_task_artifact_source: "https://gitlab.intra.kooisecurity.com/chris.vanmeer/kooi-image/-/raw/master/{{ at_demo_base_name }}-{{ at_demo_task_file_version }}.tar"
 
