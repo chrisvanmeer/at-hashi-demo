@@ -15,9 +15,9 @@
 
   roles:
     - role: geerlingguy.pip
-    # - role: geerlingguy.docker
-    #   ignore_errors: true
-    #   when: inventory_hostname in groups['clients']
+    - role: geerlingguy.docker
+      ignore_errors: true
+      when: inventory_hostname in groups['clients']
     - role: chrisvanmeer.hashicorp
       ignore_errors: true
 
