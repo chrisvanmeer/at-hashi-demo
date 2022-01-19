@@ -2,6 +2,7 @@
 - name: Get a clean slate.
   hosts: all
   become: true
+  gather_facts: false
 
   vars_files:
     - vars/general/main.yml
@@ -241,3 +242,11 @@
       delegate_to: localhost
       run_once: true
       tags: multipass
+
+    - name: Remove inventory
+      file:
+          path: inventory
+          state: absent
+      tags: inventory
+      delegate_to: localhost
+      run_once: true
