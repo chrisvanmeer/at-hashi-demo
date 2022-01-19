@@ -1,3 +1,4 @@
 skip_list:
   - risky-shell-pipe
   - ignore-errors
+  - yaml
