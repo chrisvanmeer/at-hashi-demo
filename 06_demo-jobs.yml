@@ -1,5 +1,5 @@
 ---
-- name: 'HashiCorp - Nomad - Jobs : Demo Jobs.'
+- name: "HashiCorp - Nomad - Jobs : Demo Jobs."
   hosts: all
   become: true
 
@@ -10,44 +10,45 @@
     - vars/hashicorp/demo.yml
 
   tasks:
-    - name: 'HashiCorp - Nomad - Jobs : Register the Node ID from the first client for constraints demo.'
+    - name: "HashiCorp - Nomad - Jobs : Register the Node ID from the first client for constraints demo."
       shell: "{{ nomad_binary }} node status -self -short | grep ID -m1 | awk '{print $3}'"
       changed_when: false
       register: nomad_first_client_node_id
       delegate_to: "{{ groups['clients'] | first }}"
 
-    - name: 'HashiCorp - Nomad - Jobs : Deployment.'
+    - name: "HashiCorp - Nomad - Jobs : Deployment."
       block:
-        - name: 'HashiCorp - Nomad - Jobs : Ensure job directory is present on the first server.'
+        - name: "HashiCorp - Nomad - Jobs : Ensure job directory is present on the first server."
           become: true
           file:
-            path: '{{ nomad_demo_job_remote_location }}'
+            path: "{{ nomad_demo_job_remote_location }}"
             state: directory
             recurse: true
 
-        - name: 'HashiCorp - Nomad - Jobs : Ensure job directory is present on this client.'
+        - name: "HashiCorp - Nomad - Jobs : Ensure job directory is present on this client."
           become: true
           file:
-            path: '{{ nomad_demo_job_local_location }}'
+            path: "{{ nomad_demo_job_local_location }}"
             state: directory
-            mode: '0777'
+            mode: "0777"
           delegate_to: localhost
 
-        - name: 'HashiCorp - Nomad - Jobs : Ensure demo jobs are templated and in place.'
+        - name: "HashiCorp - Nomad - Jobs : Ensure demo jobs are templated and in place."
           template:
-            src: '{{ item.template }}'
-            dest: '{{ item.destination }}'
-          with_items: '{{ nomad_demo_job_names }}'
+            src: "{{ item.template }}"
+            dest: "{{ item.destination }}"
+            mode: "0666"
+          with_items: "{{ nomad_demo_job_names }}"
           when: nomad_first_client_node_id is defined
 
-        - name: 'HashiCorp - Nomad : Retrieve job content.'
+        - name: "HashiCorp - Nomad : Retrieve job content."
           fetch:
-            src: '{{ item.destination }}'
-            dest: '{{ nomad_demo_job_local_location }}/'
+            src: "{{ item.destination }}"
+            dest: "{{ nomad_demo_job_local_location }}/"
             flat: yes
-          with_items: '{{ nomad_demo_job_names }}'
+          with_items: "{{ nomad_demo_job_names }}"
 
-        - name: 'HashiCorp - Nomad : Ensure demo jobs are running.'
+        - name: "HashiCorp - Nomad : Ensure demo jobs are running."
           community.general.nomad_job:
             host: localhost
             use_ssl: false
@@ -55,7 +56,7 @@
             content: "{{ lookup('file', item.destination) }}"
             timeout: 60
             force_start: true
-          with_items: '{{ nomad_demo_job_names }}'
+          with_items: "{{ nomad_demo_job_names }}"
       when:
         - ansible_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
