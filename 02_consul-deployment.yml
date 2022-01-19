@@ -16,6 +16,14 @@
         owner: "{{ consul_data_directory_user }}"
         group: "{{ consul_data_directory_group }}"
 
+    - name: "HashiCorp - Consul : Ensure etc directory is present."
+      file:
+        path: "{{ consul_etc_directory }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ consul_data_directory_user }}"
+        group: "{{ consul_data_directory_group }}"
+
     - name: "HashiCorp - Consul: Register first server's IP address as consul_retry_join_address fact."
       set_fact:
         consul_retry_join_address: "{{ ansible_host }}"
@@ -97,6 +105,8 @@
                   copy:
                     dest: "{{ consul_etc_directory }}/consul-agent-ca-key.pem"
                     content: "{{ consul_tls_ca_key_content }}"
+                    owner: "{{ consul_data_directory_user }}"
+                    group: "{{ consul_data_directory_group }}"
                   when:
                     - consul_tls_ca_key_content is defined
                     - inventory_hostname != consul_first_server_hostname
@@ -155,6 +165,23 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
           when: consul_ecryption_key is not defined
+
+        - name: "HashiCorp - Consul : Find all certificates."
+          find:
+            paths: "{{ consul_etc_directory }}"
+            patterns: "*.pem"
+          register: consul_certificate_files
+          tags: chown
+
+        - name: "HashiCorp - Consul : Ensure the correct file owner / group is set for all certificates."
+          file:
+            path: "{{ item.path }}"
+            owner: "{{ consul_data_directory_user }}"
+            group: "{{ consul_data_directory_group }}"
+          with_items: "{{ consul_certificate_files.files }}"
+          loop_control:
+            label: "{{ item.path }}"
+          tags: chown
 
     # CONSUL CONFIGURATION
     - name: "HashiCorp - Consul : Configuration."
