@@ -102,6 +102,12 @@
         dest: inventory
         mode: "0644"
 
+    - name: Check if this is the first time we're running this.
+      fail:
+        msg: Re-run this playbook, but now add --tags hostfile
+      when: groups.all | length == 0
+      tags: hostfile
+
     - name: Hosts file
       block:
         - name: Add a comment block in the hosts file.
@@ -127,4 +133,4 @@
             replace: '\g<1> {{ demo_fqdn }}'
 
       become: true
-      tags: host
+      tags: hostfile

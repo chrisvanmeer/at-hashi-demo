@@ -251,30 +251,30 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-    # - name: "HashiCorp - Consul Service Mesh"
-    #   block:
-    #     - name: "HashiCorp - Consul Service Mesh - Ensure CNI directory exists."
-    #       file:
-    #         path: "{{ consul_cni_target_directory }}"
-    #         state: directory
-    #         mode: "0644"
+    - name: "HashiCorp - Consul Service Mesh"
+      block:
+        - name: "HashiCorp - Consul Service Mesh - Ensure CNI directory exists."
+          file:
+            path: "{{ consul_cni_target_directory }}"
+            state: directory
+            mode: "0644"
 
-    #     - name: "HashiCorp - Consul Service Mesh - Ensure CNI plugins exist in the CNI directory."
-    #       unarchive:
-    #         src: "{{ consul_cni_plugin_url }}"
-    #         dest: "{{ consul_cni_target_directory }}"
-    #         remote_src: yes
+        - name: "HashiCorp - Consul Service Mesh - Ensure CNI plugins exist in the CNI directory."
+          unarchive:
+            src: "{{ consul_cni_plugin_url }}"
+            dest: "{{ consul_cni_target_directory }}"
+            remote_src: yes
 
-    #     - name: "HashiCorp - Consul Service Mesh - Ensure sysctl settings are present and loaded."
-    #       ansible.posix.sysctl:
-    #         name: "{{ item.key }}"
-    #         value: "{{ item.value }}"
-    #         state: present
-    #         sysctl_file: "{{ consul_cni_sysctl_dest_file }}"
-    #         reload: yes
-    #       with_items: "{{ consul_cni_sysctl_settings }}"
+        - name: "HashiCorp - Consul Service Mesh - Ensure sysctl settings are present and loaded."
+          ansible.posix.sysctl:
+            name: "{{ item.key }}"
+            value: "{{ item.value }}"
+            state: present
+            sysctl_file: "{{ consul_cni_sysctl_dest_file }}"
+            reload: yes
+          with_items: "{{ consul_cni_sysctl_settings }}"
 
-    #   when: ansible_hostname in groups['clients']
+      when: ansible_hostname in groups['clients']
 
   handlers:
     - name: Restart Consul
