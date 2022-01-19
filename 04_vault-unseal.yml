@@ -1,0 +1,43 @@
+---
+- name: "AT Computing - HashiCorp Demo - Vault"
+  hosts: servers
+  become: true
+
+  vars_files:
+    - vars/hashicorp/general.yml
+    - vars/hashicorp/vault.yml
+
+  tasks:
+    - name: "HashiCorp - Vault : Retrieve local token file."
+      set_fact:
+        token_file_output: "{{ lookup('file', vault_bootstrap_init_local_path).split('\n') }}"
+      delegate_to: localhost
+      run_once: true
+
+    - name: "HashiCorp - Vault : Retrieve first unseal key from initialization info."
+      set_fact:
+        vault_unseal_key_1: "{{ token_file_output[0].split('Unseal Key 1: ')[1] }}"
+      delegate_to: localhost
+      run_once: true
+
+    - name: "HashiCorp - Vault : Retrieve second unseal key from initialization info."
+      set_fact:
+        vault_unseal_key_2: "{{ token_file_output[1].split('Unseal Key 2: ')[1] }}"
+      delegate_to: localhost
+      run_once: true
+
+    - name: "HashiCorp - Vault : Retrieve third unseal key from initialization info."
+      set_fact:
+        vault_unseal_key_3: "{{ token_file_output[2].split('Unseal Key 3: ')[1] }}"
+      delegate_to: localhost
+      run_once: true
+
+    - name: "HashiCorp - Vault : Ensure the Vault is unsealed."
+      command: "vault operator unseal {{ item }}"
+      changed_when: false
+      environment:
+        VAULT_ADDR: "{{ vault_address }}"
+      with_items:
+        - "{{ vault_unseal_key_1 }}"
+        - "{{ vault_unseal_key_2 }}"
+        - "{{ vault_unseal_key_3 }}"

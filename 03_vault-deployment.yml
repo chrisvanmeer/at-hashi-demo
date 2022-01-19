@@ -174,50 +174,6 @@
           delegate_to: localhost
           run_once: true
 
-        - name: "HashiCorp - Vault - INIT : Retrieve first unseal key from initialization info."
-          set_fact:
-            vault_unseal_key_1: "{{ vault_init_output.stdout_lines[0].split('Unseal Key 1: ')[1] }}"
-          when:
-            - vault_is_initialized.stdout == "false"
-          delegate_to: localhost
-          run_once: true
-
-        - name: "HashiCorp - Vault - INIT : Retrieve second unseal key from initialization info."
-          set_fact:
-            vault_unseal_key_2: "{{ vault_init_output.stdout_lines[1].split('Unseal Key 2: ')[1] }}"
-          when:
-            - vault_is_initialized.stdout == "false"
-          delegate_to: localhost
-          run_once: true
-
-        - name: "HashiCorp - Vault - INIT : Retrieve third unseal key from initialization info."
-          set_fact:
-            vault_unseal_key_3: "{{ vault_init_output.stdout_lines[2].split('Unseal Key 3: ')[1] }}"
-          when:
-            - vault_is_initialized.stdout == "false"
-          delegate_to: localhost
-          run_once: true
-
-        - name: "HashiCorp - Vault : Check the Vault sealed status."
-          shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
-          environment:
-            VAULT_ADDR: "{{ vault_address }}"
-            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-          changed_when: false
-          register: vault_is_sealed
-          when: ansible_hostname in groups['servers']
-
-        - name: "HashiCorp - Vault : Ensure the Vault is unsealed."
-          command: "{{ vault_binary }} operator unseal {{ item }}"
-          environment:
-            VAULT_ADDR: "{{ vault_address }}"
-            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-          with_items:
-            - "{{ vault_unseal_key_1 }}"
-            - "{{ vault_unseal_key_2 }}"
-            - "{{ vault_unseal_key_3 }}"
-          when: vault_is_sealed.stdout == "true"
-
       when: ansible_hostname in groups['servers']
 
   handlers:
