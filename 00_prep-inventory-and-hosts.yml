@@ -1,0 +1,129 @@
+---
+- name: "AT Computing - HashiCorp Demo - Prep machines, inventory and hosts file."
+  hosts: localhost
+  connection: local
+
+  vars_files:
+    - vars/general/main.yml
+    - vars/multipass/main.yml
+
+  vars:
+    public_key: "~/.ssh/id_rsa.pub"
+
+  tasks:
+    - name: Set the client names as a fact.
+      set_fact:
+        client_names: "{{ multipass_instances.clients | join('\\|') }}"
+
+    - name: Set the server names as a fact.
+      set_fact:
+        server_names: "{{ multipass_instances.servers | join('\\|') }}"
+
+    - name: Check if multipass is present.
+      stat:
+        path: "{{ multipass_binary }}"
+      changed_when: false
+      register: multipass_presence
+      failed_when: not multipass_presence.stat.exists
+
+    - name: Check if there are already multipass instances on this machine.
+      shell: "multipass list | grep '{{ client_names }}\\|{{ server_names }}'"
+      changed_when: false
+      register: multipass_current
+      failed_when: multipass_current.rc not in [ 0, 1 ]
+
+    - name: If there are instances already present, ask permission to delete.
+      pause:
+        prompt: "Am I allowed to remove all existing instances that match the names of the instances we want to build? (Y/n)"
+        echo: true
+      register: prompt_result
+      when: multipass_current.stdout | length > 0
+
+    - name: Delete existing instances.
+      command: "multipass delete {{ item }}"
+      ignore_errors: true
+      with_items:
+        - "{{ multipass_instances.clients }}"
+        - "{{ multipass_instances.servers }}"
+      when:
+        - prompt_result.user_input is defined
+        - prompt_result.user_input | lower == "y"
+
+    - name: Purge the multipass inventory after deletion.
+      command: "multipass purge"
+      changed_when: false
+      when:
+        - prompt_result.user_input is defined
+        - prompt_result.user_input | lower == "y"
+
+    - name: Ensure the cloud-init file is present.
+      template:
+        src: "templates/multipass/at-cloud-init.yml.j2"
+        dest: "{{ cloud_init_full_path }}"
+        mode: "0644"
+
+    - name: Spin up the multipass instances.
+      command: "multipass launch --name {{ item }} --cloud-init {{ cloud_init_full_path }}"
+      register: multipass_output
+      changed_when: multipass_output.rc == 0
+      with_items:
+        - "{{ multipass_instances.clients }}"
+        - "{{ multipass_instances.servers }}"
+
+    - name: Ensure we cleanup the used cloud-init file.
+      file:
+        path: "{{ cloud_init_full_path }}"
+        state: absent
+
+    - name: Retrieve info on the running clients we've just created.
+      shell: "multipass list | grep Running | grep '{{ client_names }}' | awk '{print $1,$3}'"
+      changed_when: false
+      register: multipass_output_clients
+
+    - name: Create the multipass clients fact.
+      set_fact:
+        multipass_clients: "{{ multipass_clients | default([]) + [{ 'name' : item.split(' ')[0], 'ip' : item.split(' ')[1] }] }}"
+      loop: "{{ multipass_output_clients.stdout_lines }}"
+
+    - name: Retrieve info on the running servers we've just created.
+      shell: "multipass list | grep Running | grep '{{ server_names }}' | awk '{print $1,$3}'"
+      changed_when: false
+      register: multipass_output_servers
+
+    - name: Create the multipass servers fact.
+      set_fact:
+        multipass_servers: "{{ multipass_servers | default([]) + [{ 'name' : item.split(' ')[0], 'ip' : item.split(' ')[1] }] }}"
+      with_items: "{{ multipass_output_servers.stdout_lines }}"
+
+    - name: Ensure new dynamic inventory is created.
+      template:
+        src: templates/general/inventory.j2
+        dest: inventory
+        mode: "0644"
+
+    - name: Hosts file
+      block:
+        - name: Add a comment block in the hosts file.
+          blockinfile:
+            backup: true
+            path: /etc/hosts
+            block: |
+              # Added for the AT HashiCorp Demo - discard afterwards
+
+        - name: Add the instances to the hosts file.
+          lineinfile:
+            dest: /etc/hosts
+            regexp: ".*{{ item }} ({{ demo_fqdn }})?$"
+            line: "{{ hostvars[item].ansible_host }} {{ item }}"
+            state: present
+          when: hostvars[item].ansible_host is defined
+          with_items: "{{ groups.all }}"
+
+        - name: Add the demo FQDN to the first client in the host file.
+          replace:
+            path: /etc/hosts
+            regexp: "(.*{{ multipass_instances.clients | first }})$"
+            replace: '\g<1> {{ demo_fqdn }}'
+
+      become: true
+      tags: host

@@ -1,0 +1,18 @@
+ui = true
+
+storage "consul" {
+  address = "http://localhost:8500"
+  path    = "vault/"
+  # token   = "<VAULT_SERVICE_TOKEN>"
+}
+
+cluster_address = "{{ ansible_host }}:8201"
+api_address     = "{{ ansible_host }}:8200"
+
+listener "tcp" {
+  address            = "0.0.0.0:8200"
+  tls_cert_file      = "{{ vault_ssl_cert_dest }}"
+  tls_key_file       = "{{ vault_ssl_key_dest }}"
+  tls_client_ca_file = "{{ vault_ssl_ca_dest }}"
+  tls_disable        = 1
+}

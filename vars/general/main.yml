@@ -1,0 +1,34 @@
+---
+atcomputing_user: "atcomputing"
+docker_users:
+  - "{{ atcomputing_user }}"
+
+pip_install_packages:
+  - name: docker
+  - name: hvac
+  - name: python-nomad
+
+basic_apt_packages:
+  - atop
+  - curl
+  - git
+  - htop
+  - iperf3
+  - less
+  - lynx
+  - mailutils
+  - mlocate
+  - multitail
+  - neofetch
+  - net-tools
+  - nload
+  - telnet
+  - tmux
+  - tree
+  - vim
+  - wget
+  - whois
+
+timezone: "Europe/Amsterdam"
+
+demo_fqdn: "at-computing-demo.local"

@@ -1,0 +1,9 @@
+---
+collections:
+  - name: ansible.posix
+  - name: community.general
+  - name: community.hashi_vault
+roles:
+  - name: chrisvanmeer.hashicorp
+  - name: geerlingguy.docker
+  - name: geerlingguy.pip

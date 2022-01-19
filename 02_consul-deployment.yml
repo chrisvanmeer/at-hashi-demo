@@ -1,0 +1,283 @@
+---
+- name: "AT Computing - HashiCorp Demo - Consul"
+  hosts: all
+  become: true
+
+  vars_files:
+    - vars/hashicorp/general.yml
+    - vars/hashicorp/consul.yml
+
+  tasks:
+    - name: "HashiCorp - Consul : Ensure data directory is present."
+      file:
+        path: "{{ consul_data_directory }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ consul_data_directory_user }}"
+        group: "{{ consul_data_directory_group }}"
+
+    - name: "HashiCorp - Consul: Register first server's IP address as consul_retry_join_address fact."
+      set_fact:
+        consul_retry_join_address: "{{ ansible_host }}"
+      when: ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    # ENCRYPTION
+    - name: "HashiCorp - Consul : Encryption."
+      block:
+        # CA CERTIFICATES
+        - name: "HashiCorp - Consul : CA Certificate."
+          block:
+            # FIRST SERVER
+            - name: "HashiCorp - Consul : First server actions."
+              block:
+                - name: "HashiCorp - Consul : Register first server as a fact."
+                  set_fact:
+                    consul_first_server_hostname: "{{ inventory_hostname }}"
+                  delegate_to: "{{ groups['servers'] | first }}"
+                  run_once: true
+
+                - name: "HashiCorp - Consul : Look for existing CA certificate on first server as benchmark."
+                  stat:
+                    path: "{{ consul_etc_directory }}/consul-agent-ca.pem"
+                  register: consul_agent_ca_file_first
+
+                - name: "HashiCorp - Consul : CA Certificate creation."
+                  block:
+                    - name: "HashiCorp - Consul : Create CA Certificate if not exists."
+                      shell: "{{ consul_binary }} tls ca create -days {{ consul_tls_ca_certificate_days }}"
+                      args:
+                        chdir: "{{ consul_etc_directory }}"
+                      register: consul_tls_ca_certificate_create
+
+                    - name: "HashiCorp - Consul : Get file location of CA Certificate."
+                      set_fact:
+                        consul_tls_ca_certificate_file: "{{ consul_etc_directory }}/{{ consul_tls_ca_certificate_create.stdout_lines[0].split('==> Saved ')[1] }}"
+
+                    - name: "HashiCorp - Consul : Get contents of CA Certificate."
+                      shell: "cat {{ consul_tls_ca_certificate_file }}"
+                      register: consul_tls_ca_certificate_content_tmp
+                      changed_when: false
+
+                    - name: "HashiCorp - Consul : Register contents of CA Certificate as a fact."
+                      set_fact:
+                        consul_tls_ca_certificate_content: "{{ consul_tls_ca_certificate_content_tmp.stdout }}"
+
+                    - name: "HashiCorp - Consul : Get file location of CA key."
+                      set_fact:
+                        consul_tls_ca_key_file: "{{ consul_etc_directory }}/{{ consul_tls_ca_certificate_create.stdout_lines[1].split('==> Saved ')[1] }}"
+
+                    - name: "HashiCorp - Consul : Get contents of CA key."
+                      shell: "cat {{ consul_tls_ca_key_file }}"
+                      register: consul_tls_ca_key_content_tmp
+                      changed_when: false
+
+                    - name: "HashiCorp - Consul : Register contents of CA key as a fact."
+                      set_fact:
+                        consul_tls_ca_key_content: "{{ consul_tls_ca_key_content_tmp.stdout }}"
+
+                  when:
+                    - ansible_hostname in groups['servers']
+                    - not consul_agent_ca_file_first.stat.exists
+                  delegate_to: "{{ groups['servers'] | first }}"
+                  run_once: true
+
+            # OTHER NODES
+            - name: "HashiCorp - Consul : CA certificate and key all other nodes."
+              block:
+                - name: "HashiCorp - Consul : Ensure CA certificate is present on all other nodes."
+                  copy:
+                    dest: "{{ consul_etc_directory }}/consul-agent-ca.pem"
+                    content: "{{ consul_tls_ca_certificate_content }}"
+                  when:
+                    - consul_tls_ca_certificate_content is defined
+                    - inventory_hostname != consul_first_server_hostname
+                - name: "HashiCorp - Consul : Ensure CA key is present on all other nodes."
+                  copy:
+                    dest: "{{ consul_etc_directory }}/consul-agent-ca-key.pem"
+                    content: "{{ consul_tls_ca_key_content }}"
+                  when:
+                    - consul_tls_ca_key_content is defined
+                    - inventory_hostname != consul_first_server_hostname
+
+        # SERVER CERTIFICATES
+        - name: "HashiCorp - Consul : Server Certificates."
+          block:
+            - name: "HashiCorp - Consul : Look for existing server certificate."
+              stat:
+                path: "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-server-consul-0.pem"
+              register: consul_server_certificate_details
+
+            - name: "HashiCorp - Consul : Create server certificate."
+              shell: "{{ consul_binary }} tls cert create -server -dc {{ hashicorp_datacenter_name }} -days {{ consul_tls_server_certificate_days }}"
+              args:
+                chdir: "{{ consul_etc_directory }}"
+              when: not consul_server_certificate_details.stat.exists
+          when: ansible_hostname in groups['servers']
+
+        # CLIENT CERTIFICATES
+        - name: "HashiCorp - Consul : Client Certificates."
+          block:
+            - name: "HashiCorp - Consul : Look for existing client certificate."
+              stat:
+                path: "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-client-consul-0.pem"
+              register: consul_client_certificate_details
+
+            - name: "HashiCorp - Consul : Create client certificate."
+              shell: "{{ consul_binary }} tls cert create -client -dc {{ hashicorp_datacenter_name }} -days {{ consul_tls_client_certificate_days }}"
+              args:
+                chdir: "{{ consul_etc_directory }}"
+              when: not consul_client_certificate_details.stat.exists
+          when: ansible_hostname in groups['clients']
+
+        # ENCRYPTION KEY
+        - name: "HashiCorp - Consul : Check the first server if we are dealing with an already running cluster."
+          stat:
+            path: "{{ consul_systemd_service_file }}"
+          register: consul_systemd_service_file_details
+
+        - name: "HashiCorp - Consul : Encryption key."
+          block:
+            - name: "HashiCorp - Consul : Generate encryption key when cluster is not running yet."
+              block:
+                - name: "HashiCorp - Consul : Run the consul keygen command."
+                  shell: "consul keygen"
+                  register: consul_ecryption_key_tmp
+                  changed_when: false
+
+                - name: "HashiCorp - Consul : Retrieve encryption key and store it as a fact."
+                  set_fact:
+                    consul_ecryption_key: "{{ consul_ecryption_key_tmp.stdout }}"
+              when:
+                - ansible_hostname in groups['servers']
+                - not consul_systemd_service_file_details.stat.exists
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+          when: consul_ecryption_key is not defined
+
+    # CONSUL CONFIGURATION
+    - name: "HashiCorp - Consul : Configuration."
+      block:
+        - name: "HashiCorp - Consul : Ensure configuration is present on the server."
+          template:
+            src: "templates/hashicorp/consul/consul.hcl-server.j2"
+            dest: "{{ consul_etc_directory }}/consul.hcl"
+            mode: "0644"
+            owner: "{{ consul_data_directory_user }}"
+            group: "{{ consul_data_directory_group }}"
+          notify: Restart Consul
+          when: ansible_hostname in groups['servers']
+
+        - name: "HashiCorp - Consul : Ensure configuration is present on the client."
+          template:
+            src: "templates/hashicorp/consul/consul.hcl-client.j2"
+            dest: "{{ consul_etc_directory }}/consul.hcl"
+            mode: "0644"
+            owner: "{{ consul_data_directory_user }}"
+            group: "{{ consul_data_directory_group }}"
+          notify: Restart Consul
+          when: ansible_hostname in groups['clients']
+
+        - name: "HashiCorp - Consul : Ensure systemd service is present."
+          template:
+            src: "templates/hashicorp/consul/consul.service.j2"
+            dest: "{{ consul_systemd_service_file }}"
+            mode: "0644"
+
+        - name: "HashiCorp - Consul : Ensure systemd is reloaded."
+          systemd:
+            daemon_reload: true
+
+        - name: "HashiCorp - Consul : Ensure systemd service is enabled and started."
+          systemd:
+            name: "{{ consul_service_name }}"
+            enabled: true
+            state: started
+
+        - name: "HashiCorp - Consul : A little pause to allow for the consul members to find each other."
+          pause:
+            seconds: "{{ consul_pause_seconds }}"
+
+        - name: "HashiCorp - Consul : Run consul members command."
+          command: "{{ consul_binary }} members"
+          changed_when: false
+          ignore_errors: true
+          register: consul_members_output
+
+        - name: "HashiCorp - Consul : Ouput the results of the consul members command."
+          debug:
+            var: consul_members_output.stdout_lines
+
+        # CONSUL ACL BOOTSTRAPPING
+        - name: "HashiCorp - Consul - ACL : Check if system is already bootstrapped."
+          stat:
+            path: "{{ consul_bootstrapped_true_file }}"
+          register: consul_bootstrapped
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+        - name: "HashiCorp - Consul - Bootstrap ACL."
+          block:
+            - name: "HashiCorp - Consul - ACL : Run consul acl bootstrap command."
+              shell: "{{ consul_binary }} acl bootstrap"
+              changed_when: false
+              register: consul_acl_bootstrap_raw
+
+            - name: "HashiCorp - Consul - ACL : Store bootstrap token local for safekeeping."
+              copy:
+                content: "{{ consul_acl_bootstrap_raw.stdout }}"
+                dest: "{{ consul_bootstrap_token_local_path }}"
+              become: false
+              delegate_to: localhost
+
+            - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
+              shell: "awk '/Secret ID/ {print $4}' {{ consul_bootstrap_token_local_path }}"
+              changed_when: false
+              become: false
+              delegate_to: localhost
+              register: consul_acl_bootstrap_output
+
+            - name: "HashiCorp - Consul - ACL : Set the Secret ID as a fact."
+              set_fact:
+                consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
+
+          # ACL-ING STOPS HERE FOR DEMO SAKE.
+
+          when:
+            - ansible_hostname in groups['servers']
+            - not consul_bootstrapped.stat.exists
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+    # - name: "HashiCorp - Consul Service Mesh"
+    #   block:
+    #     - name: "HashiCorp - Consul Service Mesh - Ensure CNI directory exists."
+    #       file:
+    #         path: "{{ consul_cni_target_directory }}"
+    #         state: directory
+    #         mode: "0644"
+
+    #     - name: "HashiCorp - Consul Service Mesh - Ensure CNI plugins exist in the CNI directory."
+    #       unarchive:
+    #         src: "{{ consul_cni_plugin_url }}"
+    #         dest: "{{ consul_cni_target_directory }}"
+    #         remote_src: yes
+
+    #     - name: "HashiCorp - Consul Service Mesh - Ensure sysctl settings are present and loaded."
+    #       ansible.posix.sysctl:
+    #         name: "{{ item.key }}"
+    #         value: "{{ item.value }}"
+    #         state: present
+    #         sysctl_file: "{{ consul_cni_sysctl_dest_file }}"
+    #         reload: yes
+    #       with_items: "{{ consul_cni_sysctl_settings }}"
+
+    #   when: ansible_hostname in groups['clients']
+
+  handlers:
+    - name: Restart Consul
+      service:
+        name: "{{ consul_service_name }}"
+        state: restarted

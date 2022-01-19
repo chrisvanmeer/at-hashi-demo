@@ -1,0 +1,243 @@
+---
+- name: Get a clean slate.
+  hosts: all
+  become: true
+
+  vars_files:
+    - vars/general/main.yml
+    - vars/multipass/main.yml
+    - vars/hashicorp/general.yml
+    - vars/hashicorp/consul.yml
+    - vars/hashicorp/nomad.yml
+    - vars/hashicorp/vault.yml
+    - vars/hashicorp/demo.yml
+
+  tasks:
+    - name: NOMAD
+      tags: nomad
+      block:
+        - name: NOMAD - Stop jobs.
+          community.general.nomad_job:
+            name: "{{ item.job_name }}"
+            state: absent
+            host: localhost
+            use_ssl: false
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+          failed_when: false
+          with_items: "{{ nomad_demo_job_names }}"
+          tags: stop_jobs
+        - name: NOMAD - Get service file details.
+          stat:
+            path: "{{ nomad_systemd_service_file }}"
+          register: nomad_systemd_service_file_details
+        - name: NOMAD - Service cleanup.
+          block:
+            - name: NOMAD - Ensure service is stopped.
+              systemd:
+                name: "{{ nomad_service_name }}"
+                state: stopped
+            - name: NOMAD - Remove the service file
+              file:
+                path: "{{ nomad_systemd_service_file }}"
+                state: absent
+            - name: NOMAD - Reload systemd daemon.
+              systemd:
+                daemon_reload: true
+          when: nomad_systemd_service_file_details.stat.exists
+        - name: NOMAD - Get all nomad config files.
+          find:
+            paths: "{{ nomad_etc_directory }}"
+            patterns: "*.*"
+          register: nomad_files
+        - name: NOMAD - Delete all nomad config files.
+          file:
+            path: "{{ item.path }}"
+            state: absent
+          with_items: "{{ nomad_files.files }}"
+          loop_control:
+            label: "{{ item.path }}"
+        - name: NOMAD - Data directory mount points.
+          block:
+            - name: NOMAD - Get all mount points that start with /opt/nomad/ and register this.
+              shell: "/usr/bin/df -t tmpfs --output=target | grep '/opt/nomad'"
+              ignore_errors: true
+              changed_when: false
+              register: nomad_mounts
+            - name: NOMAD - Unmount all found mount points.
+              mount:
+                path: "{{ item }}"
+                state: unmounted
+              with_items: "{{ nomad_mounts.stdout_lines }}"
+              when: nomad_mounts is defined
+          when: ansible_hostname in groups['clients']
+        - name: NOMAD - Delete nomad data directory.
+          file:
+            path: "{{ nomad_data_directory }}"
+            state: absent
+
+    - name: VAULT
+      tags: vault
+      block:
+        - name: VAULT - Get service file details.
+          stat:
+            path: "{{ vault_systemd_service_file }}"
+          register: vault_systemd_service_file_details
+        - name: VAULT - Service cleanup.
+          block:
+            - name: VAULT - Ensure service is stopped.
+              systemd:
+                name: "{{ vault_service_name }}"
+                state: stopped
+            - name: VAULT - Remove the service file
+              file:
+                path: "{{ vault_systemd_service_file }}"
+                state: absent
+            - name: VAULT - Reload systemd daemon.
+              systemd:
+                daemon_reload: true
+          when: vault_systemd_service_file_details.stat.exists
+        - name: VAULT - Get all vault config files.
+          find:
+            paths: "{{ vault_etc_directory }}"
+            patterns: "*.*"
+          register: vault_files
+        - name: VAULT - Delete all vault config files.
+          file:
+            path: "{{ item.path }}"
+            state: absent
+          with_items: "{{ vault_files.files }}"
+          loop_control:
+            label: "{{ item.path }}"
+        - name: VAULT - Delete vault data directory.
+          file:
+            path: "{{ vault_data_directory }}"
+            state: absent
+        - name: VAULT - Delete vault TLS directory.
+          file:
+            path: "{{ vault_tls_directory }}"
+            state: absent
+        - name: VAULT - Remove Vault data from Consul.
+          command: "{{ consul_binary }} kv delete -recurse {{ vault_service_name }}/"
+          failed_when: false
+
+    - name: CONSUL
+      tags: consul
+      block:
+        - name: CONSUL - Get service file details.
+          stat:
+            path: "{{ consul_systemd_service_file }}"
+          register: consul_systemd_service_file_details
+        - name: Service cleanup.
+          block:
+            - name: CONSUL - Ensure service is stopped.
+              systemd:
+                name: "{{ consul_service_name }}"
+                state: stopped
+            - name: CONSUL - Remove the service file
+              file:
+                path: "{{ consul_systemd_service_file }}"
+                state: absent
+            - name: CONSUL - Reload systemd daemon.
+              systemd:
+                daemon_reload: true
+          when: consul_systemd_service_file_details.stat.exists
+        - name: CONSUL - Get all consul config files.
+          find:
+            paths: "{{ consul_etc_directory }}"
+            patterns: "*.*"
+          register: consul_files
+        - name: CONSUL - Delete all consul config files.
+          file:
+            path: "{{ item.path }}"
+            state: absent
+          with_items: "{{ consul_files.files }}"
+          loop_control:
+            label: "{{ item.path }}"
+        - name: CONSUL - Delete consul data directory.
+          file:
+            path: "{{ consul_data_directory }}"
+            state: absent
+
+    - name: DOCKER
+      tags: docker
+      become: false
+      block:
+        - name: Get running containers
+          docker_host_info:
+            containers: yes
+          register: docker_container_info
+
+        - name: Stop running containers
+          docker_container:
+            name: "{{ item }}"
+            state: absent
+          loop: "{{ docker_container_info.containers | map(attribute='Id') | list }}"
+
+        - name: Get details of all images
+          docker_host_info:
+            images: yes
+            verbose_output: yes
+          register: docker_image_info
+
+        - name: Remove all images
+          docker_image:
+            name: "{{ item }}"
+            state: absent
+            force_absent: true
+          loop: "{{ docker_image_info.images | map(attribute='Id') | list }}"
+      when: ansible_hostname in groups['clients']
+
+    ## LOCALHOST
+    - name: LOCALHOST
+      block:
+        - name: Remove the comment block from the hosts file.
+          blockinfile:
+            backup: true
+            path: /etc/hosts
+            state: absent
+            block: |
+              # Added for the AT HashiCorp Demo - discard afterwards
+
+        - name: Remove the instances from the hosts file.
+          lineinfile:
+            dest: /etc/hosts
+            regexp: ".*{{ hostvars[item].ansible_host }} {{ item }}"
+            state: absent
+          with_items: "{{ groups.all }}"
+
+        - name: Remove items from known hosts file based on IP.
+          known_hosts:
+            name: "{{ hostvars[item].ansible_host }}"
+            state: absent
+          with_items: "{{ groups.all }}"
+
+        - name: Remove items from known hosts file based on name.
+          known_hosts:
+            name: "{{ item }}"
+            state: absent
+          with_items: "{{ groups.all }}"
+
+      become: true
+      delegate_to: localhost
+      run_once: true
+      tags: localhost
+
+    ## MULTIPASS
+    - name: MULTIPASS
+      block:
+        - name: Delete existing instances.
+          command: "multipass delete {{ item }}"
+          ignore_errors: true
+          with_items:
+            - "{{ multipass_instances.clients }}"
+            - "{{ multipass_instances.servers }}"
+
+        - name: Purge the multipass inventory after deletion.
+          command: "multipass purge"
+          changed_when: false
+
+      delegate_to: localhost
+      run_once: true
+      tags: multipass
