@@ -7,9 +7,6 @@
     - vars/hashicorp/general.yml
     - vars/hashicorp/nomad.yml
 
-  vars:
-    consul_use_bootstrap: false
-
   tasks:
     - name: "HashiCorp - Nomad : Ensure data directory is present."
       file:
@@ -136,7 +133,7 @@
       when:
         - ansible_hostname in groups['servers']
         - not nomad_bootstrapped.stat.exists
-        - consul_use_bootstrap is true
+        - nomad_use_bootstrap is true
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
