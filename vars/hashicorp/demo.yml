@@ -1,0 +1,19 @@
+---
+nomad_demo_job_remote_location: "/opt/nomad/demo-jobs"
+nomad_demo_job_local_location: "/opt/nomad/demo-jobs"
+
+traefik_demo_template_location: "templates/hashicorp/nomad/demo-jobs/traefik.nomad.j2"
+traefik_demo_docker_image: "traefik:v2.6"
+
+at_demo_job_template_location: "templates/hashicorp/nomad/demo-jobs/at-demo.nomad.j2"
+at_demo_group_count: "3"
+at_demo_service_tag_traefik_rule: "Host(`{{ demo_fqdn }}`)"
+at_demo_task_artifact_source: "https://gitlab.intra.kooisecurity.com/chris.vanmeer/kooi-image/-/raw/master/{{ at_demo_base_name }}-{{ at_demo_task_file_version }}.tar"
+
+nomad_demo_job_names:
+  - job_name: "traefik"
+    template: "{{ traefik_demo_template_location }}"
+    destination: "{{ nomad_demo_job_remote_location }}/traefik.nomad"
+  - job_name: "at-demo"
+    template: "{{ at_demo_job_template_location }}"
+    destination: "{{ nomad_demo_job_remote_location }}/at-demo.nomad"

@@ -1,0 +1,7 @@
+users:
+  - default
+  - name: {{ atcomputing_user }}
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - {{ lookup('file', public_key) }}

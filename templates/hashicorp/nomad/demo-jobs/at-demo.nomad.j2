@@ -1,0 +1,67 @@
+job "at-demo" {
+  datacenters = ["{{ hashicorp_datacenter_name }}"]
+  type        = "service"
+
+  // For demo purposes only, spread over all but first client.
+  constraint {
+    attribute = "${node.unique.id}"
+    operator  = "!="
+    value     = "{{ nomad_first_client_node_id.stdout }}"
+  }
+
+  group "at-demo" {
+    count = {{ at_demo_group_count }}
+
+    network {
+      port "at-http" {
+        to = 80
+      }
+    }
+
+    service {
+      name = "at-demo"
+      port = "at-http"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.at-demo.rule={{ at_demo_service_tag_traefik_rule }}",
+      ]
+
+      check {
+        name     = "check if demo is alive"
+        type     = "http"
+        path     = "/"
+        interval = "10s"
+        timeout  = "2s"
+      }
+
+    }
+
+    task "at-demo" {
+
+      env {
+        PORT    = "${NOMAD_PORT_http}"
+        NODE_IP = "${NOMAD_IP_http}"
+      }
+
+      driver = "docker"
+      config {
+        load  = "at-image.tar"
+        image = "at-image:latest"
+        ports = ["at-http"]
+      }
+
+      artifact {
+        source = "{{ at_demo_task_artifact_source }}"
+      }
+
+      resources {
+        cpu    = 100
+        memory = 50
+      }
+
+    }
+
+  }
+
+}

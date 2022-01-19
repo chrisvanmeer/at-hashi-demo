@@ -1,0 +1,38 @@
+---
+- name: "AT Computing - HashiCorp Demo - General server configuration."
+  hosts: all
+  become: true
+
+  vars_files:
+    - vars/general/main.yml
+    - vars/hashicorp/general.yml
+
+  pre_tasks:
+    - name: Ensure the apt cache is updated before we are going to install.
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  roles:
+    - role: geerlingguy.pip
+    # - role: geerlingguy.docker
+    #   ignore_errors: true
+    #   when: inventory_hostname in groups['clients']
+    - role: chrisvanmeer.hashicorp
+      ignore_errors: true
+
+  tasks:
+    - name: Ensure basic apt packages are installed.
+      apt:
+        name: "{{ basic_apt_packages }}"
+        state: present
+
+    - name: Ensure .hushlogin is present in atcomputing user home dir.
+      file:
+        path: "/home/{{ atcomputing_user }}/.hushlogin"
+        state: touch
+        mode: "0644"
+
+    - name: Ensure the correct timezone is used.
+      timezone:
+        name: "{{ timezone }}"

@@ -1,0 +1,227 @@
+---
+- name: "AT Computing - HashiCorp Demo - Vault"
+  hosts: all
+  become: true
+
+  vars_files:
+    - vars/hashicorp/general.yml
+    - vars/hashicorp/consul.yml
+    - vars/hashicorp/vault.yml
+
+  tasks:
+    - name: "HashiCorp - Vault : Ensure data directory is present."
+      file:
+        path: "{{ vault_data_directory }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ vault_data_directory_user }}"
+        group: "{{ vault_data_directory_group }}"
+      when: ansible_hostname in groups['servers']
+
+    # VAULT CONFIGURATION
+    - name: "HashiCorp - Vault : Configuration."
+      block:
+        - name: "HashiCorp - Vault : Ensure general configuration is present."
+          template:
+            src: "templates/hashicorp/vault/vault.hcl.j2"
+            dest: "{{ vault_etc_directory }}/vault.hcl"
+            mode: "0644"
+            owner: "{{ vault_data_directory_user }}"
+            group: "{{ vault_data_directory_group }}"
+
+        - name: "HashiCorp - Vault : Ensure systemd service is present."
+          template:
+            src: "templates/hashicorp/vault/vault.service.j2"
+            dest: "{{ vault_systemd_service_file }}"
+            mode: "0644"
+
+        - name: "HashiCorp - Vault : Ensure systemd is reloaded."
+          systemd:
+            daemon_reload: true
+
+        - name: "HashiCorp - Vault - ACL : Check if system is already bootstrapped."
+          stat:
+            path: "{{ vault_bootstrapped_true_file }}"
+          register: vault_bootstrapped
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+        - name: "HashiCorp - Vault - TLS : Ensure TLS directory is present."
+          become: true
+          file:
+            path: "{{ vault_tls_directory }}"
+            state: directory
+            recurse: true
+
+        - name: "HashiCorp - Vault - TLS : Ensure the SSL files are in place."
+          copy:
+            src: "{{ item.src }}"
+            dest: "{{ item.dest }}"
+            owner: "{{ item.owner }}"
+            group: "{{ item.group }}"
+            mode: "{{ item.mode }}"
+          with_items: "{{ vault_ssl_files }}"
+          when: ansible_hostname in groups['servers']
+
+        - name: "HashiCorp - Vault - ACL : Check if Consul has ACL mode enabled."
+          shell: "cat {{ consul_etc_directory }}/consul.hcl | grep -a3 '^acl' | grep enabled | awk '{print $3}'"
+          changed_when: false
+          ignore_errors: true
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+          register: consul_acl_enabled
+
+        # VAULT ACL
+        - name: "HashiCorp - Vault - ACL"
+          block:
+            - name: "HashiCorp - Vault - ACL : Ensure the Vault service policy file is in place."
+              copy:
+                src: "{{ vault_service_policy_file_local }}"
+                dest: "{{ vault_service_policy_file_remote }}"
+
+            - name: "HashiCorp - Vault - ACL - Consul : Ensure that the ACL is present in Consul."
+              shell: "{{ consul_binary }} acl policy create -name {{ vault_consul_service_name }} -rules @{{ vault_service_policy_file_name }}"
+              args:
+                chdir: "{{ vault_data_directory }}/"
+              changed_when: false
+
+            - name: "HashiCorp - Vault - ACL - Consul : Create ACL token using the above policy."
+              shell: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consule_service_name }}"
+              changed_when: false
+              register: vault_acl_bootstrap_raw
+
+            - name: "HashiCorp - Vault - ACL : Store bootstrap token local for safekeeping."
+              copy:
+                content: "{{ vault_acl_bootstrap_raw.stdout }}"
+                dest: "{{ vault_bootstrap_token_local_path }}"
+              become: false
+              delegate_to: localhost
+
+            - name: "HashiCorp - Vault - ACL : Retrieve Secret ID from bootstrap output."
+              shell: "awk '/Secret ID/ {print $4}' {{ vault_bootstrap_token_local_path }}"
+              changed_when: false
+              become: false
+              delegate_to: localhost
+              register: vault_acl_bootstrap_output
+
+            - debug: var=vault_acl_bootstrap_output
+
+            - name: "HashiCorp - Vault - ACL : Set the Secret ID as a fact."
+              set_fact:
+                vault_acl_bootstrap_secret_id: "{{ vault_acl_bootstrap_output.stdout }}"
+
+            - debug: var=vault_acl_bootstrap_secret_id
+
+            - name: "HashiCorp - Vault - ACL : Ensure bootstrap check file is in place."
+              copy:
+                dest: "{{ vault_bootstrapped_true_file }}"
+                content: "This cluster was bootstrapped on {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
+
+            - name: "HashiCorp - Vault - ACL : Cleanup generated files which are not needed anymore."
+              file:
+                path: "{{ item }}"
+                state: absent
+              with_items:
+                - "{{ vault_service_policy_file_remote }}"
+
+          when:
+            - ansible_hostname in groups['servers']
+            - consul_acl_enabled.stdout == "enabled"
+            - not vault_bootstrapped.stat.exists
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+        - name: "HashiCorp - Vault : Ensure systemd service is enabled and started."
+          systemd:
+            name: "{{ vault_service_name }}"
+            enabled: true
+            state: started
+
+        - name: "HashiCorp - Vault : Check the Vault initialization status."
+          shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+          changed_when: false
+          register: vault_is_initialized
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+        - name: "HashiCorp - Vault : Initialize the Vault."
+          command: "{{ vault_binary }} operator init"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+          changed_when: false
+          register: vault_init_output
+          when:
+            - ansible_hostname in groups['servers']
+            - vault_is_initialized.stdout == "false"
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+        - name: "HashiCorp - Vault - INIT: Store Vault initialization info local for safekeeping."
+          copy:
+            content: "{{ vault_init_output.stdout }}"
+            dest: "{{ vault_bootstrap_init_local_path }}"
+            mode: "0644"
+          become: false
+          when:
+            - vault_is_initialized.stdout == "false"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault - INIT : Retrieve first unseal key from initialization info."
+          set_fact:
+            vault_unseal_key_1: "{{ vault_init_output.stdout_lines[0].split('Unseal Key 1: ')[1] }}"
+          when:
+            - vault_is_initialized.stdout == "false"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault - INIT : Retrieve second unseal key from initialization info."
+          set_fact:
+            vault_unseal_key_2: "{{ vault_init_output.stdout_lines[1].split('Unseal Key 2: ')[1] }}"
+          when:
+            - vault_is_initialized.stdout == "false"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault - INIT : Retrieve third unseal key from initialization info."
+          set_fact:
+            vault_unseal_key_3: "{{ vault_init_output.stdout_lines[2].split('Unseal Key 3: ')[1] }}"
+          when:
+            - vault_is_initialized.stdout == "false"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault : Check the Vault sealed status."
+          shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+          changed_when: false
+          register: vault_is_sealed
+          when: ansible_hostname in groups['servers']
+
+        - name: "HashiCorp - Vault : Ensure the Vault is unsealed."
+          command: "{{ vault_binary }} operator unseal {{ item }}"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+          with_items:
+            - "{{ vault_unseal_key_1 }}"
+            - "{{ vault_unseal_key_2 }}"
+            - "{{ vault_unseal_key_3 }}"
+          when: vault_is_sealed.stdout == "true"
+
+      when: ansible_hostname in groups['servers']
+
+  handlers:
+    - name: Restart Vault
+      service:
+        name: "{{ vault_service_name }}"
+        state: restarted

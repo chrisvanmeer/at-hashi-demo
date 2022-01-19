@@ -1,0 +1,12 @@
+[all:vars]
+ansible_user={{ atcomputing_user }}
+
+[servers]
+{% for i in multipass_servers %}
+{{ i.name }} ansible_host={{ i.ip }}
+{% endfor %}
+
+[clients]
+{% for i in multipass_clients %}
+{{ i.name }} ansible_host={{ i.ip }}
+{% endfor %}

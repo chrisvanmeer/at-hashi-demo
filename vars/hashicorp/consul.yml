@@ -1,0 +1,28 @@
+---
+consul_binary: "/usr/bin/consul"
+consul_etc_directory: "/etc/consul.d"
+consul_data_directory: "/opt/consul"
+consul_data_directory_user: "consul"
+consul_data_directory_group: "consul"
+consul_service_name: "consul"
+consul_systemd_service_file: "/etc/systemd/system/consul.service"
+consul_log_directory: "/var/log/consul"
+consul_pause_seconds: "5"
+
+consul_tls_ca_certificate_days: "3650"
+consul_tls_server_certificate_days: "1827"
+consul_tls_client_certificate_days: "1827"
+
+consul_bootstrapped_true_file: "{{ consul_data_directory }}/bootstrapped.true"
+consul_bootstrap_token_local_path: "~/{{ ansible_hostname}}.consul.bootstrap.token"
+
+consul_cni_plugin_url: "https://github.com/containernetworking/plugins/releases/download/v1.0.1/cni-plugins-linux-amd64-v1.0.1.tgz"
+consul_cni_target_directory: "/opt/cni/bin"
+consul_cni_sysctl_settings:
+  - key: "net.bridge.bridge-nf-call-arptables"
+    value: "1"
+  - key: "net.bridge.bridge-nf-call-ip6tables"
+    value: "1"
+  - key: "net.bridge.bridge-nf-call-iptables"
+    value: "1"
+consul_cni_sysctl_dest_file: "/etc/sysctl.d/20-consul-service-mesh.conf"
