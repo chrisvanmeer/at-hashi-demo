@@ -4,4 +4,4 @@ hashicorp_product_selection:
   - nomad
   - vault
 
-hashicorp_datacenter_name: "Velp"
+hashicorp_datacenter_name: "velp"
