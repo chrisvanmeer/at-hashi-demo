@@ -1,7 +1,7 @@
 ---
 hashicorp_product_selection:
   - consul
-  - nomad
-  - vault=1.2.3
+  - nomad=1.2.3
+  - vault
 
 hashicorp_datacenter_name: "velp"
