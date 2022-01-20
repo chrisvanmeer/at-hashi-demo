@@ -192,7 +192,7 @@ And you should be able to reach the AT-Demo webapp through `https://demo.atcompu
 ansible-playbook 06_nomad-demo-jobs.yml
 ```
 ### Screenshot(s)
-![Traefik screenshot](screenshots/traefik.png)
+![Traefik screenshot](screenshots/traefik.png)  
 ![AT-Demo screenshot](screenshots/at-demo.png)
 
 ## Step 10 - Reset environment
