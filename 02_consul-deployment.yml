@@ -8,8 +8,10 @@
     - vars/hashicorp/consul.yml
 
   vars:
-    # consul_ecryption_key: "faycsQVqVPIsVN2ZgBWjpRlKJqasrRgngcPJood63TY="
-    # consul_retry_join_address: "10.5.166.218"
+    # Uncomment and fill the variables below if you need to run the playbook again.
+    # You can find the relevant data on any of the hosts in /etc/consul.d/consul.hcl
+    # consul_ecryption_key: "<ENCRYPTION KEY>"
+    # consul_retry_join_address: "<IP ADDRESS>"
 
   tasks:
     - name: "HashiCorp - Consul : Ensure data directory is present."
