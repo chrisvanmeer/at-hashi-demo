@@ -31,4 +31,4 @@ basic_apt_packages:
 
 timezone: "Europe/Amsterdam"
 
-demo_fqdn: "at-computing-demo.local"
+demo_fqdn: "demo.at-computing.local"
