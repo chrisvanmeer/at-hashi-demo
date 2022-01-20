@@ -259,7 +259,7 @@
             state: absent
 
         - name: "Ensure CA certificates database is updated."
-          command: "/usr/sbin/update-ca-certificates"
+          command: "/usr/sbin/update-ca-certificates --fresh"
           changed_when: false
       delegate_to: localhost
       run_once: true
