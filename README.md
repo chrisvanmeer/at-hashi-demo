@@ -239,6 +239,209 @@ ansible-playbook 06_nomad-demo-jobs.yml
   
 ![AT-Demo screenshot](screenshots/at-demo.gif)
 
+### Job files - rendered
+
+#### Traefik
+```hcl
+job "traefik" {
+  datacenters = ["velp"]
+  type        = "service"
+
+  // For demo purposes, keep this job on the first client.
+  constraint {
+    attribute = "${node.unique.id}"
+    operator  = "="
+    value     = "85463edb-669f-bab2-5815-6292b78026c4"
+  }
+
+  group "traefik" {
+    count = 1
+
+    network {
+      port "http" {
+        static = 80
+      }
+
+      port "https" {
+        static = 443
+      }
+
+      port "api" {
+        static = 8081
+      }
+    }
+
+    service {
+      name = "traefik"
+
+      check {
+        name     = "alive"
+        type     = "tcp"
+        port     = "http"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    task "traefik" {
+
+      driver = "docker"
+      config {
+        image        = "traefik:v2.6"
+        network_mode = "host"
+
+        volumes = [
+          "local/traefik.toml:/etc/traefik/traefik.toml",
+          "local/ssl:/etc/traefik/ssl",
+        ]
+      }
+
+      artifact {
+        source = "https://raw.githubusercontent.com/chrisvanmeer/at-image/main/demo.atcomputing.local-cert.pem"
+        destination = "local/ssl/tls.crt"
+        mode = "file"
+      }
+
+      artifact {
+        source = "https://raw.githubusercontent.com/chrisvanmeer/at-image/main/demo.atcomputing.local-key.pem"
+        destination = "local/ssl/tls.key"
+        mode = "file"
+      }
+
+      template {
+        data = <<EOF
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+  [entryPoints.https]
+    address = ":443"
+  [entryPoints.traefik]
+    address = ":8081"
+
+[api]
+  dashboard = true
+  insecure  = true
+
+# Enable Consul Catalog configuration backend.
+[providers.consulCatalog]
+  prefix           = "traefik"
+  exposedByDefault = false
+
+  [providers.consulCatalog.endpoint]
+    address = "127.0.0.1:8500"
+    scheme  = "http"
+
+# Dynamic rules go hashicorp_datacenter_name
+[providers.file]
+  directory = "/local/rules"
+  watch = true
+
+EOF
+
+        destination = "local/traefik.toml"
+      }
+
+      template {
+        data = <<EOF
+tls:
+  certificates:
+    - certFile: /etc/traefik/ssl/tls.crt
+      keyFile: /etc/traefik/ssl/tls.key
+EOF
+        destination = "local/rules/ssl.yml"
+      }
+
+      resources {
+        cpu    = 100
+        memory = 128
+      }
+
+    }
+
+  }
+
+}
+```
+
+#### AT-Demo
+```hcl
+job "at-demo" {
+  datacenters = ["velp"]
+  type        = "service"
+
+  // For demo purposes only, spread over all but first client.
+  constraint {
+    attribute = "${node.unique.id}"
+    operator  = "!="
+    value     = "85463edb-669f-bab2-5815-6292b78026c4"
+  }
+
+  group "at-demo" {
+    count = 3
+
+    network {
+      port "at-http" {
+        to = 80
+      }
+    }
+
+    service {
+      name = "at-demo"
+      port = "at-http"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https",
+        "traefik.http.routers.at-demo-redirect.rule=Host(`demo.atcomputing.local`)",
+        "traefik.http.routers.at-demo-redirect.entrypoints=http",
+        "traefik.http.routers.at-demo-redirect.middlewares=redirect-to-https",
+        "traefik.http.routers.at-demo.tls=true",
+        "traefik.http.routers.at-demo.entrypoints=https",
+        "traefik.http.routers.at-demo.rule=Host(`demo.atcomputing.local`)",
+      ]
+
+      check {
+        name     = "check if demo is alive"
+        type     = "http"
+        path     = "/"
+        interval = "10s"
+        timeout  = "2s"
+      }
+
+    }
+
+    task "at-demo" {
+
+      env {
+        PORT       = "${NOMAD_PORT_at-http}"
+        NODE_IP    = "${NOMAD_IP_at-http}"
+        FAVICON    = "https://www.atcomputing.nl/assets/img/favicon.png"
+        IMG_SOURCE = "https://www.atcomputing.nl/assets/img/atcomputing_white.png"
+      }
+
+      driver = "docker"
+      config {
+        load  = "at-image.tar"
+        image = "at-image:latest"
+        ports = ["at-http"]
+      }
+
+      artifact {
+        source = "https://github.com/chrisvanmeer/at-image/raw/main/at-image.tar"
+      }
+
+      resources {
+        cpu    = 100
+        memory = 50
+      }
+
+    }
+
+  }
+
+}
+```
+
 ## Step 10 - Reset environment
 
 ### Most noticable / important variables
