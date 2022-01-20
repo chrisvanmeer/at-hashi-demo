@@ -24,8 +24,12 @@ job "{{ at_demo_name }}" {
 
       tags = [
         "traefik.enable=true",
+        "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https",
+        "traefik.http.routers.{{ at_demo_name }}-redirect.rule={{ at_demo_service_tag_traefik_rule }}",
+        "traefik.http.routers.{{ at_demo_name }}-redirect.entrypoints=http",
+        "traefik.http.routers.{{ at_demo_name }}-redirect.middlewares=redirect-to-https",
+        "traefik.http.routers.{{ at_demo_name }}.entrypoints=https",
         "traefik.http.routers.{{ at_demo_name }}.rule={{ at_demo_service_tag_traefik_rule }}",
-        "traefik.https.routers.{{ at_demo_name }}.rule={{ at_demo_service_tag_traefik_rule }}",
       ]
 
       check {
