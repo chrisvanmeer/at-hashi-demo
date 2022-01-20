@@ -22,7 +22,7 @@ Basically, this is what we will achieve with this
     - This will be the reverse proxy / load balancer for our webapp. The idea is that all the Traefik config is done on the webapp side, and Traefik will dynamically pick this up in realtime.
   - AT-Demo
     - A small PHP image that will house a logo and show the IP address and port of the client.
-  - We can then play around with job properties / kill clients / down- and upgrade Nomad and see what happens.
+- We can then play around with job properties / kill clients / down- and upgrade Nomad and see what happens.
 
 Estimated runtime to setup: 15 - 30 minutes.
 
