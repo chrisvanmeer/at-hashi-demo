@@ -78,7 +78,7 @@ This playbook will spin up the Multipass instances with the cloud-init option to
   
 After creating the Multipass instances, a new inventory is made in this directory with the name `inventory` and this will contain all of the servers and clients.  
   
-And lastly it will add the names and IP addresses to the local /etc/hosts file.
+And lastly it will add the names and IP addresses to the local `/etc/hosts` file.
 
 ### Run playbook
 ```ansible
