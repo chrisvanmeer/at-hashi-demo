@@ -45,12 +45,12 @@ Basically, this is what we will achieve with this
     - A small PHP image that will house a logo and show the IP address and port of the client.
 - We can then play around with job properties / kill clients / down- and upgrade Nomad and see what happens.
 
-Estimated runtime to setup: 15 - 30 minutes.
-You will be needing about 8Gb of RAM to run this without annoying lagg.
+Estimated runtime to setup: 15 - 30 minutes.  
+You will be needing about 8Gb of RAM to run this without annoying lagg.  
 Diskspace wise I would say about 5Gb of diskspace should cover it.
 
 #### Disclaimer
-This was built and tested on both macOS 12.1 (Intel chip) and Ubuntu 20.04 LTS Desktop.
+This was built and tested on both macOS 12.1 (Intel chip) and Ubuntu 20.04 LTS Desktop.  
 Running the same setup on macOS with an M1-chip will fail miserably.
 
 ## Step 1 - Install required software
@@ -74,10 +74,10 @@ ansible-galaxy install -r requirements.yml
 | multipass_instances | See the multipass `main.yml` variable file | The instances that we will be using.
 
 ### Objective
-This playbook will spin up the Multipass instances with the cloud-init option to create the admin user. If it detects instances with the same names as in the variable file, you will be prompted to allow for deletion of all of these instances.
-
-After creating the Multipass instances, a new inventory is made in this directory with the name `inventory` and this will contain all of the servers and clients.
-
+This playbook will spin up the Multipass instances with the cloud-init option to create the admin user. If it detects instances with the same names as in the variable file, you will be prompted to allow for deletion of all of these instances.  
+  
+After creating the Multipass instances, a new inventory is made in this directory with the name `inventory` and this will contain all of the servers and clients.  
+  
 And lastly it will add the names and IP addresses to the local /etc/hosts file.
 
 ### Run playbook
@@ -114,10 +114,10 @@ ansible-playbook 01_general-server-configuration.yml
 | consul_bootstrap_token_local_path | `~/server1.consul.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
-This playbook will configure a Consul cluster, where the servers will be running the Consul agent in server-mode and the clients will be running the Consul agent in client-mode.
-
-The Consul agent listens on both server and client on TCP port 8200. The servers will have the UI enabled.
-
+This playbook will configure a Consul cluster, where the servers will be running the Consul agent in server-mode and the clients will be running the Consul agent in client-mode.  
+  
+The Consul agent listens on both server and client on TCP port 8200. The servers will have the UI enabled.  
+  
 After this playbook you should be able to reach the UI through `http://server1:8200` from your local workstation.
 
 ### Run playbook
@@ -137,8 +137,8 @@ ansible-playbook 02_consul-deployment.yml
 | vault_bootstrap_init_local_path | `~/server1.vault.bootstrap.init` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
-This playbook will configure a Vault cluster, where the servers will be running the Vault agent in server mode. Consul will be used for the storage of all secrets.
-
+This playbook will configure a Vault cluster, where the servers will be running the Vault agent in server mode. Consul will be used for the storage of all secrets.  
+  
 The Vault agent listens on TCP port 8500.
 
 ### Run playbook
@@ -152,8 +152,8 @@ ansible-playbook 03_vault-deployment.yml
 None
 
 ### Objective
-This playbook will unseal the vault after creating the cluster and you can also use this playbook to unseal the vault after a service restart / server reboot.
-
+This playbook will unseal the vault after creating the cluster and you can also use this playbook to unseal the vault after a service restart / server reboot.  
+  
 After this playbook you should be able to reach the UI through `http://server1:8500` from your local workstation.
 
 ### Screenshot(s)
@@ -173,10 +173,10 @@ ansible-playbook 04_vault-unseal.yml
 | nomad_bootstrap_token_local_path | `~/server1.nomad.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
-This playbook will configure a Nomad cluster, where the servers will be running the Nomad agent in server-mode and the clients will be running the Nomad agent in client-mode.
-
-The Nomad agent listens on both server and client on TCP port 4646. The servers will have the UI enabled.
-
+This playbook will configure a Nomad cluster, where the servers will be running the Nomad agent in server-mode and the clients will be running the Nomad agent in client-mode.  
+  
+The Nomad agent listens on both server and client on TCP port 4646. The servers will have the UI enabled.  
+  
 After this playbook you should be able to reach the UI through `http://server1:4646` from your local workstation.
 
 ### Run playbook
@@ -213,11 +213,11 @@ This playbook will deploy to and run two jobs on Nomad:
   - The PHP docker image that will be used for testing.
   - The exposed docker port will be dynamic, and will be picked up by Consul and thus Traefik for the connection. The local port is port 80.
   - The jobs will also be placed on `server1` on `/opt/nomad/demo-jobs`.
-
-It will also add the self signed CA certificate file (of `atcomputing.local`) to the trusted CA store.
-
-After this playbook you should be able to reach the Traefik UI through `http://client1:8081` from your local workstation.
-
+  
+It will also add the self signed CA certificate file (of `atcomputing.local`) to the trusted CA store.  
+  
+After this playbook you should be able to reach the Traefik UI through `http://client1:8081` from your local workstation.  
+  
 And you should be able to reach the AT-Demo webapp through `https://demo.atcomputing.local` from your local workstation (HTTP to HTTPS redirection is enabled as well).
 
 ### Run playbook
@@ -243,12 +243,12 @@ ansible-playbook 06_nomad-demo-jobs.yml
 None
 
 ### Objective
-This playbook can be run to clean up the whole HashiCorp install base from the environment. This can either be done for the whole installed stack or selectively.
-
-If you want to use it selectively, run the playbook with the `--list-tags` argument to see which tags are available.
-
-The binaries will **not** be deleted, but all the configuration work will be.
-
+This playbook can be run to clean up the whole HashiCorp install base from the environment. This can either be done for the whole installed stack or selectively.  
+  
+If you want to use it selectively, run the playbook with the `--list-tags` argument to see which tags are available.  
+  
+The binaries will **not** be deleted, but all the configuration work will be.  
+  
 After this playbook you can re-run one or more of the previous playbooks to re-configure that part of the environment.
 
 ### Run playbook
