@@ -28,7 +28,9 @@ Estimated runtime to setup: 15 - 30 minutes.
 You will be needing about 8Gb of RAM to run this without annoying lagg.
 Diskspace wise I would say about 5Gb of diskspace should cover it.
 
-This was built and tested on both macOS 12.1 and Ubuntu 20.04 LTS Desktop.
+#### Disclaimer
+This was built and tested on both macOS 12.1 (Intel chip) and Ubuntu 20.04 LTS Desktop.
+Running the same setup on macOS with an M1-chip will fail miserably.
 
 ## Step 1 - Install required software
 Make sure you have the following installed on your workstation:
