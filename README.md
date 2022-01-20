@@ -162,11 +162,11 @@ ansible-playbook 05_nomad-deployment.yml
 ```
 ### Screenshot(s)
 ![Nomad screenshot](screenshots/nomad-1.png)  
-
+  
 ![Nomad screenshot](screenshots/nomad-2.png)  
-
+  
 ![Nomad screenshot](screenshots/nomad-3.png)  
-
+  
 ![Nomad screenshot](screenshots/nomad-4.png)
 
 ## Step 9 - Nomad demo jobs
@@ -203,15 +203,15 @@ ansible-playbook 06_nomad-demo-jobs.yml
 ```
 ### Screenshot(s)
 ![Traefik screenshot](screenshots/traefik-1.png)  
-
+  
 ![Traefik screenshot](screenshots/traefik-2.png)  
-
+  
 ![Traefik screenshot](screenshots/traefik-3.png)  
-
+  
 ![Traefik screenshot](screenshots/traefik-4.png)  
-
+  
 ![AT-Demo screenshot](screenshots/at-demo.png)  
-
+  
 ![AT-Demo screenshot](screenshots/at-demo.gif)
 
 ## Step 10 - Reset environment
