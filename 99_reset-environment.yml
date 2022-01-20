@@ -209,7 +209,7 @@
 
         - name: Remove items from known hosts file based on IP.
           known_hosts:
-            name: "{{ hostvars[item].ansible_host }}"
+            name: "{{ ansible_default_ipv4.address }}"
             state: absent
           with_items: "{{ groups.all }}"
 
