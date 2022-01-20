@@ -24,6 +24,8 @@ Basically, this is what we will achieve with this
     - A small PHP image that will house a logo and show the IP address and port of the client.
   - We can then play around with job properties / kill clients / down- and upgrade Nomad and see what happens.
 
+Estimated runtime to setup: 15 - 30 minutes.
+
 ## Step 1 - Install required software
 Make sure you have the following installed on your workstation:
 - Ansible
@@ -82,7 +84,7 @@ ansible-playbook 01_general-server-configuration.yml
 | Variable | Default value | Description |
 | -------- | ------------- | ----------- |
 | hashicorp_datacenter_name | `velp` | This datacenter name will be used in both Consul as Nomad (and in the demo jobs). |
-| consul_bootstrap_token_local_path | `~/{{ ansible_hostname}}.consul.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| consul_bootstrap_token_local_path | `~/server1.consul.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
 This playbook will configure a Consul cluster, where the servers will be running the Consul agent in server-mode and the clients will be running the Consul agent in client-mode.
@@ -96,13 +98,16 @@ After this playbook you should be able to reach the UI through `http://server1:8
 ansible-playbook 02_consul-deployment.yml
 ```
 
+### Screenshot(s)
+![Consul screenshot](screenshots/consul.png)
+
 ## Step 6 - Vault deployment
 
 ### Most noticable / important variables
 | Variable | Default value | Description |
 | -------- | ------------- | ----------- |
-| vault_bootstrap_token_local_path | `~/{{ ansible_hostname}}.vault.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_bootstrap_init_local_path | `~/{{ ansible_hostname}}.vault.bootstrap.init` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_bootstrap_token_local_path | `~/server1.vault.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_bootstrap_init_local_path | `~/server1.vault.bootstrap.init` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
 This playbook will configure a Vault cluster, where the servers will be running the Vault agent in server mode. Consul will be used for the storage of all secrets.
@@ -124,6 +129,8 @@ This playbook will unseal the vault after creating the cluster and you can also 
 
 After this playbook you should be able to reach the UI through `http://server1:8500` from your local workstation.
 
+### Screenshot(s)
+![Vault screenshot](screenshots/vault.png)
 
 ### Run playbook
 ```
@@ -136,7 +143,7 @@ ansible-playbook 04_vault-unseal.yml
 | Variable | Default value | Description |
 | -------- | ------------- | ----------- |
 | hashicorp_datacenter_name | `velp` | This datacenter name will be used in both Consul as Nomad (and in the demo jobs). |
-| nomad_bootstrap_token_local_path | `~/{{ ansible_hostname}}.nomad.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| nomad_bootstrap_token_local_path | `~/server1.nomad.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
 This playbook will configure a Nomad cluster, where the servers will be running the Nomad agent in server-mode and the clients will be running the Nomad agent in client-mode.
@@ -149,6 +156,8 @@ After this playbook you should be able to reach the UI through `http://server1:4
 ```ansible
 ansible-playbook 05_nomad-deployment.yml
 ```
+### Screenshot(s)
+![Nomad screenshot](screenshots/nomad.png)
 
 ## Step 9 - Nomad demo jobs
 
@@ -182,6 +191,9 @@ And you should be able to reach the AT-Demo webapp through `https://demo.atcompu
 ```ansible
 ansible-playbook 06_nomad-demo-jobs.yml
 ```
+### Screenshot(s)
+![Traefik screenshot](screenshots/traefik.png)
+![AT-Demo screenshot](screenshots/at-demo.png)
 
 ## Step 10 - Reset environment
 
