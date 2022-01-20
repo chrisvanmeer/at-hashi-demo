@@ -6,6 +6,7 @@
   vars_files:
     - vars/hashicorp/ssl.yml
 
+  tasks:
     - name: LOCALHOST
       tags: localhost
       block:
