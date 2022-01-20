@@ -6,6 +6,7 @@
   vars_files:
     - vars/hashicorp/general.yml
     - vars/hashicorp/vault.yml
+    - vars/hashicorp/ssl.yml
 
   tasks:
     - name: "HashiCorp - Vault : Retrieve local token file."

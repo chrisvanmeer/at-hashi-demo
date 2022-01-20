@@ -1,0 +1,4 @@
+---
+ssl_server_cert: "files/ssl/demo.atcomputing.local-cert.pem"
+ssl_server_key: "files/ssl/demo.atcomputing.local-key.pem"
+ssl_ca_cert: "files/ssl/atcomputing.local-ca-cert.pem"

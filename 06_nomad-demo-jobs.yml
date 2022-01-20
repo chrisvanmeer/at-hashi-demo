@@ -8,6 +8,7 @@
     - vars/hashicorp/general.yml
     - vars/hashicorp/nomad.yml
     - vars/hashicorp/demo.yml
+    - vars/hashicorp/ssl.yml
 
   tasks:
     - name: "HashiCorp - Nomad - Jobs : Register the Node ID from the first client for constraints demo."

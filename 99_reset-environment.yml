@@ -11,6 +11,7 @@
     - vars/hashicorp/nomad.yml
     - vars/hashicorp/vault.yml
     - vars/hashicorp/demo.yml
+    - vars/hashicorp/ssl.yml
 
   tasks:
     - name: NOMAD
