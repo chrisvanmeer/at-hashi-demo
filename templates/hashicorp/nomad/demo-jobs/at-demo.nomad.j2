@@ -25,6 +25,7 @@ job "{{ at_demo_name }}" {
       tags = [
         "traefik.enable=true",
         "traefik.http.routers.{{ at_demo_name }}.rule={{ at_demo_service_tag_traefik_rule }}",
+        "traefik.https.routers.{{ at_demo_name }}.rule={{ at_demo_service_tag_traefik_rule }}",
       ]
 
       check {
