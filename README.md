@@ -25,6 +25,10 @@ Basically, this is what we will achieve with this
 - We can then play around with job properties / kill clients / down- and upgrade Nomad and see what happens.
 
 Estimated runtime to setup: 15 - 30 minutes.
+You will be needing about 8Gb of RAM to run this without annoying lagg.
+Diskspace wise I would say about 5Gb of diskspace should cover it.
+
+This was built and tested on both macOS 12.1 and Ubuntu 20.04 LTS Desktop.
 
 ## Step 1 - Install required software
 Make sure you have the following installed on your workstation:
