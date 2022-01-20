@@ -62,3 +62,25 @@
         - ansible_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
+
+    - name: "HashiCorp - Nomad - CA"
+      block:
+        - name: "HashiCorp - Nomad - CA : Ensure that the local certs directory exists."
+          file:
+            path: "{{ ssl_local_ca_dir }}"
+            state: directory
+            mode: "0755"
+
+        - name: "HashiCorp - Nomad - CA : Install our own self signed CA Certificate."
+          copy:
+            src: "{{ ssl_ca_cert }}"
+            dest: "{{ ssl_local_ca_dir }}/{{ ssl_local_ca_file }}"
+            mode: "0644"
+
+        - name: "HashiCorp - Nomad - CA : Ensure CA certificates database is updated."
+          command: "/usr/sbin/update-ca-certificates"
+          changed_when: false
+
+      delegate_to: localhost
+      run_once: true
+      tags: ca
