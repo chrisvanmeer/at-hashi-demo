@@ -8,9 +8,6 @@
     - vars/multipass/main.yml
     - "vars/multipass/{{ ansible_os_family }}.yml"
 
-  vars:
-    public_key: "~/.ssh/id_rsa.pub"
-
   tasks:
     - name: Check if multipass is present.
       stat:
@@ -105,7 +102,7 @@
 
     - name: Check if this is the first time we're running this.
       fail:
-        msg: Re-run this playbook, but now add --tags hostfile
+        msg: "Re-run this playbook, but now add '--tags hostfile --ask-become-pass'."
       when: groups.all | length == 0
       tags: hostfile
 
