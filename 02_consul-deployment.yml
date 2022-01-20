@@ -8,8 +8,8 @@
     - vars/hashicorp/consul.yml
 
   vars:
-    consul_ecryption_key: "faycsQVqVPIsVN2ZgBWjpRlKJqasrRgngcPJood63TY="
-    consul_retry_join_address: "10.5.166.218"
+    # consul_ecryption_key: "faycsQVqVPIsVN2ZgBWjpRlKJqasrRgngcPJood63TY="
+    # consul_retry_join_address: "10.5.166.218"
 
   tasks:
     - name: "HashiCorp - Consul : Ensure data directory is present."
