@@ -249,3 +249,17 @@
         state: absent
       delegate_to: localhost
       run_once: true
+
+    - name: CA CERTIFICATE
+      tags: ca
+      block:
+        - name: "Remove our own self signed CA Certificate."
+          file:
+            path: "{{ ssl_local_ca_dir }}/{{ ssl_local_ca_file }}"
+            state: absent
+
+        - name: "Ensure CA certificates database is updated."
+          command: "/usr/sbin/update-ca-certificates"
+          changed_when: false
+      delegate_to: localhost
+      run_once: true
