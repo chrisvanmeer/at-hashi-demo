@@ -1,4 +1,4 @@
-job "at-demo" {
+job "{{ at_demo_name }}" {
   datacenters = ["{{ hashicorp_datacenter_name }}"]
   type        = "service"
 
@@ -9,22 +9,22 @@ job "at-demo" {
     value     = "{{ nomad_first_client_node_id.stdout }}"
   }
 
-  group "at-demo" {
+  group "{{ at_demo_name }}" {
     count = {{ at_demo_group_count }}
 
     network {
-      port "at-http" {
+      port "{{ at_demo_port_name }}" {
         to = 80
       }
     }
 
     service {
-      name = "at-demo"
-      port = "at-http"
+      name = "{{ at_demo_name }}"
+      port = "{{ at_demo_port_name }}"
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.at-demo.rule={{ at_demo_service_tag_traefik_rule }}",
+        "traefik.http.routers.{{ at_demo_name }}.rule={{ at_demo_service_tag_traefik_rule }}",
       ]
 
       check {
@@ -37,11 +37,11 @@ job "at-demo" {
 
     }
 
-    task "at-demo" {
+    task "{{ at_demo_name }}" {
 
       env {
-        PORT       = "${NOMAD_PORT_http}"
-        NODE_IP    = "${NOMAD_IP_http}"
+        PORT       = "${NOMAD_PORT_{{ at_demo_port_name }}}"
+        NODE_IP    = "${NOMAD_IP_{{ at_demo_port_name }}}"
         FAVICON    = "{{ at_demo_env_favicon }}"
         IMG_SOURCE = "{{ at_demo_env_img_source }}"
       }
@@ -50,7 +50,7 @@ job "at-demo" {
       config {
         load  = "{{ at_demo_task_config_load }}"
         image = "{{ at_demo_task_config_image }}"
-        ports = ["at-http"]
+        ports = ["{{ at_demo_port_name }}"]
       }
 
       artifact {
@@ -58,8 +58,8 @@ job "at-demo" {
       }
 
       resources {
-        cpu    = 100
-        memory = 50
+        cpu    = {{ at_demo_task_resources_cpu_mhz }}
+        memory = {{ at_demo_task_resources_mem_mb }}
       }
 
     }
