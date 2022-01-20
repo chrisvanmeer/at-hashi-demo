@@ -133,7 +133,7 @@
       when:
         - ansible_hostname in groups['servers']
         - not nomad_bootstrapped.stat.exists
-        - nomad_use_bootstrap is true
+        - nomad_use_bootstrap | lower == "true"
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
