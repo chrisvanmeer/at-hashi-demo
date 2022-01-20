@@ -41,56 +41,69 @@ job "traefik" {
     task "traefik" {
 
       driver = "docker"
-
       config {
         image        = "{{ traefik_demo_docker_image }}"
         network_mode = "host"
 
         volumes = [
           "local/traefik.toml:/etc/traefik/traefik.toml",
+          "local/ssl:/etc/traefik/ssl",
         ]
-
       }
 
       artifact {
         source = "{{ traefik_demo_artifact_ssl_cert }}"
         destination = "local/ssl/tls.crt"
+        mode = "file"
       }
 
       artifact {
         source = "{{ traefik_demo_artifact_ssl_key }}"
         destination = "local/ssl/tls.key"
+        mode = "file"
       }
 
       template {
         data = <<EOF
 [entryPoints]
-    [entryPoints.http]
+  [entryPoints.http]
     address = ":80"
-    [entryPoints.https]
+  [entryPoints.https]
     address = ":443"
-      [entryPoints.https.tls]
-        [[entryPoints.https.tls.certificates]]
-        CertFile = "ssl/tls.crt"
-        KeyFile = "ssl/tls.key"
-    [entryPoints.traefik]
+  [entryPoints.traefik]
     address = ":8081"
 
 [api]
-    dashboard = true
-    insecure  = true
+  dashboard = true
+  insecure  = true
 
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
-    prefix           = "traefik"
-    exposedByDefault = false
+  prefix           = "traefik"
+  exposedByDefault = false
 
-    [providers.consulCatalog.endpoint]
-      address = "127.0.0.1:8500"
-      scheme  = "http"
+  [providers.consulCatalog.endpoint]
+    address = "127.0.0.1:8500"
+    scheme  = "http"
+
+# Dynamic rules go hashicorp_datacenter_name
+[providers.file]
+  directory = "/local/rules"
+  watch = true
+
 EOF
 
         destination = "local/traefik.toml"
+      }
+
+      template {
+        data = <<EOF
+tls:
+  certificates:
+    - certFile: /etc/traefik/ssl/tls.crt
+      keyFile: /etc/traefik/ssl/tls.key
+EOF
+        destination = "local/rules/ssl.yml"
       }
 
       resources {
