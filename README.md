@@ -161,7 +161,10 @@ After this playbook you should be able to reach the UI through `http://server1:4
 ansible-playbook 05_nomad-deployment.yml
 ```
 ### Screenshot(s)
-![Nomad screenshot](screenshots/nomad.png)
+![Nomad screenshot](screenshots/nomad1.png)  
+![Nomad screenshot](screenshots/nomad2.png)  
+![Nomad screenshot](screenshots/nomad3.png)  
+![Nomad screenshot](screenshots/nomad4.png)
 
 ## Step 9 - Nomad demo jobs
 
@@ -196,8 +199,12 @@ And you should be able to reach the AT-Demo webapp through `https://demo.atcompu
 ansible-playbook 06_nomad-demo-jobs.yml
 ```
 ### Screenshot(s)
-![Traefik screenshot](screenshots/traefik.png)  
-![AT-Demo screenshot](screenshots/at-demo.png)
+![Traefik screenshot](screenshots/traefik1.png)  
+![Traefik screenshot](screenshots/traefik2.png)  
+![Traefik screenshot](screenshots/traefik3.png)  
+![Traefik screenshot](screenshots/traefik4.png)  
+![AT-Demo screenshot](screenshots/at-demo.png)  
+![AT-Demo screenshot](screenshots/at-demo.gif)
 
 ## Step 10 - Reset environment
 
