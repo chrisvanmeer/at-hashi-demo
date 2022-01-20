@@ -201,8 +201,8 @@ ansible-playbook 05_nomad-deployment.yml
 | -------- | ------------- | ----------- |
 | traefik_demo_docker_image | `traefik:v2.6` | The version of Traefik we will be using. Be sure to stick to a v2 version, otherwise all config will be useless. |
 | at_demo_group_count | `3` | The number of instances of the webapp that will be deployed and allocated. You can step up this number to create more instances. |
-| at_demo_env_favicon | `https://www.atcomputing.nl/assets/img/favicon.png` | The favicon that will be shown. |
-| at_demo_env_img_source | `https://www.atcomputing.nl/assets/img/atcomputing_white.png` | The image / logo that will be shown. |
+| at_demo_env_favicon | AT Computing favicon URL | The favicon that will be shown. |
+| at_demo_env_img_source | AT Computing logo URL | The image / logo that will be shown. |
 
 ### Objective
 This playbook will deploy to and run two jobs on Nomad:
