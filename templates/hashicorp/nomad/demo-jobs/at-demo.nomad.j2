@@ -28,6 +28,7 @@ job "{{ at_demo_name }}" {
         "traefik.http.routers.{{ at_demo_name }}-redirect.rule={{ at_demo_service_tag_traefik_rule }}",
         "traefik.http.routers.{{ at_demo_name }}-redirect.entrypoints=http",
         "traefik.http.routers.{{ at_demo_name }}-redirect.middlewares=redirect-to-https",
+        "traefik.http.routers.{{ at_demo_name }}.tls=true",
         "traefik.http.routers.{{ at_demo_name }}.entrypoints=https",
         "traefik.http.routers.{{ at_demo_name }}.rule={{ at_demo_service_tag_traefik_rule }}",
       ]
