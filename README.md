@@ -3,6 +3,27 @@ This repository holds all the code you will need to spin up a cluster of (by def
 
 All the provisioning is done through [Ansible](https://www.ansible.com). And the virtual instances are meant to be built with [Ubuntu Multipass](https://multipass.run). During the deployment, the multipass instances will be provisioned and a new inventory file will be created.
 
+## What do the specific products do in this demo?
+
+#### Consul
+> Consul is a service networking solution to automate network configurations, discover services, and enable secure connectivity across any cloud or runtime.
+
+In our demo we will be using it for both the storage backend of Vault and for the service discovery within Nomad jobs.
+
+#### Vault
+
+> Vault secures, stores, and tightly controls access to tokens, passwords, certificates, API keys, and other secrets in modern computing.
+
+In a future iteration of this demo, we will use Vault to store tokens for both accessing and bootstrapping Nomad.
+
+#### Nomad
+
+> Nomad is a highly available, distributed, data-center aware cluster and application scheduler designed to support the modern datacenter with support for long-running services, batch jobs, and much more.
+
+In this demo we will use Nomad to demonstrate the possibilities of deploying applications fault tolerant and high available. We're only scratching the surface of the possibilities of this product for this demo.
+
+## Schematic overview
+
 A schematic overview of what we will be building:
 ![Schematic overview image](screenshots/diagram.png)
 
