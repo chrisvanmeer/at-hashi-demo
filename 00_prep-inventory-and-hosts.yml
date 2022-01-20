@@ -6,6 +6,7 @@
   vars_files:
     - vars/general/main.yml
     - vars/multipass/main.yml
+    - "vars/multipass/{{ ansible_os_family }}.yml"
 
   vars:
     public_key: "~/.ssh/id_rsa.pub"
