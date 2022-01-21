@@ -1,5 +1,5 @@
 <?php
-$favicon    = getenv("FAVICON") ?? "fhttps://www.atcomputing.nl/assets/img/favicon.png";
+$favicon    = getenv("FAVICON") ?? "https://www.atcomputing.nl/assets/img/favicon.png";
 $img_source = getenv("IMG_SOURCE") ?? "https://www.atcomputing.nl/assets/img/atcomputing_white.png";
 $port       = getenv('PORT') ?? "0";
 $node_ip    = getenv('NODE_IP') ?? "127.0.0.1";
