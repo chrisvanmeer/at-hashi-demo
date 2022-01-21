@@ -1,2 +1,2 @@
 FROM jamesbrink/php
-COPY index.php /var/www/localhost/htdocs/
+COPY src/. /var/www/localhost/htdocs/
