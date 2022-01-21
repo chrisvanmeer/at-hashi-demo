@@ -202,8 +202,6 @@ ansible-playbook 05_nomad-deployment.yml
 ![Nomad screenshot](screenshots/nomad-4.png)  
   
 ![Nomad screenshot](screenshots/nomad-cli-1.png)
-  
-![Nomad screenshot](screenshots/nomad-cli-2.png)  
 
 ## Step 9 - Nomad demo jobs
 
@@ -245,6 +243,8 @@ ansible-playbook 06_nomad-demo-jobs.yml
 ![Traefik screenshot](screenshots/traefik-3.png)  
   
 ![Traefik screenshot](screenshots/traefik-4.png)  
+  
+![Nomad screenshot](screenshots/nomad-cli-2.png)  
   
 ![AT-Demo screenshot](screenshots/at-demo.png)  
   
