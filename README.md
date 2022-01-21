@@ -460,7 +460,7 @@ COPY index.php /var/www/localhost/htdocs/
 ```
 
 ### AT-Demo `index.php`
-```html
+```php
 <?php
 $favicon    = getenv("FAVICON") ?? "https://www.atcomputing.nl/assets/img/favicon.png";
 $img_source = getenv("IMG_SOURCE") ?? "https://www.atcomputing.nl/assets/img/atcomputing_white.png";
