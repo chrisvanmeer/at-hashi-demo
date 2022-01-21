@@ -1,3 +1,10 @@
+![GitHub](https://img.shields.io/github/license/chrisvanmeer/at-hashi-demo)
+![Lines of code](https://img.shields.io/tokei/lines/github/chrisvanmeer/at-hashi-demo)
+![Code size](https://img.shields.io/github/languages/code-size/chrisvanmeer/at-hashi-demo)
+![Author](https://img.shields.io/badge/author-chrisvanmeer-blue)
+![Ansible](https://img.shields.io/badge/ansible-blue?logo=ansible)
+![Ubuntu Multipass](https://img.shields.io/badge/multipass-blue?logo=ubuntu)
+
 # HashiCorp Demo Environment
 This repository holds all the code you will need to spin up a cluster of (by default 7) virtual instances that will have a mixture of HashiCorp products installed.
 
@@ -97,7 +104,7 @@ ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pa
 | hashicorp_product_selection | `- consul`<br>`- nomad=1.2.3`<sup>*</sup><br>`- vault` | The products that will be installed.                 |
 | basic_apt_packages          | See variable file                                      | Add / remove packages as you please for general use. |
   
-<div align="right"><sup>* Sticking to version 1.2.3 for now, since I ran into an artifact bug in version 1.2.4.</sup></div>
+<sup>* Sticking to version 1.2.3 for now, since I ran into an artifact bug in version 1.2.4.</sup>
   
 ### Objective
 This playbook will install all the neccesairy packages on both servers and clients.
