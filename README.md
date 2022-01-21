@@ -9,8 +9,6 @@
 ![Ansible Quality Score](https://img.shields.io/ansible/quality/57373?logo=ansible)
 ![GitHub last commit](https://img.shields.io/github/last-commit/chrisvanmeer/at-hashi-demo?logo=github)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/chrisvanmeer/at-hashi-demo?logo=github)
-![GitHub repo size](https://img.shields.io/github/repo-size/chrisvanmeer/at-hashi-demo?logo=github)
-
 
 This repository holds all the code you will need to spin up a cluster of (by default 7) virtual instances that will have a mixture of HashiCorp products installed.
 
