@@ -1,7 +1,7 @@
 ![GitHub](https://img.shields.io/github/license/chrisvanmeer/at-hashi-demo)
 ![Author](https://img.shields.io/badge/author-chrisvanmeer-blue)
-![Ansible](https://img.shields.io/badge/ansible-blue?logo=ansible)
-![Ubuntu Multipass](https://img.shields.io/badge/multipass-blue?logo=ubuntu)
+![Ansible](https://img.shields.io/badge/ansible-black?logo=ansible)
+![Ubuntu Multipass](https://img.shields.io/badge/multipass-gray?logo=ubuntu)
 
 # HashiCorp Demo Environment
 This repository holds all the code you will need to spin up a cluster of (by default 7) virtual instances that will have a mixture of HashiCorp products installed.
