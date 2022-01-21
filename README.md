@@ -290,7 +290,7 @@ ansible-playbook 06_nomad-demo-jobs.yml
 
 ![AT-Demo screenshot](screenshots/at-demo.png)
 
-![AT-Demo screenshot](screenshots/at-demo.gif)
+![AT-Demo screenshot](screenshots/at-demo-animated.gif)
 
 ### Job files - rendered
 
