@@ -546,3 +546,6 @@ Are you done with the environment and would you like to cleanup the whole lot? T
 ```ansible
 ansible-playbook 99_destroy-environment.yml --ask-become-pass
 ```
+
+## License
+MIT - Copyright (c) 2022 Chris van Meer
