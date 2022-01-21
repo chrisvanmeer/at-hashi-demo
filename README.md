@@ -468,10 +468,9 @@ job "at-demo" {
     task "at-demo" {
 
       env {
-        PORT       = "${NOMAD_PORT_at-http}"
-        NODE_IP    = "${NOMAD_IP_at-http}"
-        FAVICON    = "https://www.atcomputing.nl/assets/img/favicon.png"
-        IMG_SOURCE = "https://www.atcomputing.nl/assets/img/atcomputing_white.png"
+        NODE_IP     = "${NOMAD_IP_at-http}"
+        HOST_PORT   = "${NOMAD_HOST_PORT_at-http}"
+        MAPPED_PORT = "${NOMAD_PORT_at-http}"
       }
 
       driver = "docker"
@@ -508,8 +507,9 @@ COPY src/. /var/www/localhost/htdocs/
 
 ```php
 <?php
-$port    = getenv('PORT') ?? "0";
-$node_ip = getenv('NODE_IP') ?? "127.0.0.1";
+$node_ip     = getenv('NODE_IP') ?? "127.0.0.1";
+$host_port   = getenv('HOST_PORT') ?? "0";
+$mapped_port = getenv('MAPPED_PORT') ?? "0";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -534,8 +534,12 @@ $node_ip = getenv('NODE_IP') ?? "127.0.0.1";
           <div class="col-6 text-start results"><?= $node_ip ?></div>
         </div>
         <div class="row">
-          <div class="col-6 text-end">Local port:</div>
-          <div class="col-6 text-start results"><?= $port ?></div>
+          <div class="col-6 text-end">Host port:</div>
+          <div class="col-6 text-start results"><?= $host_port ?></div>
+        </div>
+        <div class="row">
+          <div class="col-6 text-end">Mapped port:</div>
+          <div class="col-6 text-start results"><?= $mapped_port ?></div>
         </div>
       </div>
     </div>

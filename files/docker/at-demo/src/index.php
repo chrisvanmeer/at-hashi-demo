@@ -1,6 +1,7 @@
 <?php
-$port    = getenv('PORT') ?? "0";
-$node_ip = getenv('NODE_IP') ?? "127.0.0.1";
+$node_ip     = getenv('NODE_IP') ?? "127.0.0.1";
+$host_port   = getenv('HOST_PORT') ?? "0";
+$mapped_port = getenv('MAPPED_PORT') ?? "0";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,8 +26,12 @@ $node_ip = getenv('NODE_IP') ?? "127.0.0.1";
           <div class="col-6 text-start results"><?= $node_ip ?></div>
         </div>
         <div class="row">
-          <div class="col-6 text-end">Local port:</div>
-          <div class="col-6 text-start results"><?= $port ?></div>
+          <div class="col-6 text-end">Host port:</div>
+          <div class="col-6 text-start results"><?= $host_port ?></div>
+        </div>
+        <div class="row">
+          <div class="col-6 text-end">Mapped port:</div>
+          <div class="col-6 text-start results"><?= $mapped_port ?></div>
         </div>
       </div>
     </div>

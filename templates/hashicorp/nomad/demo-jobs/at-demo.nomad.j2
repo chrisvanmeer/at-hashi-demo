@@ -46,10 +46,9 @@ job "{{ at_demo_name }}" {
     task "{{ at_demo_name }}" {
 
       env {
-        PORT       = "${NOMAD_PORT_{{ at_demo_port_name }}}"
-        NODE_IP    = "${NOMAD_IP_{{ at_demo_port_name }}}"
-        FAVICON    = "{{ at_demo_env_favicon }}"
-        IMG_SOURCE = "{{ at_demo_env_img_source }}"
+        NODE_IP     = "${NOMAD_IP_{{ at_demo_port_name }}}"
+        HOST_PORT   = "${NOMAD_HOST_PORT_{{ at_demo_port_name }}}"
+        MAPPED_PORT = "${NOMAD_PORT_{{ at_demo_port_name }}}"
       }
 
       driver = "docker"
