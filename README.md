@@ -128,7 +128,11 @@ ansible-playbook 02_consul-deployment.yml
 ```
 
 ### Screenshot(s)
-![Consul screenshot](screenshots/consul.png)
+![Consul screenshot](screenshots/consul.png)  
+  
+![Consul screenshot](screenshots/consul-cli-1.png)  
+  
+![Consul screenshot](screenshots/consul-cli-2.png)
 
 ## Step 6 - Vault deployment
 
@@ -159,7 +163,9 @@ This playbook will unseal the vault after creating the cluster and you can also 
 After this playbook you should be able to reach the UI through `http://server1:8500` from your local workstation.
 
 ### Screenshot(s)
-![Vault screenshot](screenshots/vault.png)
+![Vault screenshot](screenshots/vault.png)  
+  
+![Vault screenshot](screenshots/vault-cli-1.png)
 
 ### Run playbook
 ```
@@ -193,7 +199,11 @@ ansible-playbook 05_nomad-deployment.yml
   
 ![Nomad screenshot](screenshots/nomad-3.png)  
   
-![Nomad screenshot](screenshots/nomad-4.png)
+![Nomad screenshot](screenshots/nomad-4.png)  
+  
+![Nomad screenshot](screenshots/nomad-cli-1.png)
+  
+![Nomad screenshot](screenshots/nomad-cli-2.png)  
 
 ## Step 9 - Nomad demo jobs
 
