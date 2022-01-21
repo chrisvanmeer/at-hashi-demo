@@ -1,6 +1,4 @@
 ![GitHub](https://img.shields.io/github/license/chrisvanmeer/at-hashi-demo)
-![Lines of code](https://img.shields.io/tokei/lines/github/chrisvanmeer/at-hashi-demo)
-![Code size](https://img.shields.io/github/languages/code-size/chrisvanmeer/at-hashi-demo)
 ![Author](https://img.shields.io/badge/author-chrisvanmeer-blue)
 ![Ansible](https://img.shields.io/badge/ansible-blue?logo=ansible)
 ![Ubuntu Multipass](https://img.shields.io/badge/multipass-blue?logo=ubuntu)
