@@ -4,95 +4,179 @@
   become: true
 
   vars_files:
-    - vars/hashicorp/general.yml
+    - vars/general/general.yml
     - vars/hashicorp/ssl.yml
 
   tasks:
-    ## Certificate Authority
-    ## The following instructions show how to set up a simple self-signed CA certificate.
-    - name: Create private key with password protection
-      community.crypto.openssl_privatekey:
-        path: /path/to/ca-certificate.key
-        passphrase: "{{ secret_ca_passphrase }}"
+    - name: "HashiCorp - PKI : Create PKI infrastructure on first server."
+      block:
+        ## Certificate Authority
+        - name: "HashiCorp - PKI : Create private key with password protection."
+          community.crypto.openssl_privatekey:
+            path: " {{ ssl_ca_keyfile_path }} "
 
-    - name: Create certificate signing request (CSR) for CA certificate
-      community.crypto.openssl_csr_pipe:
-        privatekey_path: /path/to/ca-certificate.key
-        privatekey_passphrase: "{{ secret_ca_passphrase }}"
-        common_name: Ansible CA
-        use_common_name_for_san: false
-        basic_constraints:
-          - "CA:TRUE"
-        basic_constraints_critical: yes
-        key_usage:
-          - keyCertSign
-        key_usage_critical: true
-      register: ca_csr
+        - name: "HashiCorp - PKI : Create certificate signing request (CSR) for CA certificate."
+          community.crypto.openssl_csr_pipe:
+            privatekey_path: " {{ ssl_ca_keyfile_path }} "
+            privatekey_passphrase: "{{ secret_ca_passphrase }}"
+            common_name: AT Computing CA
+            use_common_name_for_san: false
+            basic_constraints:
+              - "CA:TRUE"
+            basic_constraints_critical: yes
+            key_usage:
+              - keyCertSign
+            key_usage_critical: true
+          register: ca_csr
 
-    - name: Create self-signed CA certificate from CSR
-      community.crypto.x509_certificate:
-        path: /path/to/ca-certificate.pem
-        csr_content: "{{ ca_csr.csr }}"
-        privatekey_path: /path/to/ca-certificate.key
-        privatekey_passphrase: "{{ secret_ca_passphrase }}"
-        provider: selfsigned
+        - name: "HashiCorp - PKI : Create self-signed CA certificate from CSR."
+          community.crypto.x509_certificate:
+            path: "{{ ssl_ca_certfile_path }}"
+            csr_content: "{{ ca_csr.csr }}"
+            entrust_not_after: "{{ ssl_ca_cert_validity }}"
+            privatekey_path: " {{ ssl_ca_keyfile_path }} "
+            provider: selfsigned
+          register: ca_certificate
 
-    ## Server certificate
-    ## The following extended example reads the existing certificate from server1
-    ## and provides it to the community.crypto.x509_certificate_pipe module, and only writes the result back if it was changed.
-    - name: Create private key for new certificate on server_1
-      community.crypto.openssl_privatekey:
-        path: /path/to/certificate.key
-      delegate_to: server1
+        ## Webapp certificate
+        - name: "HashiCorp - PKI : Create private key for webapp certificate."
+          community.crypto.openssl_privatekey:
+            path: "{{ ssl_webapp_keyfile_path }}"
+
+        - name: "HashiCorp - PKI : Retrieve private key contents."
+          slurp:
+            src: "{{ ssl_webapp_keyfile_path }}"
+          register: keyfile
+
+        - name: "HashiCorp - PKI : Create certificate signing request (CSR) for webapp certificate."
+          community.crypto.openssl_csr_pipe:
+            privatekey_path: "{{ ssl_webapp_keyfile_path }}"
+            subject_alt_name:
+              - "DNS:{{ demo_fqdn }}"
+          register: csr
+
+        - name: "HashiCorp - PKI : Check whether certificate exists."
+          stat:
+            path: "{{ ssl_webapp_certfile_path }}"
+          register: certificate_exists
+
+        - name: "HashiCorp - PKI : Read existing certificate if exists."
+          slurp:
+            src: "{{ ssl_webapp_certfile_path }}"
+          when: certificate_exists.stat.exists
+          register: certificate
+
+        - name: "HashiCorp - PKI : Sign certificate with our CA."
+          community.crypto.x509_certificate_pipe:
+            content: "{{ (certificate.content | b64decode) if certificate_exists.stat.exists else omit }}"
+            csr_content: "{{ csr.csr }}"
+            entrust_not_after: "{{ ssl_webapp_cert_validity }}"
+            provider: ownca
+            ownca_path: "{{ ssl_ca_certfile_path }}"
+            ownca_privatekey_path: " {{ ssl_ca_keyfile_path }} "
+            ownca_not_after: "{{ ssl_webapp_cert_validity }}"
+            ownca_not_before: "-1d"
+          register: certificate
+
+        - name: "HashiCorp - PKI : Write certificate file."
+          copy:
+            dest: "{{ ssl_webapp_certfile_path }}"
+            content: "{{ certificate.certificate }}"
+            mode: "0644"
+          when: certificate is changed
+
+      delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
-    - name: Create certificate signing request (CSR) for new certificate
-      community.crypto.openssl_csr_pipe:
-        privatekey_path: /path/to/certificate.key
-        entrust_not_after: +3650d
-        subject_alt_name:
-          - "DNS:ansible.com"
-          - "DNS:www.ansible.com"
-          - "DNS:docs.ansible.com"
-      delegate_to: server1
-      run_once: true
-      register: csr
+    ## Distribute the CA certificate to the rest of the environment
+    - name: "HashiCorp - PKI : Distribute the CA certificate to the rest of the environment."
+      block:
+        - name: "HashiCorp - PKI : Place certificate in default location."
+          copy:
+            dest: "{{ ssl_ca_certfile_path }}"
+            content: "{{ ca_certificate.certificate }}"
+            mode: "0644"
+        - name: "HashiCorp - PKI : Place certificate in the trusted store of the local workstation."
+          copy:
+            dest: "{{ ssl_local_ca_dir }}/{{ ssl_ca_filename }}-cert.pem"
+            content: "{{ ca_certificate.certificate }}"
+            mode: "0644"
+          delegate_to: localhost
+          run_once: true
+        - name: "HashiCorp - PKI : Ensure CA certificates database is updated."
+          command: "/usr/sbin/update-ca-certificates"
+          changed_when: false
+          delegate_to: localhost
+          run_once: true
+      when: ansible_hostname != groups['servers'] | first
 
-    - name: Check whether certificate exists
-      stat:
-        path: /path/to/certificate.pem
-      delegate_to: server1
+    ## Distribute the WebApp cert + keyfile to all clients for the demo
+    - name: "HashiCorp - PKI : WebApp SSL file disitribution preparations."
+      block:
+        - name: "HashiCorp - PKI : Set the webapp certfile contents as a fact."
+          set_fact:
+            webapp_cert: "{{ certificate.certificate }}"
+        - name: "HashiCorp - PKI : Set the webapp keyfile contents as a fact."
+          set_fact:
+            webapp_key: "{{ keyfile.content | b64decode }}"
+      delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
-      register: certificate_exists
 
-    - name: Read existing certificate if exists
-      slurp:
-        src: /path/to/certificate.pem
-      when: certificate_exists.stat.exists
-      delegate_to: server1
-      run_once: true
-      register: certificate
+    - name: "HashiCorp - PKI : Distribute the WebApp cert + keyfile to all clients for the demo."
+      block:
+        - name: "HashiCorp - PKI : Write certificate file."
+          copy:
+            dest: "{{ ssl_webapp_certfile_path }}"
+            content: "{{ webapp_cert }}"
+            mode: "0644"
+        - name: "HashiCorp - PKI : Write key file."
+          copy:
+            dest: "{{ ssl_webapp_keyfile_path }}"
+            content: "{{ webapp_key }}"
+            mode: "0600"
+      when: ansible_hostname in groups['clients']
 
-    - name: Sign certificate with our CA
-      community.crypto.x509_certificate_pipe:
-        content: "{{ (certificate.content | b64decode) if certificate_exists.stat.exists else omit }}"
-        csr_content: "{{ csr.csr }}"
-        entrust_not_after: +3650d
-        provider: ownca
-        ownca_path: /path/to/ca-certificate.pem
-        ownca_privatekey_path: /path/to/ca-certificate.key
-        ownca_privatekey_passphrase: "{{ secret_ca_passphrase }}"
-        ownca_not_after: +3650d
-        ownca_not_before: "-1d"
-      delegate_to: server_2
-      run_once: true
-      register: certificate
+    ## Create all SSL certificates for both the servers and the clients.
+    - name: "HashiCorp - PKI : Create all SSL certificates for both the servers and the clients."
+      block:
+        - name: "HashiCorp - PKI : Create private key for new certificate."
+          community.crypto.openssl_privatekey:
+            path: "{{ ssl_member_keyfile_path }}"
 
-    - name: Write certificate file on server1
-      copy:
-        dest: /path/to/certificate.pem
-        content: "{{ certificate.certificate }}"
-        mode: "0644"
-      delegate_to: server_1
-      run_once: true
-      when: certificate is changed
+        - name: "HashiCorp - PKI : Create certificate signing request (CSR) for new certificate."
+          community.crypto.openssl_csr_pipe:
+            privatekey_path: "{{ ssl_member_keyfile_path }}"
+            subject_alt_name:
+              - "DNS:{{ ssl_member_filename }}"
+          register: member_csr
+
+        - name: "HashiCorp - PKI : Check whether certificate exists."
+          stat:
+            path: "{{ ssl_member_certfile_path }}"
+          register: member_certificate_exists
+
+        - name: "HashiCorp - PKI : Read existing certificate if exists."
+          slurp:
+            src: "{{ ssl_member_certfile_path }}"
+          when: member_certificate_exists.stat.exists
+          register: member_certificate
+
+        - name: "HashiCorp - PKI : Sign certificate with our CA."
+          community.crypto.x509_certificate_pipe:
+            content: "{{ (member_certificate.content | b64decode) if member_certificate_exists.stat.exists else omit }}"
+            csr_content: "{{ member_csr.csr }}"
+            entrust_not_after: "{{ ssl_member_cert_validity }}"
+            provider: ownca
+            ownca_path: "{{ ssl_ca_certfile_path }}"
+            ownca_privatekey_path: " {{ ssl_ca_keyfile_path }} "
+            ownca_not_after: "{{ ssl_member_cert_validity }}"
+            ownca_not_before: "-1d"
+          register: member_certificate
+          delegate_to: "{{ groups['servers'] | first }}"
+
+        - name: "HashiCorp - PKI : Write certificate file."
+          copy:
+            dest: "{{ ssl_member_certfile_path }}"
+            content: "{{ member_certificate.certificate }}"
+            mode: "0644"
+          when: member_certificate is changed

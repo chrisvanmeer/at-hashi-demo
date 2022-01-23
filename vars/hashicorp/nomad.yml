@@ -11,5 +11,5 @@ nomad_pause_seconds: "60"
 nomad_use_bootstrap: true
 nomad_bootstrapped_true_file: "{{ nomad_data_directory }}/bootstrapped.true"
 nomad_bootstrap_token_local_path: "~/{{ ansible_hostname}}.nomad.bootstrap.token"
-nomad_policy_local_path: "templates/hashicorp/nomad/anonymous.policy.hcl.j2"
+nomad_policy_local_path: "files/hashicorp/nomad/anonymous.policy.hcl"
 nomad_policy_remote_path: "{{ nomad_data_directory }}/anonymous.policy.hcl"
