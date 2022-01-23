@@ -288,8 +288,6 @@ This playbook will deploy to and run two jobs on Nomad:
   - The exposed docker port will be dynamic, and will be picked up by Consul and thus Traefik for the connection. The local port is port 80.
   - The jobs will also be placed on `server1` on `/opt/nomad/demo-jobs`.
 
-It will also add the self signed CA certificate file (of `atcomputing.local`) to the trusted CA store.
-
 After this playbook you should be able to reach the Traefik UI through `http://client1:8081` from your local workstation.
 
 And you should be able to reach the AT-Demo webapp through `https://demo.atcomputing.local` from your local workstation (HTTP to HTTPS redirection is enabled as well).
@@ -612,7 +610,6 @@ None
 Are you done with the environment and would you like to cleanup the whole lot? This playbook will do the following:
 
 - Remove all the instances from the local `/etc/hosts` file.
-- Remove the self signed CA certificate from the local trusted CA store.
 - Delete all Multipass instances.
 - Deletion of the `inventory` file in this directory.
 
