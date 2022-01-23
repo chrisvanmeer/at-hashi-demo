@@ -36,3 +36,8 @@
     - name: Ensure the correct timezone is used.
       timezone:
         name: "{{ timezone }}"
+
+    - name: Print first server's IP address
+      debug:
+        msg: "{{ groups.servers | first }}"
+      tags: blip
