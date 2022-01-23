@@ -42,6 +42,8 @@
         name: apache2
         state: present
       tags: apache2
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
 
     - name: Ensure apache2 is started and enabled.
       service:
@@ -49,3 +51,5 @@
         state: started
         enabled: true
       tags: apache2
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true

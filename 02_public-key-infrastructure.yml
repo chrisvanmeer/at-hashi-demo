@@ -145,6 +145,7 @@
             mode: "0644"
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
+      tags: copy
 
     ## Create all SSL certificates for both the servers and the clients.
     - name: "HashiCorp - PKI : Create all SSL certificates for both the servers and the clients."
