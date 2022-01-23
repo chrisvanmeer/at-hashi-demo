@@ -39,5 +39,6 @@
 
     - name: Print first server's IP address
       debug:
-        msg: "{{ groups.servers | first }}"
+        msg: "{{ hostvars[groups.servers].ansible_host | first }}"
+      run_once: true
       tags: blip
