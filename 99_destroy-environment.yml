@@ -4,6 +4,8 @@
   become: true
 
   vars_files:
+    - vars/general/main.yml
+    - vars/multipass/main.yml
     - vars/hashicorp/ssl.yml
 
   tasks:
