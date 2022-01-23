@@ -124,7 +124,7 @@
             mode: "0644"
           when: ansible_hostname != groups['servers'] | first
 
-    ## Distribute the WebApp cert + keyfile to all clients for the demo
+    ## Distribute the WebApp cert + keyfile the webserver on the first server.
     - name: "HashiCorp - PKI : WebApp SSL file disitribution preparations."
       block:
         - name: "HashiCorp - PKI : Set the webapp certfile contents as a fact."
@@ -133,22 +133,18 @@
         - name: "HashiCorp - PKI : Set the webapp keyfile contents as a fact."
           set_fact:
             webapp_key: "{{ keyfile.content | b64decode }}"
-      delegate_to: "{{ groups['servers'] | first }}"
-      run_once: true
-
-    - name: "HashiCorp - PKI : Distribute the WebApp cert + keyfile to all clients for the demo."
-      block:
         - name: "HashiCorp - PKI : Write certificate file."
           copy:
-            dest: "{{ ssl_webapp_certfile_path }}"
+            dest: "/var/www/html/{{ ssl_webapp_filename }}-cert.pem"
             content: "{{ webapp_cert }}"
             mode: "0644"
         - name: "HashiCorp - PKI : Write key file."
           copy:
-            dest: "{{ ssl_webapp_keyfile_path }}"
+            dest: "/var/www/html/{{ ssl_webapp_filename }}-key.pem"
             content: "{{ webapp_key }}"
             mode: "0644"
-      when: ansible_hostname in groups['clients']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
 
     ## Create all SSL certificates for both the servers and the clients.
     - name: "HashiCorp - PKI : Create all SSL certificates for both the servers and the clients."

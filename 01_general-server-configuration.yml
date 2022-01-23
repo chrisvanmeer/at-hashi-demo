@@ -37,8 +37,15 @@
       timezone:
         name: "{{ timezone }}"
 
-    - name: Print first server's IP address
-      debug:
-        msg: "{{ hostvars[groups.servers | first].ansible_host }}"
-      run_once: true
-      tags: blip
+    - name: Ensure first server has apache2 installed.
+      apt:
+        name: apache2
+        state: present
+      tags: apache2
+
+    - name: Ensure apache2 is started and enabled.
+      service:
+        name: apache2
+        state: started
+        enabled: true
+      tags: apache2
