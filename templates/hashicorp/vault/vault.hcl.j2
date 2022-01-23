@@ -11,8 +11,8 @@ api_address     = "{{ ansible_host }}:8200"
 
 listener "tcp" {
   address            = "0.0.0.0:8200"
-  tls_cert_file      = "{{ ssl_member_certfile_path }}"
-  tls_key_file       = "{{ ssl_member_keyfile_path }}"
-  tls_client_ca_file = "{{ ssl_ca_certfile_path }}"
+  tls_cert_file      = "{{ vault_ssl_cert_dest }}"
+  tls_key_file       = "{{ vault_ssl_key_dest }}"
+  tls_client_ca_file = "{{ vault_ssl_ca_dest }}"
   tls_disable        = 1
 }
