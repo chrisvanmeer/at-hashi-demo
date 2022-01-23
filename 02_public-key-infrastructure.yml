@@ -6,6 +6,7 @@
   vars_files:
     - vars/general/main.yml
     - vars/multipass/main.yml
+    - vars/hashicorp/vault.yml
     - vars/hashicorp/ssl.yml
 
   tasks:

@@ -49,22 +49,22 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-        # - name: "HashiCorp - Vault - TLS : Ensure TLS directory is present."
-        #   become: true
-        #   file:
-        #     path: "{{ vault_tls_directory }}"
-        #     state: directory
-        #     recurse: true
+        - name: "HashiCorp - Vault - TLS : Ensure TLS directory is present."
+          become: true
+          file:
+            path: "{{ vault_tls_directory }}"
+            state: directory
+            recurse: true
 
-        # - name: "HashiCorp - Vault - TLS : Ensure the SSL files are in place."
-        #   copy:
-        #     src: "{{ item.src }}"
-        #     dest: "{{ item.dest }}"
-        #     owner: "{{ item.owner }}"
-        #     group: "{{ item.group }}"
-        #     mode: "{{ item.mode }}"
-        #   with_items: "{{ vault_ssl_files }}"
-        #   when: ansible_hostname in groups['servers']
+        - name: "HashiCorp - Vault - TLS : Ensure the SSL files are in place."
+          file:
+            src: "{{ item.src }}"
+            dest: "{{ item.dest }}"
+            owner: "{{ item.owner }}"
+            group: "{{ item.group }}"
+            state: link
+          with_items: "{{ vault_ssl_files }}"
+          when: ansible_hostname in groups['servers']
 
         - name: "HashiCorp - Vault - ACL : Check if Consul has ACL mode enabled."
           shell: "cat {{ consul_etc_directory }}/consul.hcl | grep -a3 '^acl' | grep enabled | awk '{print $3}'"
