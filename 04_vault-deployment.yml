@@ -4,6 +4,7 @@
   become: true
 
   vars_files:
+    - vars/general/main.yml
     - vars/hashicorp/general.yml
     - vars/hashicorp/consul.yml
     - vars/hashicorp/vault.yml
