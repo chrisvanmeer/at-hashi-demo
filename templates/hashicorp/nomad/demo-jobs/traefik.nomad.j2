@@ -52,13 +52,15 @@ job "traefik" {
       }
 
       artifact {
-        source = "{{ traefik_demo_artifact_ssl_cert }}"
+        // source = "{{ traefik_demo_artifact_ssl_cert }}"
+        source = "{{ ssl_member_certfile_path }}"
         destination = "local/ssl/tls.crt"
         mode = "file"
       }
 
       artifact {
-        source = "{{ traefik_demo_artifact_ssl_key }}"
+        // source = "{{ traefik_demo_artifact_ssl_key }}"
+        source = "{{ ssl_member_keyfile_path }}"
         destination = "local/ssl/tls.key"
         mode = "file"
       }
