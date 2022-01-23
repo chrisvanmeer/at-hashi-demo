@@ -130,7 +130,7 @@
 
           when:
             - ansible_hostname in groups['servers']
-            - consul_acl_enabled.stdout == "enabled"
+            - consul_acl_enabled.stdout == "true"
             - not vault_bootstrapped.stat.exists
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
