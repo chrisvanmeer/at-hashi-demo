@@ -2,5 +2,21 @@
 ssl_server_cert: "files/ssl/demo.atcomputing.local-cert.pem"
 ssl_server_key: "files/ssl/demo.atcomputing.local-key.pem"
 ssl_ca_cert: "files/ssl/atcomputing.local-ca-cert.pem"
+
 ssl_local_ca_dir: "/usr/local/share/ca-certificates"
 ssl_local_ca_file: "atcomputing.local-ca.crt"
+
+ssl_ca_filename: "ATComputing-CA"
+ssl_ca_keyfile_path: "/etc/ssl/private/{{ ssl_ca_filename }}-key.pem"
+ssl_ca_certfile_path: "/etc/ssl/certs/{{ ssl_ca_filename }}-cert.pem"
+ssl_ca_cert_validity: +"3650d"
+
+ssl_webapp_filename: "{{ demo_fqdn }}"
+ssl_webapp_keyfile_path: "/etc/ssl/private/{{ ssl_webapp_filename }}-key.pem"
+ssl_webapp_certfile_path: "/etc/ssl/certs/{{ ssl_webapp_filename }}-cert.pem"
+ssl_webapp_certvalidity: +"3650d"
+
+ssl_member_filename: "{{ ansible_hostname }}.{{ demo_fqdn }}"
+ssl_member_keyfile_path: "/etc/ssl/private/{{ ssl_member_filename }}-key.pem"
+ssl_member_certfile_path: "/etc/ssl/certs/{{ ssl_member_filename }}-cert.pem"
+ssl_member_certvalidity: +"365d"
