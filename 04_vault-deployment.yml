@@ -152,6 +152,8 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
+        - debug: var=vault_is_initialized
+
         - name: "HashiCorp - Vault : Initialize the Vault."
           command: "{{ vault_binary }} operator init"
           environment:
