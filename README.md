@@ -137,13 +137,16 @@ ansible-playbook 01_general-server-configuration.yml
 
 ### Most noticable / important variables
 
-| Variable | Default value | Description |
-|----------|---------------|-------------|
-| x        | `y`           | z           |
-
+None
 ### Objective
 
-This playbook will install all the neccesairy packages on both servers and clients.
+This playbook will do the following:
+- Create a self-signed Certificate Authority on the first server.
+- Copy the CA certificate over to the rest of the environment.
+- Each server and client will do a certificate request to the first server.
+- The first server will issue the certificates and stores them on the servers / clients.
+- A certificate for the demo webapp will be requested and issued.
+- This certificate will be placed on all of the clients, so that Traefik (see Nomad Demo Jobs) can use it as an artifact.
 
 ### Run playbook
 
