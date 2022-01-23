@@ -39,18 +39,6 @@
             state: absent
           with_items: "{{ groups.all }}"
 
-    - name: CA CERTIFICATE
-      tags: ca
-      block:
-        - name: "Remove our own self signed CA Certificate."
-          file:
-            path: "{{ ssl_local_ca_dir }}/{{ ssl_local_ca_file }}"
-            state: absent
-
-        - name: "Ensure CA certificates database is updated."
-          command: "/usr/sbin/update-ca-certificates --fresh"
-          changed_when: false
-
     - name: MULTIPASS
       tags: multipass
       block:
