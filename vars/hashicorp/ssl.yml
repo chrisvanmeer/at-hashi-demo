@@ -11,8 +11,9 @@ ssl_ca_keyfile_path: "/etc/ssl/private/{{ ssl_ca_filename }}-key.pem"
 ssl_ca_certfile_path: "/etc/ssl/certs/{{ ssl_ca_filename }}-cert.pem"
 ssl_ca_cert_validity: +"3650d"
 
-ssl_webapp_keyfile_path: "/etc/ssl/private/{{ demo_fqdn }}-key.pem"
-ssl_webapp_certfile_path: "/etc/ssl/certs/{{ demo_fqdn }}-cert.pem"
+ssl_webapp_filename: "{{ demo_fqdn }}"
+ssl_webapp_keyfile_path: "/etc/ssl/private/{{ ssl_webapp_filename }}-key.pem"
+ssl_webapp_certfile_path: "/etc/ssl/certs/{{ ssl_webapp_filename }}-cert.pem"
 ssl_webapp_certvalidity: +"3650d"
 
 ssl_member_filename: "{{ ansible_hostname }}.{{ demo_fqdn }}"
