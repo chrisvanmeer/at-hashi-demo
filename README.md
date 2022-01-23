@@ -86,7 +86,7 @@ ansible-galaxy install -r requirements.yml
 ### Most noticable / important variables
 
 | Variable            | Default value                              | Description                                                                                                                 |
-| ------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+|---------------------|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | atcomputing_user    | `atcomputing`                              | The user that will be used as admin user of on each instance.                                                               |
 | public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file.                                    |
 | demo_fqdn           | `demo.atcomputing.local`                   | The demo FQD N that we will be using. If you divert from this, the provided self signed certificates won't work as planned. |
@@ -116,10 +116,10 @@ ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pa
 
 ### Most noticable / important variables
 
-| Variable                    | Default value                                           | Description                                          |
-| --------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
-| hashicorp_product_selection | `- consul`<br>`- nomad=1.2.3`<br>`- vault`              | The products that will be installed.<sup>\*</sup>    |
-| basic_apt_packages          | See variable file                                       | Add / remove packages as you please for general use. |
+| Variable                    | Default value                              | Description                                          |
+|-----------------------------|--------------------------------------------|------------------------------------------------------|
+| hashicorp_product_selection | `- consul`<br>`- nomad=1.2.3`<br>`- vault` | The products that will be installed.<sup>\*</sup>    |
+| basic_apt_packages          | See variable file                          | Add / remove packages as you please for general use. |
 
 <sup>\* Sticking to Nomad version 1.2.3 for now, since I ran into an artifact bug in version 1.2.4.</sup>
 
@@ -133,12 +133,30 @@ This playbook will install all the neccesairy packages on both servers and clien
 ansible-playbook 01_general-server-configuration.yml
 ```
 
-## Step 5 - Consul deployment
+## Step 5 - (Self Signed) Public Key Infrastructure
+
+### Most noticable / important variables
+
+| Variable | Default value | Description |
+|----------|---------------|-------------|
+| x        | `y`           | z           |
+
+### Objective
+
+This playbook will install all the neccesairy packages on both servers and clients.
+
+### Run playbook
+
+```ansible
+ansible-playbook 02_public-key-infrastructure.yml
+```
+
+## Step 6 - Consul deployment
 
 ### Most noticable / important variables
 
 | Variable                          | Default value                      | Description                                                                                                   |
-| --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+|-----------------------------------|------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | hashicorp_datacenter_name         | `velp`                             | This datacenter name will be used in both Consul as Nomad (and in the demo jobs).                             |
 | consul_bootstrap_token_local_path | `~/server1.consul.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
@@ -153,7 +171,7 @@ After this playbook you should be able to reach the UI through `http://server1:8
 ### Run playbook
 
 ```ansible
-ansible-playbook 02_consul-deployment.yml
+ansible-playbook 03_consul-deployment.yml
 ```
 
 ### Screenshot(s)
@@ -164,12 +182,12 @@ ansible-playbook 02_consul-deployment.yml
 
 ![Consul screenshot](screenshots/consul-cli-2.png)
 
-## Step 6 - Vault deployment
+## Step 7 - Vault deployment
 
 ### Most noticable / important variables
 
 | Variable                         | Default value                     | Description                                                                                                   |
-| -------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+|----------------------------------|-----------------------------------|---------------------------------------------------------------------------------------------------------------|
 | vault_bootstrap_token_local_path | `~/server1.vault.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 | vault_bootstrap_init_local_path  | `~/server1.vault.bootstrap.init`  | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
@@ -182,10 +200,10 @@ The Vault agent listens on TCP port 8500.
 ### Run playbook
 
 ```ansible
-ansible-playbook 03_vault-deployment.yml
+ansible-playbook 04_vault-deployment.yml
 ```
 
-## Step 7 - Unseal Vault
+## Step 8 - Unseal Vault
 
 ### Most noticable / important variables
 
@@ -206,15 +224,15 @@ After this playbook you should be able to reach the UI through `http://server1:8
 ### Run playbook
 
 ```
-ansible-playbook 04_vault-unseal.yml
+ansible-playbook 05_vault-unseal.yml
 ```
 
-## Step 8 - Nomad deployment
+## Step 9 - Nomad deployment
 
 ### Most noticable / important variables
 
 | Variable                         | Default value                     | Description                                                                                                   |
-| -------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+|----------------------------------|-----------------------------------|---------------------------------------------------------------------------------------------------------------|
 | hashicorp_datacenter_name        | `velp`                            | This datacenter name will be used in both Consul as Nomad (and in the demo jobs).                             |
 | nomad_bootstrap_token_local_path | `~/server1.nomad.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 | nomad_use_bootstrap              | `true`                            | Whether or not we will bootstrap the system (aka use encryption).                                             |
@@ -230,7 +248,7 @@ After this playbook you should be able to reach the UI through `http://server1:4
 ### Run playbook
 
 ```ansible
-ansible-playbook 05_nomad-deployment.yml
+ansible-playbook 06_nomad-deployment.yml
 ```
 
 ### Screenshot(s)
@@ -245,12 +263,12 @@ ansible-playbook 05_nomad-deployment.yml
 
 ![Nomad screenshot](screenshots/nomad-cli-1.png)
 
-## Step 9 - Nomad demo jobs
+## Step 10 - Nomad demo jobs
 
 ### Most noticable / important variables
 
 | Variable                  | Default value            | Description                                                                                                                      |
-| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+|---------------------------|--------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | traefik_demo_docker_image | `traefik:v2.6`           | The version of Traefik we will be using. Be sure to stick to a v2 version, otherwise all config will be useless.                 |
 | at_demo_group_count       | `3`                      | The number of instances of the webapp that will be deployed and allocated. You can step up this number to create more instances. |
 | at_demo_env_favicon       | AT Computing favicon URL | The favicon that will be shown.                                                                                                  |
@@ -279,7 +297,7 @@ And you should be able to reach the AT-Demo webapp through `https://demo.atcompu
 ### Run playbook
 
 ```ansible
-ansible-playbook 06_nomad-demo-jobs.yml
+ansible-playbook 07_nomad-demo-jobs.yml
 ```
 
 ### Screenshot(s)
