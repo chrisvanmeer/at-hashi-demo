@@ -200,26 +200,6 @@
             owner: "{{ consul_data_directory_user }}"
             group: "{{ consul_data_directory_group }}"
           notify: Restart Consul
-     
-#         - name: "HashiCorp - Consul : Ensure configuration is present on the server."
-#           template:
-#             src: "templates/hashicorp/consul/consul.hcl-server.j2"
-#             dest: "{{ consul_etc_directory }}/consul.hcl"
-#             mode: "0644"
-#             owner: "{{ consul_data_directory_user }}"
-#             group: "{{ consul_data_directory_group }}"
-#           notify: Restart Consul
-#           when: ansible_hostname in groups['servers']
-
-#         - name: "HashiCorp - Consul : Ensure configuration is present on the client."
-#           template:
-#             src: "templates/hashicorp/consul/consul.hcl-client.j2"
-#             dest: "{{ consul_etc_directory }}/consul.hcl"
-#             mode: "0644"
-#             owner: "{{ consul_data_directory_user }}"
-#             group: "{{ consul_data_directory_group }}"
-#           notify: Restart Consul
-#           when: ansible_hostname in groups['clients']
 
         - name: "HashiCorp - Consul : Ensure systemd service is present."
           template:
@@ -275,7 +255,7 @@
               delegate_to: localhost
 
             - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
-              shell: "awk '/Secret ID/ {print $4}' {{ consul_bootstrap_token_local_path }}"
+              shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
               changed_when: false
               become: false
               delegate_to: localhost
