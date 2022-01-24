@@ -83,15 +83,30 @@
                 src: "{{ vault_service_policy_file_local }}"
                 dest: "{{ vault_service_policy_file_remote }}"
 
+            - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
+              shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
+              changed_when: false
+              become: false
+              delegate_to: localhost
+              register: consul_acl_bootstrap_output
+
+            - name: "HashiCorp - Consul - ACL : Set the Secret ID as a fact."
+              set_fact:
+                consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
+
             - name: "HashiCorp - Vault - ACL - Consul : Ensure that the ACL is present in Consul."
               shell: "{{ consul_binary }} acl policy create -name {{ vault_consul_service_name }} -rules @{{ vault_service_policy_file_name }}"
               args:
                 chdir: "{{ vault_data_directory }}/"
+              environment:
+                CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
               changed_when: false
 
             - name: "HashiCorp - Vault - ACL - Consul : Create ACL token using the above policy."
               shell: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consule_service_name }}"
               changed_when: false
+              environment:
+                CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
               register: vault_acl_bootstrap_raw
 
             - name: "HashiCorp - Vault - ACL : Store bootstrap token local for safekeeping."
@@ -102,7 +117,7 @@
               delegate_to: localhost
 
             - name: "HashiCorp - Vault - ACL : Retrieve Secret ID from bootstrap output."
-              shell: "awk '/Secret ID/ {print $4}' {{ vault_bootstrap_token_local_path }}"
+              shell: "awk '/SecretID/ {print $2}' {{ vault_bootstrap_token_local_path }}"
               changed_when: false
               become: false
               delegate_to: localhost
@@ -130,7 +145,7 @@
 
           when:
             - ansible_hostname in groups['servers']
-            - consul_acl_enabled.stdout == "enabled"
+            - consul_acl_enabled.stdout == "true"
             - not vault_bootstrapped.stat.exists
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
