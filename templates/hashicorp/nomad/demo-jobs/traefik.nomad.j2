@@ -52,13 +52,15 @@ job "traefik" {
       }
 
       artifact {
-        source = "http://{{ hostvars[groups.servers | first].ansible_host }}/{{ ssl_webapp_filename }}-cert.pem"
+        // source = "http://{{ hostvars[groups.servers | first].ansible_host }}/{{ ssl_webapp_filename }}-cert.pem"
+        source = "{{ traefik_demo_artifact_ssl_cert }}"
         destination = "local/ssl/tls.crt"
         mode = "file"
       }
 
       artifact {
-        source = "http://{{ hostvars[groups.servers | first].ansible_host }}/{{ ssl_webapp_filename }}-key.pem"
+        // source = "http://{{ hostvars[groups.servers | first].ansible_host }}/{{ ssl_webapp_filename }}-key.pem"
+        source = "{{ traefik_demo_artifact_ssl_key }}"
         destination = "local/ssl/tls.key"
         mode = "file"
       }
