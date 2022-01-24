@@ -192,25 +192,34 @@
     # CONSUL CONFIGURATION
     - name: "HashiCorp - Consul : Configuration."
       block:
-        - name: "HashiCorp - Consul : Ensure configuration is present on the server."
+        - name: "HashiCorp - Consul : Ensure configuration is present."
           template:
-            src: "templates/hashicorp/consul/consul.hcl-server.j2"
+            src: "templates/hashicorp/consul/consul.hcl.j2"
             dest: "{{ consul_etc_directory }}/consul.hcl"
             mode: "0644"
             owner: "{{ consul_data_directory_user }}"
             group: "{{ consul_data_directory_group }}"
           notify: Restart Consul
-          when: ansible_hostname in groups['servers']
+     
+#         - name: "HashiCorp - Consul : Ensure configuration is present on the server."
+#           template:
+#             src: "templates/hashicorp/consul/consul.hcl-server.j2"
+#             dest: "{{ consul_etc_directory }}/consul.hcl"
+#             mode: "0644"
+#             owner: "{{ consul_data_directory_user }}"
+#             group: "{{ consul_data_directory_group }}"
+#           notify: Restart Consul
+#           when: ansible_hostname in groups['servers']
 
-        - name: "HashiCorp - Consul : Ensure configuration is present on the client."
-          template:
-            src: "templates/hashicorp/consul/consul.hcl-client.j2"
-            dest: "{{ consul_etc_directory }}/consul.hcl"
-            mode: "0644"
-            owner: "{{ consul_data_directory_user }}"
-            group: "{{ consul_data_directory_group }}"
-          notify: Restart Consul
-          when: ansible_hostname in groups['clients']
+#         - name: "HashiCorp - Consul : Ensure configuration is present on the client."
+#           template:
+#             src: "templates/hashicorp/consul/consul.hcl-client.j2"
+#             dest: "{{ consul_etc_directory }}/consul.hcl"
+#             mode: "0644"
+#             owner: "{{ consul_data_directory_user }}"
+#             group: "{{ consul_data_directory_group }}"
+#           notify: Restart Consul
+#           when: ansible_hostname in groups['clients']
 
         - name: "HashiCorp - Consul : Ensure systemd service is present."
           template:
