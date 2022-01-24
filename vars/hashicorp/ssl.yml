@@ -1,11 +1,4 @@
 ---
-# ssl_server_cert: "files/ssl/demo.atcomputing.local-cert.pem"
-# ssl_server_key: "files/ssl/demo.atcomputing.local-key.pem"
-# ssl_ca_cert: "files/ssl/atcomputing.local-ca-cert.pem"
-
-# ssl_local_ca_dir: "/usr/local/share/ca-certificates"
-# ssl_local_ca_file: "atcomputing.local-ca.crt"
-
 ssl_key_dir: "/etc/ssl/private"
 ssl_cert_dir: "/etc/ssl/certs"
 
