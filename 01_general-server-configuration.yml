@@ -42,6 +42,7 @@
         name: apache2
         state: present
       tags: apache2
+      when: ansible_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
