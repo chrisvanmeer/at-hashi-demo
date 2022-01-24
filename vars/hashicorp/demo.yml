@@ -4,8 +4,6 @@ nomad_demo_job_local_location: "/opt/nomad/demo-jobs"
 
 traefik_demo_template_location: "templates/hashicorp/nomad/demo-jobs/traefik.nomad.j2"
 traefik_demo_docker_image: "traefik:v2.6"
-traefik_demo_artifact_ssl_cert: "https://raw.githubusercontent.com/chrisvanmeer/at-image/main/demo.atcomputing.local-cert.pem"
-traefik_demo_artifact_ssl_key: "https://raw.githubusercontent.com/chrisvanmeer/at-image/main/demo.atcomputing.local-key.pem"
 
 at_demo_name: "at-demo"
 at_demo_port_name: "at-http"
