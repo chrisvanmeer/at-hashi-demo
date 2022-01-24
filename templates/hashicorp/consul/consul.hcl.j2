@@ -3,12 +3,12 @@ data_dir = "{{ consul_data_directory }}"
 encrypt = "{{ consul_ecryption_key }}"
 ca_file = "{{ consul_etc_directory }}/consul-agent-ca.pem"
 {% if ansible_hostname in groups['servers'] %}
-cert_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-server-consul-0.pem"
-key_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-server-consul-0-key.pem"
+{% set type = "server" %}
 {% elif ansible_hostname in groups['clients'] %}
-cert_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-client-consul-0.pem"
-key_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-client-consul-0-key.pem"
+{% set type = "client" %}
 {% endif %}
+cert_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-{{ type }}-consul-0.pem"
+key_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-{{ type }}-consul-0-key.pem"
 verify_incoming = false
 verify_outgoing = false
 verify_server_hostname = false
