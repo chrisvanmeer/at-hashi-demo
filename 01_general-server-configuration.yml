@@ -37,6 +37,7 @@
 
     - name: Retrieve current DNS server
       shell: "systemd-resolve --status | awk '/Current DNS Server:/ {print $4}'"
+      become: false
       changed_when: false
       register: current_dns_server
       tags: dns
@@ -44,6 +45,11 @@
     - name: Set the current DNS server as a fact.
       set_fact:
         dnsmasq_default_domain_servers: "{{ current_dns_server.stdout_lines[0] }}"
+      tags: dns
+
+    - name: Debug the output.
+      debug:
+        var: dnsmasq_default_domain_servers
       tags: dns
 
     - name: Ensure new default dnsmasq config is in place.
