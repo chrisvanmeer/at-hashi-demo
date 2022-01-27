@@ -1,0 +1,13 @@
+# DNS configuration
+port=53
+
+domain-needed
+bogus-priv
+
+strict-order
+expand-hosts
+{% if ansible_hostname in groups['clients'] %}
+listen-address=127.0.0.1
+interface=lo
+bind-interfaces
+{% endif %}
