@@ -103,7 +103,7 @@
               changed_when: false
 
             - name: "HashiCorp - Vault - ACL - Consul : Create ACL token using the above policy."
-              shell: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consule_service_name }}"
+              shell: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consul_service_name }}"
               changed_when: false
               environment:
                 CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
