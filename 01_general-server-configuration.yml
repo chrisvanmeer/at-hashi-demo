@@ -84,14 +84,14 @@
         dest: /etc/resolv.conf
         mode: "0644"
         force: true
-      tags: dns
+      tags: dns, dnsmasq
 
     - name: Ensure dnsmasq is started and enabled.
       service:
         name: dnsmasq
         state: started
         enabled: true
-      tags: dns
+      tags: dns, dnsmasq
 
     - name: Ensure basic apt packages are installed.
       apt:
