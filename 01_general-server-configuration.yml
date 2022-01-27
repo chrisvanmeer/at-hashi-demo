@@ -80,7 +80,7 @@
 
     - name: Ensure new resolv.conf file is present.
       template:
-        src: files/dnsmasq/resolv.conf.j2
+        src: templates/dnsmasq/resolv.conf.j2
         dest: /etc/resolv.conf
         mode: "0644"
         force: true
