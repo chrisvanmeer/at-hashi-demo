@@ -22,6 +22,77 @@
       ignore_errors: true
 
   tasks:
+    - name: Ensure hosts file has correct entry for 127.0.1.1
+      lineinfile:
+        path: /etc/hosts
+        regexp: "127.0.1.1 "
+        line: "127.0.1.1 {{ ansible_hostname }}"
+      tags: hosts
+
+    - name: Ensure dnsmasq is present.
+      apt:
+        name: dnsmasq
+        state: present
+      tags: dns
+
+    - name: Retrieve current DNS server
+      shell: "systemd-resolve --status | awk '/Current DNS Server:/ {print $4}'"
+      changed_when: false
+      register: current_dns_server
+      tags: dns
+
+    - name: Set the current DNS server as a fact.
+      set_fact:
+        dnsmasq_default_domain_servers: "{{ current_dns_server.stdoutlines[0] }}"
+      tags: dns
+
+    - name: Ensure new default dnsmasq config is in place.
+      template:
+        src: templates/dnsmasq/dnsmasq.conf.j2
+        dest: /etc/dnsmasq.conf
+        backup: true
+        force: true
+        mode: "0644"
+      notify: Restart dnsmasq
+      tags: dns
+
+    - name: Ensure Consul dnsmasq config is in place.
+      template:
+        src: templates/dnsmasq/dnsmasq.d/10-consul.j2
+        dest: /etc/dnsmasq.d/10-consul
+        force: true
+        mode: "0644"
+      notify: Restart dnsmasq
+      tags: dns
+
+    - name: Ensure systemd-resolved is stopped.
+      service:
+        name: systemd-resolved
+        state: stopped
+        enabled: false
+      tags: dns
+
+    # - name: Use this to revert back to the old resolv.conf file.
+    #   file:
+    #     src: /run/systemd/resolve/stub-resolv.conf
+    #     dest: /etc/resolv.conf
+    #     state: link
+
+    - name: Ensure new resolv.conf file is present.
+      template:
+        src: files/dnsmasq/resolv.conf.j2
+        dest: /etc/resolv.conf
+        mode: "0644"
+        force: true
+      tags: dns
+
+    - name: Ensure dnsmasq is started and enabled.
+      service:
+        name: dnsmasq
+        state: started
+        enabled: true
+      tags: dns
+
     - name: Ensure basic apt packages are installed.
       apt:
         name: "{{ basic_apt_packages }}"
@@ -61,3 +132,9 @@
       tags: apache2
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
+
+  handlers:
+    - name: Restart dnsmasq
+      service:
+        name: dnsmasq
+        state: restarted
