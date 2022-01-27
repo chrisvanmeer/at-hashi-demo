@@ -12,14 +12,18 @@
       apt:
         update_cache: true
         cache_valid_time: 3600
+      tags: pre_apt
 
   roles:
     - role: geerlingguy.pip
+      tags: roles
     - role: geerlingguy.docker
       ignore_errors: true
       when: inventory_hostname in groups['clients']
+      tags: roles
     - role: chrisvanmeer.hashicorp
       ignore_errors: true
+      tags: roles
 
   tasks:
     - name: Ensure hosts file has correct entry for 127.0.1.1
