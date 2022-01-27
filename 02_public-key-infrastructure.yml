@@ -48,7 +48,6 @@
           community.crypto.x509_certificate:
             path: "{{ ssl_ca_certfile_path }}"
             csr_content: "{{ ca_csr.csr }}"
-            entrust_not_after: "{{ ssl_ca_cert_validity }}"
             privatekey_path: "{{ ssl_ca_keyfile_path }}"
             provider: selfsigned
           register: ca_certificate
