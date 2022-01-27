@@ -45,9 +45,11 @@
           with_items: "{{ groups.all }}"
 
         - name: Remove items from known hosts file based on hostname.
-          command: 'ssh-keygen -f "~/.ssh/known_hosts" -R "{{ hostvars[item].ansible_hostname }}"'
+          command: 'ssh-keygen -f "~/.ssh/known_hosts" -R "{{ item }}"'
           become: false
-          with_items: "{{ groups.all }}"
+          with_items:
+            - "{{ multipass_instances.clients }}"
+            - "{{ multipass_instances.servers }}"
 
     - name: MULTIPASS
       tags: multipass
