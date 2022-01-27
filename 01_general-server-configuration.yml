@@ -29,7 +29,7 @@
     - name: Ensure hosts file has correct entry for 127.0.1.1
       lineinfile:
         path: /etc/hosts
-        regexp: "127.0.1.1 "
+        regexp: "^127.0.1.1$"
         line: "127.0.1.1 {{ ansible_hostname }}"
       tags: hosts
 
