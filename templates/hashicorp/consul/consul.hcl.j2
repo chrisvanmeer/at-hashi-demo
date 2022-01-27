@@ -34,7 +34,7 @@ performance {
 
 {% if ansible_hostname in groups['servers'] %}
 server = true
-bootstrap_expect = {{ hashicorp_bootstrap_expect }}
+bootstrap_expect = {{ groups['servers'] | length }}
 {% elif ansible_hostname in groups['clients'] %}
 server = false
 {% endif %}
