@@ -41,14 +41,9 @@
       register: current_dns_server
       tags: dns
 
-    - debug: var=current_dns_server
-      tags: dns
-    - fail:
-      tags: dns
-
     - name: Set the current DNS server as a fact.
       set_fact:
-        dnsmasq_default_domain_servers: "{{ current_dns_server.stdoutlines[0] }}"
+        dnsmasq_default_domain_servers: "{{ current_dns_server.stdout_lines[0] }}"
       tags: dns
 
     - name: Ensure new default dnsmasq config is in place.
