@@ -42,7 +42,9 @@
       tags: dns
 
     - debug: var=current_dns_server
+      tags: dns
     - fail:
+      tags: dns
 
     - name: Set the current DNS server as a fact.
       set_fact:
