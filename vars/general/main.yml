@@ -25,6 +25,7 @@ basic_apt_packages:
   - telnet
   - tmux
   - tree
+  - unattended-upgrades
   - vim
   - wget
   - whois
