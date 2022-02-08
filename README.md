@@ -60,8 +60,8 @@ Basically, this is what we will achieve with this
 - We can then play around with job properties / kill clients / down- and upgrade Nomad and see what happens.
 
 Estimated runtime to setup: 15 - 30 minutes.  
-You will be needing about 8Gb of RAM to run this without annoying lagg.  
-Diskspace wise I would say about 5Gb of diskspace should cover it.
+You will be needing about 8GB of RAM to run this without annoying lagg.  
+Diskspace wise I would say about 5GB of diskspace should cover it.
 
 ### Disclaimer
 
