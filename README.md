@@ -89,7 +89,7 @@ ansible-galaxy install -r requirements.yml
 |---------------------|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | atcomputing_user    | `atcomputing`                              | The user that will be used as admin user of on each instance.                                                               |
 | public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file.                                    |
-| demo_fqdn           | `demo.atcomputing.local`                   | The demo FQD N that we will be using. If you divert from this, the provided self signed certificates won't work as planned. |
+| demo_fqdn           | `demo.atcomputing.local`                   | The demo FQDN that we will be using. If you divert from this, the provided self signed certificates won't work as planned. |
 | multipass_instances | See the multipass `main.yml` variable file | The instances that we will be using.                                                                                        |
 
 ### Objective
