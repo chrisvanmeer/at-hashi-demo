@@ -13,6 +13,7 @@ basic_apt_packages:
   - curl
   - git
   - htop
+  - iotop
   - iperf3
   - less
   - lynx
@@ -22,6 +23,7 @@ basic_apt_packages:
   - neofetch
   - net-tools
   - nload
+  - sysstat
   - telnet
   - tmux
   - tree
