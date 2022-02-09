@@ -30,6 +30,14 @@
         owner: "{{ consul_data_directory_user }}"
         group: "{{ consul_data_directory_group }}"
 
+    - name: "HashiCorp - Consul : Ensure Consul is excluded from the unattended upgrades."
+      lineinfile:
+        path: "/usr/share/unattended-upgrades/50unattended-upgrades"
+        state: present
+        line: '    "consul";'
+        insertafter: 'Unattended-Upgrade::Package-Blacklist \{\n'
+        backup: true
+
     - name: "HashiCorp - Consul: Register first server's IP address as consul_retry_join_address fact."
       set_fact:
         consul_retry_join_address: "{{ ansible_host }}"
