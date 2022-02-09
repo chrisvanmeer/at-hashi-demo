@@ -89,7 +89,6 @@ ansible-galaxy install -r requirements.yml
 |---------------------|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | atcomputing_user    | `atcomputing`                              | The user that will be used as admin user of on each instance.                                                               |
 | public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file.                                    |
-| demo_fqdn           | `demo.atcomputing.local`                   | The demo FQDN that we will be using. |
 | multipass_instances | See the multipass `main.yml` variable file | The instances that we will be using.                                                                                        |
 
 ### Objective
@@ -137,7 +136,10 @@ ansible-playbook 01_general-server-configuration.yml
 
 ### Most noticable / important variables
 
-None
+| Variable                    | Default value                              | Description                                          |
+|-----------------------------|--------------------------------------------|------------------------------------------------------|
+| demo_fqdn                   | `demo.atcomputing.local`                   | The demo FQDN that we will be using.                 |
+
 ### Objective
 
 This playbook will do the following:
