@@ -20,6 +20,14 @@
         group: "{{ vault_data_directory_group }}"
       when: ansible_hostname in groups['servers']
 
+    - name: "HashiCorp - Vault : Ensure Vault is excluded from the unattended upgrades."
+      lineinfile:
+        path: "/usr/share/unattended-upgrades/50unattended-upgrades"
+        state: present
+        line: '    "vault";'
+        insertafter: 'Unattended-Upgrade::Package-Blacklist \{\n'
+        backup: true
+
     # VAULT CONFIGURATION
     - name: "HashiCorp - Vault : Configuration."
       block:
