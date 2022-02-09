@@ -76,6 +76,8 @@ job "traefik" {
 [api]
   dashboard = true
   insecure  = true
+[pilot]
+  dashboard = false
 
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
