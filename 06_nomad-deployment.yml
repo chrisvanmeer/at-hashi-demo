@@ -52,6 +52,14 @@
       notify: Restart Nomad
       when: ansible_hostname in groups['clients']
 
+    - name: "HashiCorp - Nomad : Ensure Nomad is excluded from the unattended upgrades."
+      lineinfile:
+        path: "/usr/share/unattended-upgrades/50unattended-upgrades"
+        state: present
+        line: '    "nomad";'
+        insertafter: 'Unattended-Upgrade::Package-Blacklist \{\n'
+        backup: true
+
     - name: "HashiCorp - Nomad : Ensure systemd service is present."
       template:
         src: "templates/hashicorp/nomad/nomad.service.j2"
