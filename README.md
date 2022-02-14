@@ -117,10 +117,8 @@ ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pa
 
 | Variable                    | Default value                              | Description                                          |
 |-----------------------------|--------------------------------------------|------------------------------------------------------|
-| hashicorp_product_selection | `- consul`<br>`- nomad=1.2.3`<br>`- vault` | The products that will be installed.<sup>\*</sup>    |
+| hashicorp_product_selection | `- consul`<br>`- nomad`<br>`- vault`       | The products that will be installed.                 |
 | basic_apt_packages          | See variable file                          | Add / remove packages as you please for general use. |
-
-<sup>\* Sticking to Nomad version 1.2.3 for now, since I ran into an artifact bug in version 1.2.4.</sup>
 
 ### Objective
 
