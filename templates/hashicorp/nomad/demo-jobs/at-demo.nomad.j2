@@ -60,6 +60,9 @@ job "{{ at_demo_name }}" {
 
       artifact {
         source = "{{ at_demo_task_artifact_source }}"
+        options {
+          archive = false
+        }
       }
 
       resources {
