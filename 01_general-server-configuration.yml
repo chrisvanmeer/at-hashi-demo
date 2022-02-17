@@ -26,6 +26,19 @@
       tags: roles
 
   tasks:
+    - name: Install autocompletion.
+      command: "{{ item[0] }} -autocomplete-install"
+      become: "{{ item[1] }}"
+      with_nested:
+        - "{{ hashicorp_product_selection }}"
+        - ["true", "false"]
+      register: autoinstall_cmd
+      changed_when:
+        - not 'already installed' in autoinstall_cmd.stderr
+      failed_when:
+        - autoinstall_cmd.rc != 0
+        - not 'already installed' in autoinstall_cmd.stderr
+
     - name: Ensure hosts file has correct entry for 127.0.1.1
       lineinfile:
         path: /etc/hosts
