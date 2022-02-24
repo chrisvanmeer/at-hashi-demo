@@ -146,7 +146,7 @@
           changed_when: false
 
         - name: Ensure webapp certificate contents are present.
-          command: "{{ vault_binary }} kv put secret/ssl/webapp privatekey={{ webapp_key }} publickey={{ webapp_cert }}"
+          command: "{{ vault_binary }} kv put secret/ssl-certificates/webapp privatekey={{ webapp_key }} publickey={{ webapp_cert }}"
           environment:
             VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
             VAULT_ADDR: "{{ vault_address }}"
