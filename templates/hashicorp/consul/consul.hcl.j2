@@ -12,7 +12,7 @@ key_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-{{ type }
 verify_incoming = false
 verify_outgoing = false
 verify_server_hostname = false
-retry_join = ["{{ consul_retry_join_address }}"]
+retry_join = [{% for host in groups['servers'] %}{{ hostvars[host].ansible_default_ipv4.address | to_json }}{% if not loop.last %}, {% endif %}{% endfor %}]
 {% if ansible_hostname in groups['servers'] %}
 bind_addr = "0.0.0.0"
 client_addr = "0.0.0.0"
