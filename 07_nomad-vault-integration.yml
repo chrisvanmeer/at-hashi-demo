@@ -1,0 +1,159 @@
+---
+- name: "AT Computing - HashiCorp Nomad - Vault integration"
+  hosts: all
+  become: true
+
+  vars_files:
+    - vars/hashicorp/general.yml
+    - vars/hashicorp/nomad.yml
+    - vars/hashicorp/vault.yml
+
+  tasks:
+    - name: Find all vault-nomad-server- files.
+      find:
+        paths: "files/hashicorp/vault/"
+        patterns: "vault-nomad-*"
+        file_type: "file"
+      delegate_to: localhost
+      run_once: true
+      register: vault_files
+
+    - name: Ensure vault-nomad-server- files are present.
+      copy:
+        src: "{{ item.path }}"
+        dest: "{{ nomad_data_directory }}/{{ item.path | basename }}"
+        mode: 0644
+      with_items: "{{ vault_files.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+      when: ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    - name: Enable integration.
+      block:
+        - name: Retrieve Initial Root Token from local file.
+          shell: "awk '/Initial Root Token/ {print $4}' {{ vault_bootstrap_init_local_path }}"
+          register: vault_initial_root_token
+          changed_when: false
+          delegate_to: localhost
+          become: false
+          run_once: true
+        - name: Ensure nomad-server-policy is present.
+          command: "{{ vault_binary }} policy write nomad-server vault-nomad-server-policy.hcl"
+          args:
+            chdir: "{{ nomad_data_directory }}"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            # VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+        - name: Ensure ssl-certificates-policy is present.
+          command: "{{ vault_binary }} policy write ssl-certificates-policy vault-nomad-ssl-certificates-policy.hcl"
+          args:
+            chdir: "{{ nomad_data_directory }}"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            # VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+        - name: Ensure nomad-cluster-role is present.
+          command: "{{ vault_binary }} write /auth/token/roles/nomad-cluster @vault-nomad-cluster-role.json"
+          args:
+            chdir: "{{ nomad_data_directory }}"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            # VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+        - name: Ensure nomad token is generated.
+          shell: "{{ vault_binary }} token create -policy nomad-server -period 72h -orphan -format=json | jq -r .auth.client_token"
+          args:
+            chdir: "{{ nomad_data_directory }}"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            # VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+          register: nomad_server_token_raw
+      when: ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    - name: Set a fact of the nomad token.
+      set_fact:
+        nomad_server_vault_token: "{{ nomad_server_token_raw.stdout }}"
+
+    - name: Ensure vault integration is part of the Nomad config directory.
+      template:
+        src: templates/hashicorp/vault/vault-nomad-server.hcl.j2
+        dest: "{{ nomad_etc_directory }}/vault.hcl"
+        mode: 0644
+      notify: Restart Nomad
+
+    - name: Find all vault-nomad-server- files.
+      find:
+        paths: "{{ nomad_data_directory }}/"
+        patterns: "vault-nomad-*"
+        file_type: "file"
+      when: ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+      register: vault_files
+
+    - name: Clean up files.
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ vault_files.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+      when: ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    - name: Certificate collection.
+      block:
+        - name: Retrieve private key contents.
+          slurp:
+            src: "{{ ssl_webapp_keyfile_path }}"
+          register: keyfile
+
+        - name: Retrieve public key contents.
+          slurp:
+            src: "{{ ssl_webapp_certfile_path }}"
+          register: certificate
+
+        - name: Set the webapp keyfile contents as a fact.
+          set_fact:
+            webapp_key: "{{ keyfile.content | b64decode }}"
+
+        - name: Set the webapp certfile contents as a fact.
+          set_fact:
+            webapp_cert: "{{ certificate.content | b64decode }}"
+
+        - name: Ensure kv-v2 engine is enabled.
+          command: "{{ vault_binary }} secrets enable -path=secret kv-v2"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            # VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+
+        - name: Ensure webapp certificate contents are present.
+          command: "{{ vault_binary }} kv put secret/ssl/webapp privatekey={{ webapp_key }} publickey={{ webapp_cert }}"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            # VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+
+      when: ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
