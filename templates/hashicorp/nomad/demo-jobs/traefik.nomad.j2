@@ -53,14 +53,14 @@ job "traefik" {
 
       template {
         data = <<EOF
-{{ with secret "secret/ssl/webapp" }}{{ .Data.data.privatekey }}{{ end }}
+{{ with secret "secret/ssl-certificates/webapp" }}{{ .Data.data.privatekey }}{{ end }}
 EOF
         destination = "local/ssl/tls.key"
       }
 
       template {
         data = <<EOF
-{{ with secret "secret/ssl/webapp" }}{{ .Data.data.publickey }}{{ end }}
+{{ with secret "secret/ssl-certificates/webapp" }}{{ .Data.data.publickey }}{{ end }}
 EOF
         destination = "local/ssl/tls.crt"
       }
