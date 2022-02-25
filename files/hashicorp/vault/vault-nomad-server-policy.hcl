@@ -40,6 +40,6 @@ path "auth/token/renew-self" {
   capabilities = ["update"]
 }
 
-path "secret/ssl-certificates/*" {
+path "secret/data/ssl-certificates/*" {
   capabilities = ["read"]
 }
