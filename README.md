@@ -228,7 +228,6 @@ ansible-playbook 04_vault-deployment.yml
 | nomad_bootstrap_token_local_path | `~/hashi-tokens/management.nomad.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 | nomad_operator_token_local_path | `~/hashi-tokens/atcomputing-operator.nomad.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
-
 ### Objective
 
 This playbook will configure a Nomad cluster, where the servers will be running the Nomad agent in server-mode and the clients will be running the Nomad agent in client-mode.
