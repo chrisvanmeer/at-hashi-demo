@@ -11,7 +11,6 @@
     # Uncomment and fill the variables below if you need to run the playbook again.
     # You can find the relevant data on any of the hosts in /etc/consul.d/consul.hcl
     # consul_ecryption_key: "<ENCRYPTION KEY>"
-    # consul_retry_join_address: "<IP ADDRESS>"
 
   tasks:
     - name: "HashiCorp - Consul : Ensure data directory is present."
@@ -37,13 +36,6 @@
         line: '    "consul";'
         insertafter: 'Unattended-Upgrade::Package-Blacklist \{\n'
         backup: true
-
-    - name: "HashiCorp - Consul: Register first server's IP address as consul_retry_join_address fact."
-      set_fact:
-        consul_retry_join_address: "{{ ansible_host }}"
-      when: ansible_hostname in groups['servers']
-      delegate_to: "{{ groups['servers'] | first }}"
-      run_once: true
 
     # ENCRYPTION
     - name: "HashiCorp - Consul : Encryption."
@@ -106,24 +98,25 @@
                   run_once: true
 
             # OTHER NODES
-            - name: "HashiCorp - Consul : CA certificate and key all other nodes."
-              block:
-                - name: "HashiCorp - Consul : Ensure CA certificate is present on all other nodes."
-                  copy:
-                    dest: "{{ consul_etc_directory }}/consul-agent-ca.pem"
-                    content: "{{ consul_tls_ca_certificate_content }}"
-                  when:
-                    - consul_tls_ca_certificate_content is defined
-                    - inventory_hostname != consul_first_server_hostname
-                - name: "HashiCorp - Consul : Ensure CA key is present on all other nodes."
-                  copy:
-                    dest: "{{ consul_etc_directory }}/consul-agent-ca-key.pem"
-                    content: "{{ consul_tls_ca_key_content }}"
-                    owner: "{{ consul_data_directory_user }}"
-                    group: "{{ consul_data_directory_group }}"
-                  when:
-                    - consul_tls_ca_key_content is defined
-                    - inventory_hostname != consul_first_server_hostname
+            - name: CA - Ensure CA certificate and key are present on all other nodes.
+              copy:
+                dest: "{{ consul_etc_directory }}/{{ item.dest }}"
+                content: "{{ item.content }}"
+                owner: "{{ consul_data_directory_user }}"
+                group: "{{ consul_data_directory_group }}"
+                mode: "{{ item.mode }}"
+              with_items:
+                - dest: "consul-agent-ca.pem"
+                  content: "{{ consul_tls_ca_certificate_content }}"
+                  mode: "0644"
+                - dest: "consul-agent-ca-key.pem"
+                  content: "{{ consul_tls_ca_key_content }}"
+                  mode: "0600"
+              loop_control:
+                label: "{{ item.dest }}"
+              when:
+                - consul_tls_ca_certificate_content is defined
+                - inventory_hostname != consul_first_server_hostname
 
         # SERVER CERTIFICATES
         - name: "HashiCorp - Consul : Server Certificates."
@@ -273,14 +266,73 @@
               set_fact:
                 consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
 
-          # ACL-ING STOPS HERE FOR DEMO SAKE.
-
           when:
             - ansible_hostname in groups['servers']
             - not consul_bootstrapped.stat.exists
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
+    - name: Ensure default ACL is set to deny.
+      lineinfile:
+        path: "{{ consul_etc_directory }}/consul.hcl"
+        regexp: 'default_policy = "allow"'
+        line: '  default_policy = "deny"'
+      notify: Restart Consul
+
+    # DNS REQUESTS
+    - name: Ensure the DNS request policy file is in place.
+      copy:
+        src: "{{ consul_dns_policy_file_local }}"
+        dest: "{{ consul_dns_policy_file_remote }}"
+        mode: 0644
+
+    - name: DNS requests.
+      block:
+        - name: Ensure that the policy is present in Consul.
+          command: "{{ consul_binary }} acl policy create -name {{ consul_dns_policy_name }} -rules @{{ consul_dns_policy_file_name }}"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          args:
+            chdir: "{{ consul_data_directory }}/"
+          changed_when: false
+
+        - name: Create ACL token using the above policy.
+          command: "{{ consul_binary }} acl token create -description '{{ consul_dns_policy_description }}' -policy-name {{ consul_dns_policy_name }}"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          changed_when: false
+          register: dns_policy_token_output_raw
+
+        - name: Store bootstrap token local for safekeeping.
+          copy:
+            content: "{{ dns_policy_token_output_raw.stdout }}"
+            dest: "{{ consul_dns_token_local_path }}"
+            mode: 0644
+          become: false
+          delegate_to: localhost
+
+        - name: Retrieve Secret ID from bootstrap output.
+          shell: "awk '/SecretID/ {print $2}' {{ consul_dns_token_local_path }}"
+          changed_when: false
+          become: false
+          delegate_to: localhost
+          register: dns_token_output
+
+        - name: Cleanup the placed policy file.
+          file:
+            path: "{{ consul_dns_policy_file_remote }}"
+            state: absent
+
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    - name: Set the DNS token as default for the Consul agent
+      command: "{{ consul_binary }} acl set-agent-token default '{{ dns_token_output.stdout }}'"
+      environment:
+        CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+      changed_when: false
+
+    # CONSUL SERVICE MESH
     - name: "HashiCorp - Consul Service Mesh"
       block:
         - name: "HashiCorp - Consul Service Mesh - Ensure CNI directory exists."
