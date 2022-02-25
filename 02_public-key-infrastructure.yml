@@ -12,12 +12,15 @@
   tasks:
     - name: "HashiCorp - PKI : Ensure certificate path is present."
       file:
-        path: "{{ item }}"
+        path: "{{ item.name }}"
         state: directory
-        mode: "0644"
+        mode: "{{ item.mode }}"
       with_items:
-        - "{{ ssl_key_dir }}"
-        - "{{ ssl_cert_dir }}"
+        - name: "{{ ssl_key_dir }}"
+          mode: 0755
+        - name: "{{ ssl_cert_dir }}"
+          mode: 0755
+      tags: rights
 
     - name: "HashiCorp - PKI : Check if CA file already exists."
       stat:
