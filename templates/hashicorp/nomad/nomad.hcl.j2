@@ -1,2 +1,10 @@
 datacenter = "{{ hashicorp_datacenter_name }}"
 data_dir = "{{ nomad_data_directory }}"
+
+consul = {
+{% if ansible_hostname in groups['servers'] %}
+  token = "{{ nomad_server_token }}"
+{% elif ansible_hostname in groups['clients'] %}
+  token = "{{ nomad_client_token }}"
+{% endif %}
+}
