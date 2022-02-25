@@ -64,10 +64,10 @@
         dnsmasq_default_domain_server: "{{ current_dns_server.stdout_lines[0] }}"
       tags: dns
 
-    - name: Debug the output.
-      debug:
-        var: dnsmasq_default_domain_server
-      tags: dns
+    # - name: Debug the output.
+    #   debug:
+    #     var: dnsmasq_default_domain_server
+    #   tags: dns
 
     - name: Ensure new default dnsmasq config is in place.
       template:
