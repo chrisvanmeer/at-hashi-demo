@@ -5,3 +5,4 @@ hashicorp_product_selection:
   - vault
 
 hashicorp_datacenter_name: "velp"
+token_directory: "~/hashi-tokens"
