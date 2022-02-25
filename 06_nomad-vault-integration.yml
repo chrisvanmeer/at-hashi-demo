@@ -136,11 +136,11 @@
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
           changed_when: false
-          tags: cert
 
       when: ansible_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
+      tags: cert
 
   handlers:
     - name: Restart Nomad
