@@ -127,6 +127,15 @@
         state: touch
         mode: "0644"
 
+    - name: Ensure tokens-nextgen directory is present.
+      file:
+        path: "{{ token_directory }}/"
+        state: directory
+        mode: 0755
+      delegate_to: localhost
+      become: false
+      run_once: true
+
     - name: Ensure the correct timezone is used.
       timezone:
         name: "{{ timezone }}"

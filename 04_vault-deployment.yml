@@ -28,6 +28,166 @@
         insertafter: 'Unattended-Upgrade::Package-Blacklist \{\n'
         backup: true
 
+    # PKI
+    - name: "HashiCorp - Vault - PKI : Ensure TLS directory is present."
+      become: true
+      file:
+        path: "{{ vault_tls_directory }}"
+        state: directory
+        recurse: true
+      when: ansible_hostname in groups['servers']
+
+    - name: "HashiCorp - Vault - PKI : Check if CA file already exists."
+      stat:
+        path: "{{ vault_ssl_ca_dest }}"
+      register: ca_already_exists
+      when: ansible_hostname in groups['servers']
+
+    - name: "HashiCorp - Vault - PKI : Create PKI infrastructure on first server."
+      block:
+        - name: "HashiCorp - Vault - PKI : Create private key."
+          community.crypto.openssl_privatekey:
+            path: "{{ vault_ssl_ca_key_dest }}"
+            owner: "root"
+            group: "root"
+            mode: "0640"
+
+        - name: "HashiCorp - Vault - PKI : Create certificate signing request (CSR) for CA certificate."
+          community.crypto.openssl_csr_pipe:
+            privatekey_path: "{{ vault_ssl_ca_key_dest }}"
+            common_name: "{{ vault_ssl_ca_common_name }}"
+            use_common_name_for_san: false
+            basic_constraints:
+              - "CA:TRUE"
+            basic_constraints_critical: yes
+            key_usage:
+              - keyCertSign
+            key_usage_critical: true
+          register: ca_csr
+
+        - name: "HashiCorp - Vault - PKI : Create self-signed CA certificate from CSR."
+          community.crypto.x509_certificate:
+            path: "{{ vault_ssl_ca_dest }}"
+            csr_content: "{{ ca_csr.csr }}"
+            privatekey_path: "{{ vault_ssl_ca_key_dest }}"
+            provider: selfsigned
+          register: ca_certificate
+
+      when:
+        - not ca_already_exists.stat.exists
+        - ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    ## Server certificate
+    - name: "HashiCorp - Vault - PKI : Create PKI infrastructure on first server."
+      block:
+        - name: "HashiCorp - Vault - PKI : Create private key for server certificate."
+          community.crypto.openssl_privatekey:
+            path: "{{ vault_ssl_key_dest }}"
+            owner: "root"
+            group: "vault"
+            mode: "0640"
+
+        - name: "HashiCorp - Vault - PKI : Retrieve private key contents."
+          slurp:
+            src: "{{ vault_ssl_key_dest }}"
+          register: keyfile
+
+        - name: "HashiCorp - Vault - PKI : Create certificate signing request (CSR) for server certificate."
+          community.crypto.openssl_csr_pipe:
+            privatekey_path: "{{ vault_ssl_key_dest }}"
+            common_name: "{{ vault_ssl_server_common_name }}"
+            subject_alt_name: "{{ vault_ssl_server_subject_alt_names }}"
+          register: csr
+
+        - name: "HashiCorp - Vault - PKI : Check whether certificate exists."
+          stat:
+            path: "{{ vault_ssl_cert_dest }}"
+          register: certificate_exists
+
+        - name: "HashiCorp - Vault - PKI : Read existing certificate if exists."
+          slurp:
+            src: "{{ vault_ssl_cert_dest }}"
+          when: certificate_exists.stat.exists
+          register: certificate
+
+        - name: "HashiCorp - Vault - PKI : Sign certificate with our CA."
+          community.crypto.x509_certificate_pipe:
+            content: "{{ (certificate.content | b64decode) if certificate_exists.stat.exists else omit }}"
+            csr_content: "{{ csr.csr }}"
+            provider: ownca
+            ownca_path: "{{ vault_ssl_ca_dest }}"
+            ownca_privatekey_path: "{{ vault_ssl_ca_key_dest }}"
+            ownca_not_after: "+1826d"
+          register: certificate
+
+        - name: "HashiCorp - Vault - PKI : Write certificate file."
+          copy:
+            dest: "{{ vault_ssl_cert_dest }}"
+            content: "{{ certificate.certificate }}"
+            owner: "root"
+            group: "root"
+            mode: "0644"
+          when: certificate is changed
+
+      delegate_to: "{{ groups['servers'] | first }}"
+      when: ansible_hostname in groups['servers']
+      run_once: true
+
+    ## Distribute the CA certificate to the rest of the environment
+    - name: "HashiCorp - Vault - PKI : Retrieve Content."
+      block:
+        - name: "HashiCorp - Vault - PKI : Retrieve CA certificate contents."
+          slurp:
+            src: "{{ vault_ssl_ca_dest }}"
+          register: ca_certificate_slurp
+        - name: "HashiCorp - Vault - PKI : Retrieve Server certificate contents."
+          slurp:
+            src: "{{ vault_ssl_cert_dest }}"
+          register: server_certificate_slurp
+        - name: "HashiCorp - Vault - PKI : Retrieve Server key contents."
+          slurp:
+            src: "{{ vault_ssl_key_dest }}"
+          register: server_key_slurp
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    - name: "HashiCorp - Vault - PKI : Place Content."
+      block:
+        - name: "HashiCorp - Vault - PKI : Place CA certificate in default location."
+          copy:
+            dest: "{{ vault_ssl_ca_dest }}"
+            content: "{{ ca_certificate_slurp.content | b64decode }}"
+            owner: "root"
+            group: "root"
+            mode: "0644"
+        - name: "HashiCorp - Vault - PKI : Place certificate in default location."
+          copy:
+            dest: "{{ vault_ssl_cert_dest }}"
+            content: "{{ server_certificate_slurp.content | b64decode }}"
+            owner: "root"
+            group: "root"
+            mode: "0644"
+        - name: "HashiCorp - Vault - PKI : Place key in default location."
+          copy:
+            dest: "{{ vault_ssl_key_dest }}"
+            content: "{{ server_key_slurp.content | b64decode }}"
+            owner: "root"
+            group: "vault"
+            mode: "0640"
+      when:
+        - ansible_hostname in groups['servers']
+        - ansible_hostname != groups['servers'] | first
+
+    - name: "HashiCorp - Vault - PKI : Ensure the CA certificate is copied to the local certs directory."
+      copy:
+        dest: "{{ vault_ssl_local_dir }}/{{ vault_ssl_ca_share_filename }}"
+        content: "{{ ca_certificate_slurp.content | b64decode }}"
+
+    - name: "HashiCorp - Vault - PKI : Ensure certificate index is updated."
+      command: "/usr/sbin/update-ca-certificates -f"
+
     # VAULT CONFIGURATION
     - name: "HashiCorp - Vault : Configuration."
       block:
@@ -56,23 +216,6 @@
           when: ansible_hostname in groups['servers']
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
-
-        - name: "HashiCorp - Vault - TLS : Ensure TLS directory is present."
-          become: true
-          file:
-            path: "{{ vault_tls_directory }}"
-            state: directory
-            recurse: true
-
-        - name: "HashiCorp - Vault - TLS : Ensure the SSL files are in place."
-          file:
-            src: "{{ item.src }}"
-            dest: "{{ item.dest }}"
-            owner: "{{ item.owner }}"
-            group: "{{ item.group }}"
-            state: link
-          with_items: "{{ vault_ssl_files }}"
-          when: ansible_hostname in groups['servers']
 
         - name: "HashiCorp - Vault - ACL : Check if Consul has ACL mode enabled."
           shell: "cat {{ consul_etc_directory }}/consul.hcl | grep -a3 '^acl' | grep enabled | awk '{print $3}'"
@@ -121,6 +264,7 @@
               copy:
                 content: "{{ vault_acl_bootstrap_raw.stdout }}"
                 dest: "{{ vault_bootstrap_token_local_path }}"
+                mode: 0644
               become: false
               delegate_to: localhost
 
@@ -131,13 +275,9 @@
               delegate_to: localhost
               register: vault_acl_bootstrap_output
 
-            - debug: var=vault_acl_bootstrap_output
-
             - name: "HashiCorp - Vault - ACL : Set the Secret ID as a fact."
               set_fact:
                 vault_acl_bootstrap_secret_id: "{{ vault_acl_bootstrap_output.stdout }}"
-
-            - debug: var=vault_acl_bootstrap_secret_id
 
             - name: "HashiCorp - Vault - ACL : Ensure bootstrap check file is in place."
               copy:
@@ -158,6 +298,12 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
+        - name: "HashiCorp - Vault : Ensure Vault Service Token is set in config file."
+          lineinfile:
+            path: "{{ vault_etc_directory }}/vault.hcl"
+            regexp: '  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"'
+            line: '  token   = "{{ vault_acl_bootstrap_secret_id }}"'
+
         - name: "HashiCorp - Vault : Ensure systemd service is enabled and started."
           systemd:
             name: "{{ vault_service_name }}"
@@ -169,6 +315,7 @@
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
           changed_when: false
           register: vault_is_initialized
           when: ansible_hostname in groups['servers']
@@ -180,6 +327,7 @@
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
           changed_when: false
           register: vault_init_output
           when:
@@ -188,7 +336,7 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-        - name: "HashiCorp - Vault - INIT: Store Vault initialization info local for safekeeping."
+        - name: "HashiCorp - Vault - INIT: Store Vault master keys local for safekeeping."
           copy:
             content: "{{ vault_init_output.stdout }}"
             dest: "{{ vault_bootstrap_init_local_path }}"
@@ -200,6 +348,235 @@
           run_once: true
 
       when: ansible_hostname in groups['servers']
+
+    - name: "HashiCorp - Vault : Check the Vault sealed status."
+      shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
+      environment:
+        VAULT_ADDR: "{{ vault_address }}"
+        VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+        VAULT_SKIP_VERIFY: true
+      changed_when: false
+      register: vault_is_sealed
+
+    - name: "HashiCorp - Vault - Unseal"
+      block:
+        - name: "HashiCorp - Vault - Unseal : Retrieve local token file."
+          set_fact:
+            token_file_output: "{{ lookup('file', vault_bootstrap_init_local_path).split('\n') }}"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault - Unseal : Retrieve first unseal key from initialization info."
+          set_fact:
+            vault_unseal_key_1: "{{ token_file_output[0].split('Unseal Key 1: ')[1] }}"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault - Unseal : Retrieve second unseal key from initialization info."
+          set_fact:
+            vault_unseal_key_2: "{{ token_file_output[1].split('Unseal Key 2: ')[1] }}"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault - Unseal : Retrieve third unseal key from initialization info."
+          set_fact:
+            vault_unseal_key_3: "{{ token_file_output[2].split('Unseal Key 3: ')[1] }}"
+          delegate_to: localhost
+          run_once: true
+
+        - name: "HashiCorp - Vault - Unseal : Ensure the Vault is unsealed."
+          command: "{{ vault_binary }} operator unseal {{ item }}"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          with_items:
+            - "{{ vault_unseal_key_1 }}"
+            - "{{ vault_unseal_key_2 }}"
+            - "{{ vault_unseal_key_3 }}"
+      when:
+        - vault_is_sealed.stdout == "true"
+
+    - name: "HashiCorp - Vault : Check if there is already a second root token."
+      stat:
+        path: "{{ vault_bootstrap_root_true_file }}"
+      register: vault_bootstrap_root_true_file_status
+      when: ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    # SECONDARY ROOT TOKEN
+    - name: "HashiCorp - Vault : Secondary Root Token."
+      block:
+        - name: "HashiCorp - Vault : Create second root token."
+          command: "{{ vault_binary }} token create -policy=root"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+          register: vault_second_root_token_output
+
+        - name: "HashiCorp - Vault : Store second root token local for safekeeping."
+          copy:
+            content: "{{ vault_second_root_token_output.stdout }}"
+            dest: "{{ vault_bootstrap_root_token_local_path }}"
+            mode: 0644
+          delegate_to: localhost
+          become: false
+
+        - name: "HashiCorp - Vault : Ensure second root check file is in place."
+          copy:
+            dest: "{{ vault_bootstrap_root_true_file }}"
+            content: "This cluster has a second root token, generated at {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
+            mode: 0644
+
+      when:
+        - not vault_bootstrap_root_true_file_status.stat.exists
+        - vault_is_sealed.stdout == "false"
+        - ansible_hostname in groups['servers']
+      run_once: true
+
+    # VAULT CONTENT CONFIGURATION
+    - name: "HashiCorp - Vault : Admin user creation."
+      block:
+        - name: "HashiCorp - Vault : Ensure admin-policy is in place."
+          uri:
+            url: "{{ vault_address }}/v1/sys/policy/{{ vault_admin_policy_name }}"
+            method: PUT
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "policy": "path \"*\" { capabilities = [\"create\", \"read\", \"update\", \"delete\", \"list\", \"sudo\"] }" }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
+
+        - name: "HashiCorp - Vault : Ensure ssl-certificates-policy is in place."
+          uri:
+            url: "{{ vault_address }}/v1/sys/policy/{{ vault_ssl_certificates_policy_name }}"
+            method: PUT
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "policy": "path \"secret/data/ssl-certificates/*\" { capabilities = [ \"read\" ] }" }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
+
+        - name: "HashiCorp - Vault : Ensure userpass auth engine is enabled and mounted."
+          uri:
+            url: "{{ vault_address }}/v1/sys/auth/userpass"
+            method: POST
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "type": "userpass" }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
+
+        - name: "HashiCorp - Vault : Create a random password."
+          set_fact:
+            random_password: "{{ lookup('password', '{{ token_directory }}/{{ vault_admin_username }}.vault.password chars=ascii_letters,digits,punctuation length=40') }}"
+          become: false
+
+        - name: "HashiCorp - Vault : Ensure admin user is created."
+          uri:
+            url: "{{ vault_address }}/v1/auth/userpass/users/{{ vault_admin_username }}"
+            method: POST
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "password": "{{ random_password }}" }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
+
+        - name: "HashiCorp - Vault : Retrieve userpass mount accessor."
+          uri:
+            url: "{{ vault_address }}/v1/sys/auth"
+            method: GET
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            return_content: true
+            validate_certs: false
+          register: mount_accessor_raw
+
+        - name: "HashiCorp - Vault : Set a fact with the mount accessor."
+          set_fact:
+            mount_accessor: "{{ mount_accessor_raw['json']['data']['userpass/']['accessor'] }}"
+
+        - name: "HashiCorp - Vault : Create the admin-user entity."
+          uri:
+            url: "{{ vault_address }}/v1/identity/entity"
+            method: POST
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "name": "{{ vault_admin_username }}-entity" }'
+            status_code:
+              - 200
+              - 204
+            return_content: true
+            validate_certs: false
+          register: entity_raw
+
+        - name: "HashiCorp - Vault : Set a fact with the entity ID."
+          set_fact:
+            entity_id: "{{ entity_raw['json']['data']['id'] }}"
+
+        - name: "HashiCorp - Vault : Create the admin-user-entity alias."
+          uri:
+            url: "{{ vault_address }}/v1/identity/entity-alias"
+            method: POST
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "name": "{{ vault_admin_username }}", "canonical_id": "{{ entity_id }}", "mount_accessor": "{{ mount_accessor }}" }'
+            status_code:
+              - 200
+              - 204
+            return_content: true
+            validate_certs: false
+          register: entity_alias_raw
+
+        - name: "HashiCorp - Vault : Ensure admin-group is present."
+          uri:
+            url: "{{ vault_address }}/v1/identity/group"
+            method: POST
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "name": "{{ vault_admin_group_name }}", "policies": ["{{ vault_admin_policy_name }}"], "member_entity_ids": ["{{ entity_id }}"] }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
+
+      when: ansible_hostname in groups['servers']
+      run_once: true
+
+    - name: "HashiCorp - Vault : Ensure that the KV secret engine is enabled and mounted."
+      uri:
+        url: "{{ vault_address }}/v1/sys/mounts/{{ vault_kv_path }}"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+        body_format: json
+        body: '{ "type": "kv-v2" }'
+        status_code:
+          - 200
+          - 204
+        validate_certs: false
+      when: ansible_hostname in groups['servers']
+      run_once: true
 
   handlers:
     - name: Restart Vault

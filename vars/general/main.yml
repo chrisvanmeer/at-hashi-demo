@@ -35,3 +35,5 @@ basic_apt_packages:
 timezone: "Europe/Amsterdam"
 
 demo_fqdn: "demo.atcomputing.local"
+
+token_directory: "~/hashi-tokens"

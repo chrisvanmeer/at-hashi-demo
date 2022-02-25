@@ -10,6 +10,30 @@ nomad_log_directory: "/var/log/nomad"
 nomad_pause_seconds: "60"
 nomad_use_bootstrap: true
 nomad_bootstrapped_true_file: "{{ nomad_data_directory }}/bootstrapped.true"
-nomad_bootstrap_token_local_path: "~/{{ ansible_hostname}}.nomad.bootstrap.token"
+nomad_bootstrap_token_local_path: "{{ token_directory }}/nomad.bootstrap.token"
 nomad_policy_local_path: "files/hashicorp/nomad/anonymous.policy.hcl"
 nomad_policy_remote_path: "{{ nomad_data_directory }}/anonymous.policy.hcl"
+
+nomad_consul_bootstrapped_true_file: "{{ nomad_data_directory }}/consul-bootstrapped.true"
+
+nomad_consul_server_policy_local_file: "files/hashicorp/nomad/nomad-server-service-consul-policy.hcl"
+nomad_consul_server_policy_remote_file: "{{ nomad_data_directory }}/nomad-server-service-consul-policy.hcl"
+nomad_consul_server_service_name: "nomad-server-service"
+nomad_consul_server_token_description: "Nomad Server Service Token"
+nomad_consul_server_token_local_path: "{{ token_directory }}/nomad-server.consul.token"
+
+nomad_consul_client_policy_local_file: "files/hashicorp/nomad/nomad-client-service-consul-policy.hcl"
+nomad_consul_client_policy_remote_file: "{{ nomad_data_directory }}/nomad-client-service-consul-policy.hcl"
+nomad_consul_client_service_name: "nomad-client-service"
+nomad_consul_client_token_description: "Nomad Client Service Token"
+nomad_consul_client_token_local_path: "{{ token_directory }}/nomad-client.consul.token"
+
+nomad_operator_token_name: ATComputing Operator Token"
+nomad_operator_token_local_path: "{{ token_directory }}/atcomputing-operator.nomad.token"
+
+nomad_client_token_name: "Nomad Clients Token"
+nomad_client_policy_name: "nomad-clients"
+nomad_client_policy_description: "Nomad Clients Policy"
+nomad_client_policy_local_file: "files/hashicorp/nomad/nomad-client-policy.hcl"
+nomad_client_policy_remote_file: "{{ nomad_data_directory }}/nomad-client-policy.hcl"
+nomad_client_token_local_path: "{{ token_directory }}/nomad-clients.nomad.token"
