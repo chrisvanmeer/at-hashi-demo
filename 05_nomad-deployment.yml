@@ -326,22 +326,26 @@
     # POST ACL
     - name: "HashiCorp - Nomad : Run nomad server members command."
       command: "{{ nomad_binary }} server members"
-      register: nomad_server_members_ouput
+      environment:
+        NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
+      register: nomad_server_members_output
       when: ansible_hostname in groups['servers']
 
-    - name: "HashiCorp - Nomad : Ouput the results of the nomad server members command."
+    - name: "HashiCorp - Nomad : Output the results of the nomad server members command."
       debug:
-        var: nomad_server_members_ouput.stdout_lines
+        var: nomad_server_members_output.stdout_lines
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Nomad : Run nomad node status command."
       command: "{{ nomad_binary }} node status"
-      register: nomad_node_status_ouput
+      environment:
+        NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
+      register: nomad_node_status_output
       when: ansible_hostname in groups['clients']
 
-    - name: "HashiCorp - Nomad : Ouput the results of the nomad node status command."
+    - name: "HashiCorp - Nomad : Output the results of the nomad node status command."
       debug:
-        var: nomad_node_status_ouput.stdout_lines
+        var: nomad_node_status_output.stdout_lines
       when: ansible_hostname in groups['clients']
 
   handlers:
