@@ -9,6 +9,15 @@
     - vars/hashicorp/nomad.yml
 
   tasks:
+    # GENERAL
+    - name: "HashiCorp - Nomad : Ensure data directory is present."
+      file:
+        path: "{{ nomad_data_directory }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ nomad_data_directory_user }}"
+        group: "{{ nomad_data_directory_group }}"
+
     # CONSUL ACL
     - name: "HashiCorp - Nomad - Consul : Retrieve Consul Secret ID from bootstrap output."
       shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
@@ -140,22 +149,6 @@
       run_once: true
 
     # GENERAL
-    - name: "HashiCorp - Nomad : Ensure data directory is present."
-      file:
-        path: "{{ nomad_data_directory }}"
-        state: directory
-        mode: "0755"
-        owner: "{{ nomad_data_directory_user }}"
-        group: "{{ nomad_data_directory_group }}"
-
-    - name: "HashiCorp - Nomad : Ensure data directory is present."
-      file:
-        path: "{{ nomad_etc_directory }}"
-        state: directory
-        mode: "0755"
-        owner: "{{ nomad_data_directory_user }}"
-        group: "{{ nomad_data_directory_group }}"
-
     - name: "HashiCorp - Nomad : Ensure general configuration is present."
       template:
         src: "templates/hashicorp/nomad/nomad.hcl.j2"
