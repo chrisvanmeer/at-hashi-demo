@@ -98,7 +98,7 @@
                   run_once: true
 
             # OTHER NODES
-            - name: CA - Ensure CA certificate and key are present on all other nodes.
+            - name: "HashiCorp - Consul - CA : Ensure CA certificate and key are present on all other nodes."
               copy:
                 dest: "{{ consul_etc_directory }}/{{ item.dest }}"
                 content: "{{ item.content }}"
@@ -272,7 +272,7 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-    - name: Ensure default ACL is set to deny.
+    - name: "HashiCorp - Consul - ACL : Ensure default ACL is set to deny."
       lineinfile:
         path: "{{ consul_etc_directory }}/consul.hcl"
         regexp: 'default_policy = "allow"'
@@ -280,15 +280,15 @@
       notify: Restart Consul
 
     # DNS REQUESTS
-    - name: Ensure the DNS request policy file is in place.
+    - name: "HashiCorp - Consul - ACL : Ensure the DNS request policy file is in place."
       copy:
         src: "{{ consul_dns_policy_file_local }}"
         dest: "{{ consul_dns_policy_file_remote }}"
         mode: 0644
 
-    - name: DNS requests.
+    - name: "HashiCorp - Consul - ACL : DNS requests."
       block:
-        - name: Ensure that the policy is present in Consul.
+        - name: "HashiCorp - Consul - ACL : Ensure that the policy is present in Consul."
           command: "{{ consul_binary }} acl policy create -name {{ consul_dns_policy_name }} -rules @{{ consul_dns_policy_file_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
@@ -296,14 +296,14 @@
             chdir: "{{ consul_data_directory }}/"
           changed_when: false
 
-        - name: Create ACL token using the above policy.
+        - name: "HashiCorp - Consul - ACL : Create ACL token using the above policy."
           command: "{{ consul_binary }} acl token create -description '{{ consul_dns_policy_description }}' -policy-name {{ consul_dns_policy_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           changed_when: false
           register: dns_policy_token_output_raw
 
-        - name: Store bootstrap token local for safekeeping.
+        - name: "HashiCorp - Consul - ACL : Store bootstrap token local for safekeeping."
           copy:
             content: "{{ dns_policy_token_output_raw.stdout }}"
             dest: "{{ consul_dns_token_local_path }}"
@@ -311,14 +311,14 @@
           become: false
           delegate_to: localhost
 
-        - name: Retrieve Secret ID from bootstrap output.
+        - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
           shell: "awk '/SecretID/ {print $2}' {{ consul_dns_token_local_path }}"
           changed_when: false
           become: false
           delegate_to: localhost
           register: dns_token_output
 
-        - name: Cleanup the placed policy file.
+        - name: "HashiCorp - Consul - ACL : Cleanup the placed policy file."
           file:
             path: "{{ consul_dns_policy_file_remote }}"
             state: absent
@@ -326,28 +326,28 @@
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
-    - name: Set the DNS token as default for the Consul agent
+    - name: "HashiCorp - Consul - ACL : Set the DNS token as default for the Consul agent."
       command: "{{ consul_binary }} acl set-agent-token default '{{ dns_token_output.stdout }}'"
       environment:
         CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
       changed_when: false
 
     # CONSUL SERVICE MESH
-    - name: "HashiCorp - Consul Service Mesh"
+    - name: "HashiCorp - Consul - Service Mesh"
       block:
-        - name: "HashiCorp - Consul Service Mesh - Ensure CNI directory exists."
+        - name: "HashiCorp - Consul - Service Mesh : Ensure CNI directory exists."
           file:
             path: "{{ consul_cni_target_directory }}"
             state: directory
             mode: "0644"
 
-        - name: "HashiCorp - Consul Service Mesh - Ensure CNI plugins exist in the CNI directory."
+        - name: "HashiCorp - Consul - Service Mesh : Ensure CNI plugins exist in the CNI directory."
           unarchive:
             src: "{{ consul_cni_plugin_url }}"
             dest: "{{ consul_cni_target_directory }}"
             remote_src: yes
 
-        - name: "HashiCorp - Consul Service Mesh - Ensure sysctl settings are present and loaded."
+        - name: "HashiCorp - Consul - Service Mesh : Ensure sysctl settings are present and loaded."
           ansible.posix.sysctl:
             name: "{{ item.key }}"
             value: "{{ item.value }}"

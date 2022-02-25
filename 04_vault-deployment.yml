@@ -482,7 +482,7 @@
 
         - name: "HashiCorp - Vault : Create a random password."
           set_fact:
-            random_password: "{{ lookup('password', '{{ token_directory }}/{{ vault_admin_username }}.vault.password chars=ascii_letters,digits,punctuation length=40') }}"
+            random_password: "{{ lookup('password', '{{ vault_admin_local_path }} chars=ascii_letters,digits,punctuation length=40') }}"
           become: false
 
         - name: "HashiCorp - Vault : Ensure admin user is created."
