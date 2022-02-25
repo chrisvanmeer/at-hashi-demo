@@ -92,6 +92,12 @@
           file:
             path: "{{ nomad_data_directory }}"
             state: absent
+        - name: NOMAD - Remove Nomad Server policy from Consul.
+          command: "{{ consul_binary }} acl policy delete -name {{ nomad_consul_server_service_name }}"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          run_once: true
+          ignore_errors: true
         - name: NOMAD - Remove Nomad Client policy from Consul.
           command: "{{ consul_binary }} acl policy delete -name {{ nomad_consul_client_service_name }}"
           environment:
