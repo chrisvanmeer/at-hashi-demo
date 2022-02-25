@@ -28,7 +28,7 @@ In our demo we will be using it for both the storage backend of Vault and for th
 
 > Vault secures, stores, and tightly controls access to tokens, passwords, certificates, API keys, and other secrets in modern computing.
 
-In a future iteration of this demo, we will use Vault to store tokens for both accessing and bootstrapping Nomad.
+In our demo we will be storing the created SSL certificate in Vault, so that this can be accessed by Nomad during a job run.
 
 ### Nomad
 
@@ -120,6 +120,7 @@ ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pa
 | --------------------------- | ------------------------------------ | ---------------------------------------------------- |
 | hashicorp_product_selection | `- consul`<br>`- nomad`<br>`- vault` | The products that will be installed.                 |
 | basic_apt_packages          | See variable file                    | Add / remove packages as you please for general use. |
+| token_directory             | `~/hashi-tokens`                     | This path will be used to store the tokens locally.  |
 
 ### Objective
 
@@ -163,7 +164,8 @@ ansible-playbook 02_public-key-infrastructure.yml
 | Variable                          | Default value                      | Description                                                                                                   |
 | --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | hashicorp_datacenter_name         | `velp`                             | This datacenter name will be used in both Consul as Nomad (and in the demo jobs).                             |
-| consul_bootstrap_token_local_path | `~/server1.consul.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| consul_bootstrap_token_local_path | `~/hashi-tokens/management.consul.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| consul_dns_token_local_path | `~/hashi-tokens/dns-requests.consul.token` | This token will be used to register the Consul agents with, to keep allowing for DNS requests even though ACL is enabled. |
 
 ### Objective
 
@@ -193,12 +195,14 @@ ansible-playbook 03_consul-deployment.yml
 
 | Variable                         | Default value                     | Description                                                                                                   |
 | -------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| vault_bootstrap_token_local_path | `~/server1.vault.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_bootstrap_init_local_path  | `~/server1.vault.bootstrap.init`  | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_bootstrap_token_local_path | `~/hashi-tokens/vault.consul.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_bootstrap_init_local_path  | `~/hashi-tokens/vault.master.keys`  | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_bootstrap_root_token_local_path  | `~/hashi-tokens/management.vault.token`  | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_admin_local_path  | `~/hashi-tokens/atcomputing.vault.password`  | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
 
-This playbook will configure a Vault cluster, where the servers will be running the Vault agent in server mode. Consul will be used for the storage of all secrets.
+This playbook will configure a Vault cluster, where the servers will be running the Vault agent in server mode. The clients will have the Vault agent installed for use as a client. Consul will be used for the storage the Vault backend because this makes the whole storage high available.
 
 The Vault agent listens on TCP port 8500.
 
@@ -221,8 +225,9 @@ ansible-playbook 04_vault-deployment.yml
 | Variable                         | Default value                     | Description                                                                                                   |
 | -------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | hashicorp_datacenter_name        | `velp`                            | This datacenter name will be used in both Consul as Nomad (and in the demo jobs).                             |
-| nomad_bootstrap_token_local_path | `~/server1.nomad.bootstrap.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| nomad_use_bootstrap              | `true`                            | Whether or not we will bootstrap the system (aka use encryption).                                             |
+| nomad_bootstrap_token_local_path | `~/hashi-tokens/management.nomad.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| nomad_operator_token_local_path | `~/hashi-tokens/atcomputing-operator.nomad.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+
 
 ### Objective
 
