@@ -15,6 +15,7 @@ basic_apt_packages:
   - htop
   - iotop
   - iperf3
+  - jq
   - less
   - lynx
   - mailutils
