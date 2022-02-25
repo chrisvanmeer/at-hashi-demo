@@ -120,6 +120,7 @@
       apt:
         name: "{{ basic_apt_packages }}"
         state: present
+      tags: apt
 
     - name: Ensure .hushlogin is present in atcomputing user home dir.
       file:
@@ -127,7 +128,7 @@
         state: touch
         mode: "0644"
 
-    - name: Ensure tokens-nextgen directory is present.
+    - name: Ensure token directory is present.
       file:
         path: "{{ token_directory }}/"
         state: directory
