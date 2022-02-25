@@ -446,7 +446,7 @@
             url: "{{ vault_address }}/v1/sys/policy/{{ vault_admin_policy_name }}"
             method: PUT
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             body: '{ "policy": "path \"*\" { capabilities = [\"create\", \"read\", \"update\", \"delete\", \"list\", \"sudo\"] }" }'
             status_code:
@@ -459,7 +459,7 @@
             url: "{{ vault_address }}/v1/sys/policy/{{ vault_ssl_certificates_policy_name }}"
             method: PUT
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             body: '{ "policy": "path \"secret/data/ssl-certificates/*\" { capabilities = [ \"read\" ] }" }'
             status_code:
@@ -472,7 +472,7 @@
             url: "{{ vault_address }}/v1/sys/auth/userpass"
             method: POST
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             body: '{ "type": "userpass" }'
             status_code:
@@ -490,7 +490,7 @@
             url: "{{ vault_address }}/v1/auth/userpass/users/{{ vault_admin_username }}"
             method: POST
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             body: '{ "password": "{{ random_password }}" }'
             status_code:
@@ -503,7 +503,7 @@
             url: "{{ vault_address }}/v1/sys/auth"
             method: GET
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             return_content: true
             validate_certs: false
@@ -518,7 +518,7 @@
             url: "{{ vault_address }}/v1/identity/entity"
             method: POST
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             body: '{ "name": "{{ vault_admin_username }}-entity" }'
             status_code:
@@ -537,7 +537,7 @@
             url: "{{ vault_address }}/v1/identity/entity-alias"
             method: POST
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             body: '{ "name": "{{ vault_admin_username }}", "canonical_id": "{{ entity_id }}", "mount_accessor": "{{ mount_accessor }}" }'
             status_code:
@@ -552,7 +552,7 @@
             url: "{{ vault_address }}/v1/identity/group"
             method: POST
             headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+              X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
             body_format: json
             body: '{ "name": "{{ vault_admin_group_name }}", "policies": ["{{ vault_admin_policy_name }}"], "member_entity_ids": ["{{ entity_id }}"] }'
             status_code:
@@ -568,7 +568,7 @@
         url: "{{ vault_address }}/v1/sys/mounts/{{ vault_kv_path }}"
         method: POST
         headers:
-          X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+          X-Vault-Token: "{{ vault_acl_bootstrap_secret_id }}"
         body_format: json
         body: '{ "type": "kv-v2" }'
         status_code:
