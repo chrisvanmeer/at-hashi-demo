@@ -28,7 +28,7 @@ nomad_consul_client_service_name: "nomad-client-service"
 nomad_consul_client_token_description: "Nomad Client Service Token"
 nomad_consul_client_token_local_path: "{{ token_directory }}/nomad-client.consul.token"
 
-nomad_operator_token_name: ATComputing Operator Token"
+nomad_operator_token_name: ATComputing Operator Token
 nomad_operator_token_local_path: "{{ token_directory }}/atcomputing-operator.nomad.token"
 
 nomad_client_token_name: "Nomad Clients Token"
