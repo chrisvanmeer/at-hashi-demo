@@ -92,6 +92,40 @@
           file:
             path: "{{ nomad_data_directory }}"
             state: absent
+        - name: NOMAD - Remove Nomad Client policy from Consul.
+          command: "{{ consul_binary }} acl policy delete -name {{ nomad_consul_client_service_name }}"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          run_once: true
+          ignore_errors: true
+        - name: NOMAD - Get AccessorID of Nomad Server Token.
+          shell: "{{ consul_binary }} acl token list | grep -B2 '{{ nomad_consul_server_token_description }}' | awk '/AccessorID/ {print $2}'"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          register: consul_nomad_server_token
+          run_once: true
+          ignore_errors: true
+          changed_when: false
+        - name: NOMAD - Delete Nomad Server Token.
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          command: "{{ consul_binary }} acl token delete -id {{ consul_nomad_server_token.stdout }}"
+          run_once: true
+          ignore_errors: true
+        - name: NOMAD - Get AccessorID of Nomad Client Token.
+          shell: "{{ consul_binary }} acl token list | grep -B2 '{{ nomad_consul_client_token_description }}' | awk '/AccessorID/ {print $2}'"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          register: consul_nomad_client_token
+          run_once: true
+          ignore_errors: true
+          changed_when: false
+        - name: NOMAD - Delete Nomad Client Token.
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          command: "{{ consul_binary }} acl token delete -id {{ consul_nomad_client_token.stdout }}"
+          run_once: true
+          ignore_errors: true
 
     - name: VAULT
       tags: vault
