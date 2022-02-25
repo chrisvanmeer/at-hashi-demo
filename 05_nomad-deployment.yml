@@ -5,6 +5,7 @@
 
   vars_files:
     - vars/hashicorp/general.yml
+    - vars/hashicorp/consul.yml
     - vars/hashicorp/nomad.yml
 
   tasks:
