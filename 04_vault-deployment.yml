@@ -478,7 +478,7 @@
             headers:
               X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
             body_format: json
-            body: "{{ lookup('file','files/hashicorp/vault/vault-nomad-ssl-certificates-policy.json') }}"
+            body: "{{ lookup('file','files/hashicorp/vault/vault-nomad-ssl-certificates-policy.hcl') }}"
             status_code:
               - 200
               - 204
