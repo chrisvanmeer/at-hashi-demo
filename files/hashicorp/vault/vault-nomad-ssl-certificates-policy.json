@@ -1,0 +1,22 @@
+{
+  "path": [
+    {
+      "secret/data/ssl-certificates/*": [
+        {
+          "capabilities": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "secret/metadata/ssl-certificates/*": [
+        {
+          "capabilities": [
+            "list"
+          ]
+        }
+      ]
+    }
+  ]
+}
