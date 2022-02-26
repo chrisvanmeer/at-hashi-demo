@@ -52,16 +52,16 @@ job "traefik" {
       }
 
       template {
-        data = <<EOF
-{% raw %}{{ with secret "secret/data/ssl-certificates/webapp" }}{{ .Data.data.privatekey }}{{ end }}{% endraw %}
-EOF
+        data = <<EOF{% raw %}
+{{ with secret "secret/data/ssl-certificates/webapp" }}{{ .Data.data.privatekey }}{{ end }}
+{% endraw %}EOF
         destination = "local/ssl/tls.key"
       }
 
       template {
-        data = <<EOF
-{% raw %}{{ with secret "secret/data/ssl-certificates/webapp" }}{{ .Data.data.publickey }}{{ end }}{% endraw %}
-EOF
+        data = <<EOF{% raw %}
+{{ with secret "secret/data/ssl-certificates/webapp" }}{{ .Data.data.publickey }}{{ end }}
+{% endraw %}EOF
         destination = "local/ssl/tls.crt"
       }
 
