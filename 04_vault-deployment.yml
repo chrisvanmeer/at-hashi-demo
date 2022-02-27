@@ -322,9 +322,20 @@
             enabled: true
             state: started
 
+        - name: "HashiCorp - Vault : Check the Vault initialization status."
+          shell: "{{ vault_binary }} status"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
         - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
           pause:
-            seconds: 10s
+            seconds: 10
 
         - name: "HashiCorp - Vault : Check the Vault initialization status."
           shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
