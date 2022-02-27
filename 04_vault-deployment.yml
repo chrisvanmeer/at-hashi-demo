@@ -112,11 +112,6 @@
           when: certificate_exists.stat.exists
           register: certificate
 
-        - name: "HashiCorp - Vault - PKI : Read existing CA certificate."
-          slurp:
-            src: "{{ ssl_ca_certfile_path }}"
-          register: ca_certificate_slurp
-
         - name: "HashiCorp - Vault - PKI : Sign certificate with our CA."
           community.crypto.x509_certificate_pipe:
             content: "{{ (certificate.content | b64decode) if certificate_exists.stat.exists else omit }}"
@@ -149,23 +144,23 @@
       when: ansible_hostname in groups['servers']
       run_once: true
 
-    ## Distribute the CA certificate to the rest of the environment
-    # - name: "HashiCorp - Vault - PKI : Retrieve Content."
-    #   block:
-    #     - name: "HashiCorp - Vault - PKI : Retrieve CA certificate contents."
-    #       slurp:
-    #         src: "{{ vault_ssl_ca_dest }}"
-    #       register: ca_certificate_slurp
-    #     - name: "HashiCorp - Vault - PKI : Retrieve Server certificate contents."
-    #       slurp:
-    #         src: "{{ vault_ssl_cert_dest }}"
-    #       register: server_certificate_slurp
-    #     - name: "HashiCorp - Vault - PKI : Retrieve Server key contents."
-    #       slurp:
-    #         src: "{{ vault_ssl_key_dest }}"
-    #       register: server_key_slurp
-    #   delegate_to: "{{ groups['servers'] | first }}"
-    #   run_once: true
+    # Distribute the CA certificate to the rest of the environment
+    - name: "HashiCorp - Vault - PKI : Retrieve Content."
+      block:
+        - name: "HashiCorp - Vault - PKI : Retrieve CA certificate contents."
+          slurp:
+            src: "{{ ssl_ca_certfile_path }}"
+          register: ca_certificate_slurp
+        - name: "HashiCorp - Vault - PKI : Retrieve Server certificate contents."
+          slurp:
+            src: "{{ vault_ssl_cert_dest }}"
+          register: server_certificate_slurp
+        - name: "HashiCorp - Vault - PKI : Retrieve Server key contents."
+          slurp:
+            src: "{{ vault_ssl_key_dest }}"
+          register: server_key_slurp
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
 
     - name: "HashiCorp - Vault - PKI : Place Content."
       block:
