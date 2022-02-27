@@ -87,7 +87,7 @@ ansible-galaxy install -r requirements.yml
 ### Most noticable / important variables
 
 | Variable            | Default value                              | Description                                                                              |
-|---------------------|--------------------------------------------|------------------------------------------------------------------------------------------|
+| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | atcomputing_user    | `atcomputing`                              | The user that will be used as admin user of on each instance.                            |
 | public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file. |
 | multipass_instances | See the multipass `main.yml` variable file | The instances that we will be using.                                                     |
@@ -117,7 +117,7 @@ ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pa
 ### Most noticable / important variables
 
 | Variable                    | Default value                        | Description                                          |
-|-----------------------------|--------------------------------------|------------------------------------------------------|
+| --------------------------- | ------------------------------------ | ---------------------------------------------------- |
 | hashicorp_product_selection | `- consul`<br>`- nomad`<br>`- vault` | The products that will be installed.                 |
 | basic_apt_packages          | See variable file                    | Add / remove packages as you please for general use. |
 | token_directory             | `~/hashi-tokens`                     | This path will be used to store the tokens locally.  |
@@ -137,7 +137,7 @@ ansible-playbook 01_general-server-configuration.yml
 ### Most noticable / important variables
 
 | Variable  | Default value            | Description                          |
-|-----------|--------------------------|--------------------------------------|
+| --------- | ------------------------ | ------------------------------------ |
 | demo_fqdn | `demo.atcomputing.local` | The demo FQDN that we will be using. |
 
 ### Objective
@@ -149,7 +149,7 @@ This playbook will do the following:
 - Each server and client will do a certificate request to the first server.
 - The first server will issue the certificates and stores them on the servers / clients.
 - A certificate for the demo webapp will be requested and issued.
-- This certificate will be placed on all of the clients, so that Traefik (see Nomad Demo Jobs) can use it as an artifact.
+- This certificate will be placed in Vault later on, so that Traefik (see Nomad Demo Jobs) can use it as an artifact.
 
 ### Run playbook
 
@@ -162,7 +162,7 @@ ansible-playbook 02_public-key-infrastructure.yml
 ### Most noticable / important variables
 
 | Variable                          | Default value                              | Description                                                                                                               |
-|-----------------------------------|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| --------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | hashicorp_datacenter_name         | `velp`                                     | This datacenter name will be used in both Consul as Nomad (and in the demo jobs).                                         |
 | consul_bootstrap_token_local_path | `~/hashi-tokens/management.consul.token`   | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!**             |
 | consul_dns_token_local_path       | `~/hashi-tokens/dns-requests.consul.token` | This token will be used to register the Consul agents with, to keep allowing for DNS requests even though ACL is enabled. |
@@ -194,7 +194,7 @@ ansible-playbook 03_consul-deployment.yml
 ### Most noticable / important variables
 
 | Variable                              | Default value                               | Description                                                                                                   |
-|---------------------------------------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | vault_bootstrap_token_local_path      | `~/hashi-tokens/vault.consul.token`         | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 | vault_bootstrap_init_local_path       | `~/hashi-tokens/vault.master.keys`          | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 | vault_bootstrap_root_token_local_path | `~/hashi-tokens/management.vault.token`     | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
@@ -204,7 +204,9 @@ ansible-playbook 03_consul-deployment.yml
 
 This playbook will configure a Vault cluster, where the servers will be running the Vault agent in server mode. The clients will have the Vault agent installed for use as a client. Consul will be used for the storage the Vault backend because this makes the whole storage high available.
 
-The Vault agent listens on TCP port 8500.
+The Vault agent listens on TCP port 8200.
+
+After this playbook you should be able to reach the UI through `https://server1:8200` from your local workstation.
 
 ### Screenshot(s)
 
@@ -223,7 +225,7 @@ ansible-playbook 04_vault-deployment.yml
 ### Most noticable / important variables
 
 | Variable                         | Default value                                     | Description                                                                                                   |
-|----------------------------------|---------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| -------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | hashicorp_datacenter_name        | `velp`                                            | This datacenter name will be used in both Consul as Nomad (and in the demo jobs).                             |
 | nomad_bootstrap_token_local_path | `~/hashi-tokens/management.nomad.token`           | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 | nomad_operator_token_local_path  | `~/hashi-tokens/atcomputing-operator.nomad.token` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
@@ -275,7 +277,7 @@ ansible-playbook 06_nomad-vault-integration.yml
 ### Most noticable / important variables
 
 | Variable                  | Default value            | Description                                                                                                                      |
-|---------------------------|--------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | traefik_demo_docker_image | `traefik:v2.6`           | The version of Traefik we will be using. Be sure to stick to a v2 version, otherwise all config will be useless.                 |
 | at_demo_group_count       | `3`                      | The number of instances of the webapp that will be deployed and allocated. You can step up this number to create more instances. |
 | at_demo_env_favicon       | AT Computing favicon URL | The favicon that will be shown.                                                                                                  |
