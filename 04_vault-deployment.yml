@@ -322,6 +322,10 @@
             enabled: true
             state: started
 
+        - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
+          pause:
+            seconds: 10s
+
         - name: "HashiCorp - Vault : Check the Vault initialization status."
           shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
           environment:
