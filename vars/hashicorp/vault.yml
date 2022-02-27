@@ -19,8 +19,6 @@ vault_bootstrap_root_true_file: "{{ vault_data_directory }}/second_root_token.tr
 vault_ssl_cert_filename: "vault-cert.pem"
 vault_ssl_key_filename: "vault-key.pem"
 vault_ssl_ca_filename: "vault-ca.pem"
-# vault_ssl_ca_key_filename: "vault-ca-key.pem"
-# vault_ssl_ca_share_filename: "ATComputing_Vault_CA_Root.crt"
 
 vault_ssl_base_path: "/opt/vault/tls"
 vault_ssl_cert_dest: "{{ vault_ssl_base_path }}/{{ vault_ssl_cert_filename }}"
@@ -28,7 +26,6 @@ vault_ssl_key_dest: "{{ vault_ssl_base_path }}/{{ vault_ssl_key_filename }}"
 vault_ssl_ca_dest: "{{ vault_ssl_base_path }}/{{ vault_ssl_ca_filename }}"
 vault_ssl_ca_key_dest: "{{ vault_ssl_base_path }}/{{ vault_ssl_ca_key_filename }}"
 
-vault_ssl_ca_common_name: "AT Computing - Vault CA"
 vault_ssl_server_common_name: "vault.atcomputing.local"
 vault_ssl_server_subject_alt_names:
   - "DNS:{{ vault_ssl_server_common_name }}"

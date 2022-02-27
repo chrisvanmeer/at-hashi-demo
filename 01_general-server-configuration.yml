@@ -64,11 +64,6 @@
         dnsmasq_default_domain_server: "{{ current_dns_server.stdout_lines[0] }}"
       tags: dns
 
-    # - name: Debug the output.
-    #   debug:
-    #     var: dnsmasq_default_domain_server
-    #   tags: dns
-
     - name: Ensure new default dnsmasq config is in place.
       template:
         src: templates/dnsmasq/dnsmasq.conf.j2
@@ -140,31 +135,6 @@
     - name: Ensure the correct timezone is used.
       timezone:
         name: "{{ timezone }}"
-
-    # - name: Ensure first server has apache2 installed.
-    #   apt:
-    #     name: apache2
-    #     state: present
-    #   tags: apache2
-    #   when: ansible_hostname in groups['servers']
-    #   delegate_to: "{{ groups['servers'] | first }}"
-    #   run_once: true
-
-    # - name: Ensure other instances do not have apache2 installed.
-    #   apt:
-    #     name: apache2
-    #     state: absent
-    #   when: ansible_hostname != groups['servers'] | first
-    #   tags: apache2
-
-    # - name: Ensure apache2 is started and enabled.
-    #   service:
-    #     name: apache2
-    #     state: started
-    #     enabled: true
-    #   tags: apache2
-    #   delegate_to: "{{ groups['servers'] | first }}"
-    #   run_once: true
 
   handlers:
     - name: Restart dnsmasq
