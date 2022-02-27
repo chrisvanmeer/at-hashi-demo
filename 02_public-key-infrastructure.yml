@@ -196,6 +196,8 @@
       copy:
         dest: "{{ ssl_shared_dir }}/{{ ssl_ca_share_filename }}"
         content: "{{ ca_certificate_slurp.content | b64decode }}"
+        mode: 0644
 
     - name: "HashiCorp - PKI : Ensure certificate index is updated."
       command: "/usr/sbin/update-ca-certificates -f"
+      changed_when: false
