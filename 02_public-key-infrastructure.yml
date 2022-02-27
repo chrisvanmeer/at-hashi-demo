@@ -114,7 +114,7 @@
       block:
         - name: "HashiCorp - PKI : Retrieve CA certificate contents."
           slurp:
-            src: "{{ ssl_webapp_certfile_path }}"
+            src: "{{ ssl_ca_certfile_path }}"
           register: ca_certificate_slurp
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
