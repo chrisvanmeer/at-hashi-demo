@@ -600,7 +600,7 @@ None
 
 This playbook will unseal the vault after a service restart / server reboot.
 
-After this playbook you should be able to reach the UI through `http://server1:8500` from your local workstation.
+After this playbook you should be able to reach the UI through `https://server1:8200` from your local workstation.
 
 ### Run playbook
 
