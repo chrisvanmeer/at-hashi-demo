@@ -456,7 +456,7 @@
       run_once: true
 
     # VAULT CONTENT CONFIGURATION
-    - name: "HashiCorp - Vault : Admin user creation."
+    - name: "HashiCorp - Vault : Content creation."
       block:
         - name: "HashiCorp - Vault : Ensure admin-policy is in place."
           uri:
@@ -466,19 +466,6 @@
               X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
             body_format: json
             body: '{ "policy": "path \"*\" { capabilities = [\"create\", \"read\", \"update\", \"delete\", \"list\", \"sudo\"] }" }'
-            status_code:
-              - 200
-              - 204
-            validate_certs: false
-
-        - name: "HashiCorp - Vault : Ensure ssl-certificates-policy is in place."
-          uri:
-            url: "{{ vault_address }}/v1/sys/policy/{{ vault_ssl_certificates_policy_name }}"
-            method: PUT
-            headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
-            body_format: json
-            body: "{{ lookup('file','files/hashicorp/vault/vault-nomad-ssl-certificates-policy.json') }}"
             status_code:
               - 200
               - 204
@@ -577,23 +564,22 @@
               - 204
             validate_certs: false
 
-      when: ansible_hostname in groups['servers']
-      run_once: true
+        - name: "HashiCorp - Vault : Ensure that the KV secret engine is enabled and mounted."
+          uri:
+            url: "{{ vault_address }}/v1/sys/mounts/{{ vault_kv_path }}"
+            method: POST
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "type": "kv-v2" }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
 
-    - name: "HashiCorp - Vault : Ensure that the KV secret engine is enabled and mounted."
-      uri:
-        url: "{{ vault_address }}/v1/sys/mounts/{{ vault_kv_path }}"
-        method: POST
-        headers:
-          X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
-        body_format: json
-        body: '{ "type": "kv-v2" }'
-        status_code:
-          - 200
-          - 204
-        validate_certs: false
       when: ansible_hostname in groups['servers']
       run_once: true
+      tags: content
 
   handlers:
     - name: Restart Vault

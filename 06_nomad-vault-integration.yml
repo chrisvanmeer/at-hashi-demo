@@ -41,6 +41,16 @@
           delegate_to: localhost
           become: false
           run_once: true
+        - name: "HashiCorp - Nomad / Vault : Ensure ssl-certificates-policy is present."
+          command: "{{ vault_binary }} policy write ssl-certificates-policy vault-nomad-ssl-certificates-policy.hcl"
+          args:
+            chdir: "{{ nomad_data_directory }}"
+          environment:
+            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
         - name: "HashiCorp - Nomad / Vault : Ensure nomad-server-policy is present."
           command: "{{ vault_binary }} policy write nomad-server vault-nomad-server-policy.hcl"
           args:
