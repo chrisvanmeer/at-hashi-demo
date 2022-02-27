@@ -1,6 +1,8 @@
 ---
 ssl_key_dir: "/etc/ssl/private"
 ssl_cert_dir: "/etc/ssl/certs"
+ssl_shared_dir: "/usr/local/share/ca-certificates"
+ssl_ca_share_filename: "ATComputing_CA_Root.crt"
 
 ssl_ca_filename: "ATComputing-CA"
 ssl_ca_keyfile_path: "{{ ssl_key_dir }}/{{ ssl_ca_filename }}-key.pem"

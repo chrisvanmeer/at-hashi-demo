@@ -37,47 +37,47 @@
         recurse: true
       when: ansible_hostname in groups['servers']
 
-    - name: "HashiCorp - Vault - PKI : Check if CA file already exists."
-      stat:
-        path: "{{ vault_ssl_ca_dest }}"
-      register: ca_already_exists
-      when: ansible_hostname in groups['servers']
+    # - name: "HashiCorp - Vault - PKI : Check if CA file already exists."
+    #   stat:
+    #     path: "{{ vault_ssl_ca_dest }}"
+    #   register: ca_already_exists
+    #   when: ansible_hostname in groups['servers']
 
-    - name: "HashiCorp - Vault - PKI : Create PKI infrastructure on first server."
-      block:
-        - name: "HashiCorp - Vault - PKI : Create private key."
-          community.crypto.openssl_privatekey:
-            path: "{{ vault_ssl_ca_key_dest }}"
-            owner: "root"
-            group: "root"
-            mode: "0640"
+    # - name: "HashiCorp - Vault - PKI : Create PKI infrastructure on first server."
+    #   block:
+    #     - name: "HashiCorp - Vault - PKI : Create private key."
+    #       community.crypto.openssl_privatekey:
+    #         path: "{{ vault_ssl_ca_key_dest }}"
+    #         owner: "root"
+    #         group: "root"
+    #         mode: "0640"
 
-        - name: "HashiCorp - Vault - PKI : Create certificate signing request (CSR) for CA certificate."
-          community.crypto.openssl_csr_pipe:
-            privatekey_path: "{{ vault_ssl_ca_key_dest }}"
-            common_name: "{{ vault_ssl_ca_common_name }}"
-            use_common_name_for_san: false
-            basic_constraints:
-              - "CA:TRUE"
-            basic_constraints_critical: yes
-            key_usage:
-              - keyCertSign
-            key_usage_critical: true
-          register: ca_csr
+    #     - name: "HashiCorp - Vault - PKI : Create certificate signing request (CSR) for CA certificate."
+    #       community.crypto.openssl_csr_pipe:
+    #         privatekey_path: "{{ vault_ssl_ca_key_dest }}"
+    #         common_name: "{{ vault_ssl_ca_common_name }}"
+    #         use_common_name_for_san: false
+    #         basic_constraints:
+    #           - "CA:TRUE"
+    #         basic_constraints_critical: yes
+    #         key_usage:
+    #           - keyCertSign
+    #         key_usage_critical: true
+    #       register: ca_csr
 
-        - name: "HashiCorp - Vault - PKI : Create self-signed CA certificate from CSR."
-          community.crypto.x509_certificate:
-            path: "{{ vault_ssl_ca_dest }}"
-            csr_content: "{{ ca_csr.csr }}"
-            privatekey_path: "{{ vault_ssl_ca_key_dest }}"
-            provider: selfsigned
-          register: ca_certificate
+    #     - name: "HashiCorp - Vault - PKI : Create self-signed CA certificate from CSR."
+    #       community.crypto.x509_certificate:
+    #         path: "{{ vault_ssl_ca_dest }}"
+    #         csr_content: "{{ ca_csr.csr }}"
+    #         privatekey_path: "{{ vault_ssl_ca_key_dest }}"
+    #         provider: selfsigned
+    #       register: ca_certificate
 
-      when:
-        - not ca_already_exists.stat.exists
-        - ansible_hostname in groups['servers']
-      delegate_to: "{{ groups['servers'] | first }}"
-      run_once: true
+    #   when:
+    #     - not ca_already_exists.stat.exists
+    #     - ansible_hostname in groups['servers']
+    #   delegate_to: "{{ groups['servers'] | first }}"
+    #   run_once: true
 
     ## Server certificate
     - name: "HashiCorp - Vault - PKI : Create PKI infrastructure on first server."
@@ -112,15 +112,30 @@
           when: certificate_exists.stat.exists
           register: certificate
 
+        - name: "HashiCorp - Vault - PKI : Read existing CA certificate."
+          slurp:
+            src: "{{ ssl_ca_certfile_path }}"
+          when: ca_certificate_slurp.stat.exists
+          register: certificate
+
         - name: "HashiCorp - Vault - PKI : Sign certificate with our CA."
           community.crypto.x509_certificate_pipe:
             content: "{{ (certificate.content | b64decode) if certificate_exists.stat.exists else omit }}"
             csr_content: "{{ csr.csr }}"
             provider: ownca
-            ownca_path: "{{ vault_ssl_ca_dest }}"
-            ownca_privatekey_path: "{{ vault_ssl_ca_key_dest }}"
-            ownca_not_after: "+1826d"
+            ownca_path: "{{ ssl_ca_certfile_path }}"
+            ownca_privatekey_path: "{{ ssl_ca_keyfile_path }}"
           register: certificate
+
+        # - name: "HashiCorp - Vault - PKI : Sign certificate with our CA."
+        #   community.crypto.x509_certificate_pipe:
+        #     content: "{{ (certificate.content | b64decode) if certificate_exists.stat.exists else omit }}"
+        #     csr_content: "{{ csr.csr }}"
+        #     provider: ownca
+        #     ownca_path: "{{ vault_ssl_ca_dest }}"
+        #     ownca_privatekey_path: "{{ vault_ssl_ca_key_dest }}"
+        #     ownca_not_after: "+1826d"
+        #   register: certificate
 
         - name: "HashiCorp - Vault - PKI : Write certificate file."
           copy:
@@ -136,22 +151,22 @@
       run_once: true
 
     ## Distribute the CA certificate to the rest of the environment
-    - name: "HashiCorp - Vault - PKI : Retrieve Content."
-      block:
-        - name: "HashiCorp - Vault - PKI : Retrieve CA certificate contents."
-          slurp:
-            src: "{{ vault_ssl_ca_dest }}"
-          register: ca_certificate_slurp
-        - name: "HashiCorp - Vault - PKI : Retrieve Server certificate contents."
-          slurp:
-            src: "{{ vault_ssl_cert_dest }}"
-          register: server_certificate_slurp
-        - name: "HashiCorp - Vault - PKI : Retrieve Server key contents."
-          slurp:
-            src: "{{ vault_ssl_key_dest }}"
-          register: server_key_slurp
-      delegate_to: "{{ groups['servers'] | first }}"
-      run_once: true
+    # - name: "HashiCorp - Vault - PKI : Retrieve Content."
+    #   block:
+    #     - name: "HashiCorp - Vault - PKI : Retrieve CA certificate contents."
+    #       slurp:
+    #         src: "{{ vault_ssl_ca_dest }}"
+    #       register: ca_certificate_slurp
+    #     - name: "HashiCorp - Vault - PKI : Retrieve Server certificate contents."
+    #       slurp:
+    #         src: "{{ vault_ssl_cert_dest }}"
+    #       register: server_certificate_slurp
+    #     - name: "HashiCorp - Vault - PKI : Retrieve Server key contents."
+    #       slurp:
+    #         src: "{{ vault_ssl_key_dest }}"
+    #       register: server_key_slurp
+    #   delegate_to: "{{ groups['servers'] | first }}"
+    #   run_once: true
 
     - name: "HashiCorp - Vault - PKI : Place Content."
       block:
@@ -180,13 +195,13 @@
         - ansible_hostname in groups['servers']
         - ansible_hostname != groups['servers'] | first
 
-    - name: "HashiCorp - Vault - PKI : Ensure the CA certificate is copied to the local certs directory."
-      copy:
-        dest: "{{ vault_ssl_local_dir }}/{{ vault_ssl_ca_share_filename }}"
-        content: "{{ ca_certificate_slurp.content | b64decode }}"
+    # - name: "HashiCorp - Vault - PKI : Ensure the CA certificate is copied to the local certs directory."
+    #   copy:
+    #     dest: "{{ vault_ssl_local_dir }}/{{ vault_ssl_ca_share_filename }}"
+    #     content: "{{ ca_certificate_slurp.content | b64decode }}"
 
-    - name: "HashiCorp - Vault - PKI : Ensure certificate index is updated."
-      command: "/usr/sbin/update-ca-certificates -f"
+    # - name: "HashiCorp - Vault - PKI : Ensure certificate index is updated."
+    #   command: "/usr/sbin/update-ca-certificates -f"
 
     # VAULT CONFIGURATION
     - name: "HashiCorp - Vault : Configuration."
