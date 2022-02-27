@@ -115,8 +115,7 @@
         - name: "HashiCorp - Vault - PKI : Read existing CA certificate."
           slurp:
             src: "{{ ssl_ca_certfile_path }}"
-          when: ca_certificate_slurp.stat.exists
-          register: certificate
+          register: ca_certificate_slurp
 
         - name: "HashiCorp - Vault - PKI : Sign certificate with our CA."
           community.crypto.x509_certificate_pipe:
