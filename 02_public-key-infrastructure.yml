@@ -118,6 +118,7 @@
           register: ca_certificate_slurp
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
+          tags: shared
 
         - name: "HashiCorp - PKI : Place certificate in default location."
           copy:
