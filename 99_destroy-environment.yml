@@ -27,18 +27,6 @@
             state: absent
           with_items: "{{ groups.all }}"
 
-        # - name: Remove items from known hosts file based on IP.
-        #   known_hosts:
-        #     name: "{{ ansible_default_ipv4.address }}"
-        #     state: absent
-        #   with_items: "{{ groups.all }}"
-
-        # - name: Remove items from known hosts file based on name.
-        #   known_hosts:
-        #     name: "{{ item }}"
-        #     state: absent
-        #   with_items: "{{ groups.all }}"
-
         - name: Remove items from known hosts file based on IP.
           command: 'ssh-keygen -f "~/.ssh/known_hosts" -R "{{ hostvars[item].ansible_host }}"'
           become: false
