@@ -173,7 +173,7 @@ This playbook will configure a Consul cluster, where the servers will be running
 
 The Consul agent listens on both server and client on TCP port 8200. The servers will have the UI enabled.
 
-After this playbook you should be able to reach the UI through `https://server1:8200` from your local workstation.
+After this playbook you should be able to reach the UI through `http://server1:8500` from your local workstation.
 
 ### Run playbook
 
@@ -206,7 +206,7 @@ This playbook will configure a Vault cluster, where the servers will be running 
 
 The Vault agent listens on TCP port 8200.
 
-After this playbook you should be able to reach the UI through `https://server1:8200` from your local workstation.
+After this playbook you should be able to reach the UI through `https://server1:8200` or `https://vault.atcomputing.local` from your local workstation.
 
 ### Screenshot(s)
 
@@ -600,7 +600,7 @@ None
 
 This playbook will unseal the vault after a service restart / server reboot.
 
-After this playbook you should be able to reach the UI through `https://server1:8200` from your local workstation.
+After this playbook you should be able to reach the UI through `https://server1:8200` or `https://vault.atcomputing.local` from your local workstation.
 
 ### Run playbook
 
