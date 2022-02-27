@@ -6,6 +6,7 @@
   vars_files:
     - vars/general/main.yml
     - vars/multipass/main.yml
+    - vars/hashicorp/general.yml
     - vars/hashicorp/ssl.yml
 
   tasks:
@@ -57,6 +58,15 @@
       tags: inventory
       file:
         path: inventory
+        state: absent
+      delegate_to: localhost
+      run_once: true
+
+    - name: Remove tokens
+      tags: tokens
+      become: false
+      file:
+        path: "{{ token_directory }}"
         state: absent
       delegate_to: localhost
       run_once: true
