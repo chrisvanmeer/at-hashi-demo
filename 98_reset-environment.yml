@@ -264,3 +264,12 @@
             force_absent: true
           loop: "{{ docker_image_info.images | map(attribute='Id') | list }}"
       when: ansible_hostname in groups['clients']
+
+    - name: TOKENS
+      tags: tokens
+      become: false
+      file:
+        path: "{{ token_directory }}"
+        state: absent
+      delegate_to: localhost
+      run_once: true
