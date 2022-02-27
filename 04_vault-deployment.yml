@@ -162,15 +162,18 @@
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
+    - name: "HashiCorp - Vault - PKI : Place CA certificate in default location."
+      copy:
+        dest: "{{ vault_ssl_ca_dest }}"
+        content: "{{ ca_certificate_slurp.content | b64decode }}"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+      when:
+        - ansible_hostname in groups['servers']
+
     - name: "HashiCorp - Vault - PKI : Place Content."
       block:
-        - name: "HashiCorp - Vault - PKI : Place CA certificate in default location."
-          copy:
-            dest: "{{ vault_ssl_ca_dest }}"
-            content: "{{ ca_certificate_slurp.content | b64decode }}"
-            owner: "root"
-            group: "root"
-            mode: "0644"
         - name: "HashiCorp - Vault - PKI : Place certificate in default location."
           copy:
             dest: "{{ vault_ssl_cert_dest }}"
