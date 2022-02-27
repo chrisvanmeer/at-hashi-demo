@@ -127,7 +127,7 @@
           when: ansible_hostname != groups['servers'] | first
 
     ## Distribute the WebApp cert + keyfile the webserver on the first server.
-    # - name: "HashiCorp - PKI : WebApp SSL file disitribution preparations."
+    # - name: "HashiCorp - PKI : WebApp SSL file distribution preparations."
     #   block:
     #     - name: "HashiCorp - PKI : Set the webapp certfile contents as a fact."
     #       set_fact:
