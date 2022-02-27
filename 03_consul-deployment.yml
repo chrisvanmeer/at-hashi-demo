@@ -218,7 +218,7 @@
             enabled: true
             state: started
 
-        - name: "HashiCorp - Consul : A little pause to allow for the consul members to find each other."
+        - name: "HashiCorp - Consul : A little pause to allow for the consul members to find each other. You could check with 'consul members' on a random server to see if there is output."
           pause:
             seconds: "{{ consul_pause_seconds }}"
 
