@@ -332,6 +332,7 @@
           when: ansible_hostname in groups['servers']
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
+          tags: init
 
         - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
           pause:
