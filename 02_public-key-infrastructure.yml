@@ -10,18 +10,6 @@
     - vars/hashicorp/ssl.yml
 
   tasks:
-    - name: "HashiCorp - PKI : Ensure certificate path is present and has the right permissions."
-      file:
-        path: "{{ item.name }}"
-        state: directory
-        mode: "{{ item.mode }}"
-      with_items:
-        - name: "{{ ssl_key_dir }}"
-          mode: "0700"
-        - name: "{{ ssl_cert_dir }}"
-          mode: "0755"
-      tags: rights
-
     - name: "HashiCorp - PKI : Check if CA file already exists."
       stat:
         path: "{{ ssl_ca_certfile_path }}"
