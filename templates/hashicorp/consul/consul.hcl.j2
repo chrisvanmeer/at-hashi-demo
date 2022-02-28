@@ -22,6 +22,12 @@ bind_addr = "{{ ansible_host }}"
 check_update_interval = "0s"
 {% endif %}
 
+log_level = "{{ consul_log_level }}"
+log_json = {{ consul_log_json }}
+log_file = "{{ consul_log_directory }}/"
+log_rotate_duration = "{{ consul_log_rotate_duration }}"
+log_rotate_max_files = {{ consul_log_rotate_max_files }}
+
 acl = {
   enabled = true
   default_policy = "allow"
