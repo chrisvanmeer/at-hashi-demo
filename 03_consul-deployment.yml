@@ -29,6 +29,14 @@
         owner: "{{ consul_data_directory_user }}"
         group: "{{ consul_data_directory_group }}"
 
+    - name: "HashiCorp - Consul : Ensure log directory is present."
+      file:
+        path: "{{ consul_log_directory }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ consul_log_directory_owner }}"
+        group: "{{ consul_data_directory_group }}"
+
     - name: "HashiCorp - Consul : Ensure Consul is excluded from the unattended upgrades."
       lineinfile:
         path: "/usr/share/unattended-upgrades/50unattended-upgrades"
@@ -255,23 +263,85 @@
               become: false
               delegate_to: localhost
 
-            - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
-              shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
-              changed_when: false
-              become: false
-              delegate_to: localhost
-              register: consul_acl_bootstrap_output
-
-            - name: "HashiCorp - Consul - ACL : Set the Secret ID as a fact."
-              set_fact:
-                consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
-
           when:
             - ansible_hostname in groups['servers']
             - not consul_bootstrapped.stat.exists
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
+    - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
+      shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
+      changed_when: false
+      become: false
+      delegate_to: localhost
+      register: consul_acl_bootstrap_output
+
+    - name: "HashiCorp - Consul - ACL : Set the Secret ID as a fact."
+      set_fact:
+        consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
+
+    # AGENT TOKEN
+    - name: "HashiCorp - Consul - Agent."
+      block:
+        - name: "HashiCorp - Consul - Agent : Ensure consul-agent-policy file is present on the system."
+          copy:
+            src: "{{ consul_agent_policy_file_local }}"
+            dest: "{{ consul_agent_policy_file_remote }}"
+            mode: 0644
+
+        - name: "HashiCorp - Consul - Agent : Ensure consul-agent policy is registered."
+          command: "{{ consul_binary }} acl policy create -name {{ consul_agent_policy_name }} -rules @{{ consul_agent_policy_file_name }}"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          args:
+            chdir: "{{ consul_data_directory }}/"
+          changed_when: false
+          ignore_errors: true
+
+        - name: "HashiCorp - Consul - Agent : Ensure consul agent token is generated."
+          command: "{{ consul_binary }} acl token create -description '{{ consul_agent_policy_description }}' -policy-name {{ consul_agent_policy_name }}"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          changed_when: false
+          register: agent_policy_token_output_raw
+
+        - name: "HashiCorp - Consul - Agent : Store consul agent token local for safekeeping."
+          copy:
+            content: "{{ agent_policy_token_output_raw.stdout }}"
+            dest: "{{ consul_agent_token_local_path }}"
+            mode: 0644
+          become: false
+          delegate_to: localhost
+
+        - name: "HashiCorp - Consul - Agent : Retrieve Secret ID from agent token output."
+          shell: "awk '/SecretID/ {print $2}' {{ consul_agent_token_local_path }}"
+          changed_when: false
+          become: false
+          delegate_to: localhost
+          register: consul_agent_token_output
+
+        - name: "HashiCorp - Consul - Agent : Create a fact of the agent token."
+          set_fact:
+            consul_agent_token: "{{ consul_agent_token_output.stdout }}"
+
+        - name: "HashiCorp - Consul - Agent : Cleanup the placed policy file."
+          file:
+            path: "{{ consul_agent_policy_file_remote }}"
+            state: absent
+
+      when:
+        - ansible_hostname in groups['servers']
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
+
+    - name: "HashiCorp - Consul - Agent : Ensure agent token is part of the configuration."
+      lineinfile:
+        path: "{{ consul_etc_directory }}/consul.hcl"
+        regexp: '#agent = "<WILL BE FILLED LATER>"'
+        line: '    agent = "{{ consul_agent_token }}"'
+      notify: Restart Consul
+
+    # DEFAULT DENY
     - name: "HashiCorp - Consul - ACL : Ensure default ACL is set to deny."
       lineinfile:
         path: "{{ consul_etc_directory }}/consul.hcl"

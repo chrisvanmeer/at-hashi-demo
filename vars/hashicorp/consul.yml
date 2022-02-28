@@ -6,7 +6,15 @@ consul_data_directory_user: "consul"
 consul_data_directory_group: "consul"
 consul_service_name: "consul"
 consul_systemd_service_file: "/etc/systemd/system/consul.service"
+
+consul_log_level: "info"
+consul_log_json: "false"
 consul_log_directory: "/var/log/consul"
+consul_log_directory_owner: "consul"
+consul_log_directory_group: "consul"
+consul_log_rotate_duration: "86400s"
+consul_log_rotate_max_files: "7"
+
 consul_pause_seconds: "60"
 
 consul_tls_ca_certificate_days: "3650"
@@ -26,6 +34,13 @@ consul_cni_sysctl_settings:
   - key: "net.bridge.bridge-nf-call-iptables"
     value: "1"
 consul_cni_sysctl_dest_file: "/etc/sysctl.d/20-consul-service-mesh.conf"
+
+consul_agent_policy_file_name: "consul-agent-policy.hcl"
+consul_agent_policy_file_local: "files/hashicorp/consul/{{ consul_agent_policy_file_name }}"
+consul_agent_policy_file_remote: "{{ consul_data_directory }}/{{ consul_agent_policy_file_name }}"
+consul_agent_policy_name: "consul-agent"
+consul_agent_policy_description: "Token for Consul Agents"
+consul_agent_token_local_path: "{{ token_directory }}/agent.consul.token"
 
 consul_dns_policy_file_name: "dns-request-policy.hcl"
 consul_dns_policy_file_local: "files/hashicorp/consul/{{ consul_dns_policy_file_name }}"
