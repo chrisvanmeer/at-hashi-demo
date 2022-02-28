@@ -16,7 +16,8 @@ AmbientCapabilities=CAP_IPC_LOCK
 Capabilities=CAP_IPC_LOCK+ep
 CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
 NoNewPrivileges=yes
-ExecStart={{ vault_binary }} server -config={{ vault_etc_directory }}/vault.hcl ExecReload=/bin/kill --signal HUP $MAINPID
+ExecStart={{ vault_binary }} server -config={{ vault_etc_directory }}/vault.hcl
+ExecReload=/bin/kill --signal HUP $MAINPID
 KillMode=process
 KillSignal=SIGINT
 Restart=on-failure
