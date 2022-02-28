@@ -18,6 +18,14 @@
         owner: "{{ nomad_data_directory_user }}"
         group: "{{ nomad_data_directory_group }}"
 
+    - name: "HashiCorp - Nomad : Ensure log directory is present."
+      file:
+        path: "{{ nomad_log_directory }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ nomad_log_directory_user }}"
+        group: "{{ nomad_log_directory_group }}"
+
     # CONSUL ACL
     - name: "HashiCorp - Nomad - Consul : Retrieve Consul Secret ID from bootstrap output."
       shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
