@@ -1,6 +1,12 @@
 datacenter = "{{ hashicorp_datacenter_name }}"
 data_dir = "{{ nomad_data_directory }}"
 
+log_level = "{{ nomad_log_level }}"
+log_json  = {{ nomad_log_json }}
+log_file = "{{ nomad_log_directory }}/"
+log_rotate_duration = "{{ nomad_log_rotate_duration }}"
+log_rotate_max_files = {{ nomad_log_rotate_max_files }}
+
 consul = {
 {% if ansible_hostname in groups['servers'] %}
   token = "{{ nomad_server_token }}"
