@@ -9,7 +9,7 @@ ConditionFileNotEmpty={{ consul_etc_directory }}/consul.hcl
 Type=exec
 User=consul
 Group=consul
-ExecStart={{ consul_binary }} agent -config-dir={{ consul_etc_directory }}/ -log-level={{ consul_log_level }} -log-json={{ consul_log_json }} -log-file={{ consul_log_directory }}/ -log-rotate-duration={{ consul_log_rotate_duration }} -log-rotate-max-files={{ consul_log_rotate_max_files }}
+ExecStart={{ consul_binary }} agent -config-dir={{ consul_etc_directory }}/
 ExecReload=/bin/kill --signal HUP $MAINPID
 KillMode=process
 KillSignal=SIGTERM
