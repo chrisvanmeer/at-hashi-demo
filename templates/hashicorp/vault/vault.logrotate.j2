@@ -1,0 +1,14 @@
+{{ vault_log_location }} {
+  rotate {{ vault_log_rotate_count }}
+  {{ vault_log_rotation_interval }}
+  notifempty
+  missingok
+  compress
+  delaycompress
+  postrotate
+    /usr/bin/systemctl reload {{ vault_service_name }} 2> /dev/null || true
+  endscript
+  extension {{ vault_log_extension }}
+  dateext
+  dateformat {{ vault_log_dateformat }}
+}
