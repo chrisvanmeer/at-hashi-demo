@@ -139,7 +139,7 @@
             webapp_cert: "{{ certificate.content | b64decode }}"
 
         - name: "HashiCorp - Nomad / Vault : Ensure webapp certificate contents are present."
-          command: '{{ vault_binary }} kv put {{ vault_kv_path }}/ssl-certificates/webapp privatekey="{{ webapp_key }}" publickey="{{ webapp_cert }}"'
+          command: '{{ vault_binary }} kv put {{ vault_kv_path }}/ssl-certificates/webapp privatekey="{{ webapp_key }}" certificate="{{ webapp_cert }}"'
           environment:
             VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
             VAULT_ADDR: "{{ vault_address }}"
