@@ -176,6 +176,8 @@
             state: absent
         - name: VAULT - Remove Vault data from Consul.
           command: "{{ consul_binary }} kv delete -recurse {{ vault_service_name }}/"
+          environment:
+            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           failed_when: false
         - name: VAULT - Remove Policy data from Consul.
           command: "{{ consul_binary }} acl policy delete -name {{ vault_consul_service_name }}"
