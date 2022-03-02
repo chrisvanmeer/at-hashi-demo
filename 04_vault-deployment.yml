@@ -20,6 +20,15 @@
         group: "{{ vault_data_directory_group }}"
       when: ansible_hostname in groups['servers']
 
+    - name: "HashiCorp - Vault : Ensure log directory is present."
+      file:
+        path: "{{ vault_log_directory }}"
+        state: directory
+        mode: '0755'
+        owner: "{{ vault_log_directory_user }}"
+        group: "{{ vault_log_directory_group }}"
+      when: ansible_hostname in groups['servers']
+
     - name: "HashiCorp - Vault : Ensure Vault is excluded from the unattended upgrades."
       lineinfile:
         path: "/usr/share/unattended-upgrades/50unattended-upgrades"
