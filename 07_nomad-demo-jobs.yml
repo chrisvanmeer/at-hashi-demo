@@ -12,7 +12,7 @@
 
   tasks:
 
-    - name: "HashiCorp - Nomad : Retrieve Operator Secret ID."
+    - name: "HashiCorp - Nomad - Jobs : Retrieve Operator Secret ID."
       shell: "awk '/Secret ID/ {print $4}' {{ nomad_operator_token_local_path }}"
       changed_when: false
       become: false
