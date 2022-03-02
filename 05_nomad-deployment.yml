@@ -15,7 +15,7 @@
         path: "{{ nomad_data_directory }}"
         state: directory
         mode: "0755"
-        owner: "{{ nomad_data_directory_user }}"
+        owner: "{{ nomad_data_directory_owner }}"
         group: "{{ nomad_data_directory_group }}"
 
     - name: "HashiCorp - Nomad : Ensure log directory is present."
@@ -23,7 +23,7 @@
         path: "{{ nomad_log_directory }}"
         state: directory
         mode: "0755"
-        owner: "{{ nomad_log_directory_user }}"
+        owner: "{{ nomad_log_directory_owner }}"
         group: "{{ nomad_log_directory_group }}"
 
     # CONSUL ACL
@@ -162,7 +162,7 @@
         src: "templates/hashicorp/nomad/nomad.hcl.j2"
         dest: "{{ nomad_etc_directory }}/nomad.hcl"
         mode: "0644"
-        owner: "{{ nomad_data_directory_user }}"
+        owner: "{{ nomad_data_directory_owner }}"
         group: "{{ nomad_data_directory_group }}"
 
     - name: "HashiCorp - Nomad : Ensure configuration is present on the server."
@@ -170,7 +170,7 @@
         src: "templates/hashicorp/nomad/server.hcl.j2"
         dest: "{{ nomad_etc_directory }}/server.hcl"
         mode: "0644"
-        owner: "{{ nomad_data_directory_user }}"
+        owner: "{{ nomad_data_directory_owner }}"
         group: "{{ nomad_data_directory_group }}"
       notify: Restart Nomad
       when: ansible_hostname in groups['servers']
@@ -180,7 +180,7 @@
         src: "templates/hashicorp/nomad/client.hcl.j2"
         dest: "{{ nomad_etc_directory }}/client.hcl"
         mode: "0644"
-        owner: "{{ nomad_data_directory_user }}"
+        owner: "{{ nomad_data_directory_owner }}"
         group: "{{ nomad_data_directory_group }}"
       notify: Restart Nomad
       when: ansible_hostname in groups['clients']
