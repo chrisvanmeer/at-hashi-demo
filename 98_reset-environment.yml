@@ -92,6 +92,10 @@
           file:
             path: "{{ nomad_data_directory }}"
             state: absent
+        - name: NOMAD - Delete nomad log directory.
+          file:
+            path: "{{ nomad_log_directory }}"
+            state: absent
         - name: NOMAD - Remove Nomad Server policy from Consul.
           command: "{{ consul_binary }} acl policy delete -name {{ nomad_consul_server_service_name }}"
           environment:
@@ -170,6 +174,14 @@
           file:
             path: "{{ vault_data_directory }}"
             state: absent
+        - name: VAULT - Delete vault log directory.
+          file:
+            path: "{{ vault_log_directory }}"
+            state: absent
+        - name: VAULT - Delete vault logrotate file.
+          file:
+            path: "{{ vault_log_rotate_dir }}/{{ vault_log_rotate_filename }}"
+            state: absent
         - name: VAULT - Delete vault TLS directory.
           file:
             path: "{{ vault_tls_directory }}"
@@ -236,6 +248,10 @@
         - name: CONSUL - Delete consul data directory.
           file:
             path: "{{ consul_data_directory }}"
+            state: absent
+        - name: CONSUL - Delete consul log directory.
+          file:
+            path: "{{ consul_log_directory }}"
             state: absent
 
     - name: DOCKER
