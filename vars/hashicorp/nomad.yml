@@ -2,7 +2,7 @@
 nomad_binary: "/usr/bin/nomad"
 nomad_etc_directory: "/etc/nomad.d"
 nomad_data_directory: "/opt/nomad"
-nomad_data_directory_user: "root"
+nomad_data_directory_owner: "root"
 nomad_data_directory_group: "root"
 nomad_service_name: "nomad"
 nomad_systemd_service_file: "/etc/systemd/system/nomad.service"
