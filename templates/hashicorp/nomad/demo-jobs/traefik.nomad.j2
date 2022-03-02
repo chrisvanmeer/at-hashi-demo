@@ -24,15 +24,19 @@ job "traefik" {
       port "api" {
         static = 8081
       }
+
+      port "health" {
+        static = 8082
+      }
     }
 
     service {
       name = "traefik"
 
       check {
-        name     = "alive"
-        type     = "tcp"
-        port     = "http"
+        type     = "http"
+        path     = "/ping"
+        port     = "health"
         interval = "10s"
         timeout  = "2s"
       }
@@ -71,7 +75,7 @@ job "traefik" {
             [entryPoints.https.http]
               middlewares = ["hsts@file"]
               [entryPoints.https.http.tls]
-            [entryPoints.traefik]
+            [entryPoints.api]
             address = ":8081"
             [entryPoints.ping]
             address = ":8082"
