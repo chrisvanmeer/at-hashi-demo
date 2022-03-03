@@ -54,6 +54,7 @@ job "traefik" {
           "local/ssl:/etc/traefik/ssl",
         ]
       }
+
       vault {
         policies      = ["ssl-certificates-policy"]
         change_mode   = "signal"
@@ -61,6 +62,7 @@ job "traefik" {
       }
 
       template {
+        destination = "local/traefik.yml"
         data = <<-EOH
         entryPoints:
           http:
@@ -108,7 +110,6 @@ job "traefik" {
         accessLog:
           format: json
         EOH
-        destination = "local/traefik.yml"
       }
 
       template {
