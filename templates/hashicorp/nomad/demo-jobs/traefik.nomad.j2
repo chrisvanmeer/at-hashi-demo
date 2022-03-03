@@ -62,58 +62,53 @@ job "traefik" {
 
       template {
         data = <<-EOH
-        [entryPoints]
-            [entryPoints.http]
-            address = ":80"
-            [entryPoints.http.http.redirections]
-              [entryPoints.http.http.redirections.entryPoint]
-                to = "https"
-                scheme = "https"
-                permanent = true
-            [entryPoints.https]
-            address = ":443"
-            [entryPoints.https.http]
-              middlewares = ["hsts@file"]
-              [entryPoints.https.http.tls]
-            [entryPoints.traefik]
-            address = ":8081"
-            [entryPoints.ping]
-            address = ":8082"
-
-        [tls.options]
-          [tls.options.default]
-            sniStrict = true
-            minVersion = "VersionTLS12"
-
-        [api]
-            dashboard = true
-            insecure  = true
-        [pilot]
-            dashboard = false
-
-        [providers]
-          [providers.file]
-            directory = "/local/rules"
-            watch = true
-          [providers.consulCatalog]
-              prefix           = "traefik"
-              exposedByDefault = false
-
-              [providers.consulCatalog.endpoint]
-                address = "127.0.0.1:8500"
-                scheme  = "http"
-
-        [ping]
-          entryPoint = "ping"
-
-        [log]
-          format = "json"
-
-        [accessLog]
-          format = "json"
-
+        entryPoints:
+          http:
+            address: :80
+            http:
+              redirections:
+                entryPoint:
+                  to: https
+                  scheme: https
+                  permanent: true
+          https:
+            address: :443
+            http:
+              middlewares:
+                - hsts@file
+              tls: {}
+          traefik:
+            address: :8081
+          ping:
+            address: :8082
+        tls:
+          options:
+            default:
+              sniStrict: true
+              minVersion: VersionTLS12
+        api:
+          dashboard: true
+          insecure: true
+        pilot:
+          dashboard: false
+        providers:
+          file:
+            directory: /local/rules
+            watch: true
+          consulCatalog:
+            prefix: traefik
+            exposedByDefault: false
+            endpoint:
+              address: 127.0.0.1:8500
+              scheme: http
+        ping:
+          entryPoint: ping
+        log:
+          format: json
+        accessLog:
+          format: json
         EOH
-        destination = "local/traefik.toml"
+        destination = "local/traefik.yml"
       }
 
       template {
