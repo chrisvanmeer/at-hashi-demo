@@ -21,7 +21,7 @@ job "traefik" {
         static = 443
       }
 
-      port "api" {
+      port "traefik" {
         static = 8081
       }
 
@@ -75,7 +75,7 @@ job "traefik" {
             [entryPoints.https.http]
               middlewares = ["hsts@file"]
               [entryPoints.https.http.tls]
-            [entryPoints.api]
+            [entryPoints.traefik]
             address = ":8081"
             [entryPoints.ping]
             address = ":8082"
