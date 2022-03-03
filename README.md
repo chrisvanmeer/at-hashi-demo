@@ -351,8 +351,12 @@ job "traefik" {
         static = 443
       }
 
-      port "api" {
+      port "traefik" {
         static = 8081
+      }
+
+      port "health" {
+        static = 8082
       }
     }
 
@@ -360,9 +364,9 @@ job "traefik" {
       name = "traefik"
 
       check {
-        name     = "alive"
-        type     = "tcp"
-        port     = "http"
+        type     = "http"
+        path     = "/ping"
+        port     = "health"
         interval = "10s"
         timeout  = "2s"
       }
@@ -372,27 +376,13 @@ job "traefik" {
 
       driver = "docker"
       config {
-        image        = "traefik:v2.6"
+        image        = "{{ traefik_demo_docker_image }}"
         network_mode = "host"
 
         volumes = [
           "local/traefik.toml:/etc/traefik/traefik.toml",
           "local/ssl:/etc/traefik/ssl",
         ]
-      }
-
-      template {
-        data = <<EOF
-{{ with secret "secret/ssl-certificates/webapp" }}{{ .Data.data.privatekey }}{{ end }}
-EOF
-        destination = "local/ssl/tls.key"
-      }
-
-      template {
-        data = <<EOF
-{{ with secret "secret/ssl-certificates/webapp" }}{{ .Data.data.publickey }}{{ end }}
-EOF
-        destination = "local/ssl/tls.crt"
       }
 
       vault {
@@ -402,46 +392,95 @@ EOF
       }
 
       template {
-        data = <<EOF
-[entryPoints]
-  [entryPoints.http]
-    address = ":80"
-  [entryPoints.https]
-    address = ":443"
-  [entryPoints.traefik]
-    address = ":8081"
-
-[api]
-  dashboard = true
-  insecure  = true
-
-# Enable Consul Catalog configuration backend.
-[providers.consulCatalog]
-  prefix           = "traefik"
-  exposedByDefault = false
-
-  [providers.consulCatalog.endpoint]
-    address = "127.0.0.1:8500"
-    scheme  = "http"
-
-# Dynamic rules go hashicorp_datacenter_name
-[providers.file]
-  directory = "/local/rules"
-  watch = true
-
-EOF
-
-        destination = "local/traefik.toml"
+        destination = "local/traefik.yml"
+        data = <<-EOH
+        entryPoints:
+          http:
+            address: :80
+            http:
+              redirections:
+                entryPoint:
+                  to: https
+                  scheme: https
+                  permanent: true
+          https:
+            address: :443
+            http:
+              middlewares:
+                - hsts@file
+              tls: {}
+          traefik:
+            address: :8081
+          ping:
+            address: :8082
+        tls:
+          options:
+            default:
+              sniStrict: true
+              minVersion: VersionTLS12
+        api:
+          dashboard: true
+          insecure: true
+        pilot:
+          dashboard: false
+        providers:
+          file:
+            directory: /local/rules
+            watch: true
+          consulCatalog:
+            prefix: traefik
+            exposedByDefault: false
+            endpoint:
+              address: 127.0.0.1:8500
+              scheme: http
+        ping:
+          entryPoint: ping
+        log:
+          format: json
+        accessLog:
+          format: json
+        EOH
       }
 
       template {
-        data = <<EOF
-tls:
-  certificates:
-    - certFile: /etc/traefik/ssl/tls.crt
-      keyFile: /etc/traefik/ssl/tls.key
-EOF
-        destination = "local/rules/ssl.yml"
+        destination = "local/rules/sts.yml"
+        data = <<-EOH
+        http:
+          middlewares:
+            hsts:
+              headers:
+                stsSeconds: 63072000
+                stsIncludeSubdomains: true
+                stsPreload: true
+        EOH
+      }
+
+      template {
+        destination = "local/rules/tls.yml"
+        data = <<-EOH
+        tls:
+          certificates:
+            - certFile: /etc/traefik/ssl/tls.crt
+              keyFile: /etc/traefik/ssl/tls.key
+        EOH
+      }
+
+      template {
+        destination = "local/ssl/tls.key"
+        left_delimiter = "{!"
+        right_delimiter = "!}"
+        data = <<-EOH
+        {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.privatekey !}{! end !}
+        EOH
+      }
+
+      template {
+        destination = "local/ssl/tls.crt"
+        left_delimiter = "{!"
+        right_delimiter = "!}"
+        data = <<-EOH
+        {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.certificate !}{! end !}
+        EOH
       }
 
       resources {
@@ -485,11 +524,6 @@ job "at-demo" {
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https",
-        "traefik.http.routers.at-demo-redirect.rule=Host(`demo.atcomputing.local`)",
-        "traefik.http.routers.at-demo-redirect.entrypoints=http",
-        "traefik.http.routers.at-demo-redirect.middlewares=redirect-to-https",
-        "traefik.http.routers.at-demo.tls=true",
         "traefik.http.routers.at-demo.entrypoints=https",
         "traefik.http.routers.at-demo.rule=Host(`demo.atcomputing.local`)",
       ]
