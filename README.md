@@ -313,13 +313,13 @@ ansible-playbook 07_nomad-demo-jobs.yml
 
 ![Nomad screenshot](screenshots/nomad-2.png)
 
-![Nomad screenshot](screenshots/nomad-3.png)
-
 ![Nomad screenshot](screenshots/nomad-5.png)
 
 ![Nomad screenshot](screenshots/nomad-6.png)
 
 ![Nomad screenshot](screenshots/nomad-7.png)
+
+![Nomad screenshot](screenshots/nomad-3.png)
 
 ![Traefik screenshot](screenshots/traefik-1.png)
 
