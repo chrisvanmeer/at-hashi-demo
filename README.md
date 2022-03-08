@@ -327,8 +327,6 @@ ansible-playbook 07_nomad-demo-jobs.yml
 
 ![Traefik screenshot](screenshots/traefik-3.png)
 
-![Traefik screenshot](screenshots/traefik-4.png)
-
 ![AT-Demo screenshot](screenshots/at-demo.png)
 
 ![AT-Demo screenshot](screenshots/at-demo-animated.gif)
