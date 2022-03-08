@@ -177,34 +177,6 @@ job "traefik" {
         }
       }
 
-      // template {
-      //   destination = "local/rules/tls.yml"
-      //   data = <<-EOH
-      //   tls:
-      //     certificates:
-      //       - certFile: /etc/traefik/ssl/tls.crt
-      //         keyFile: /etc/traefik/ssl/tls.key
-      //   EOH
-      // }
-
-      // template {
-      //   destination = "local/ssl/tls.key"
-      //   left_delimiter = "{!"
-      //   right_delimiter = "!}"
-      //   data = <<-EOH
-      //   {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.privatekey !}{! end !}
-      //   EOH
-      // }
-
-      // template {
-      //   destination = "local/ssl/tls.crt"
-      //   left_delimiter = "{!"
-      //   right_delimiter = "!}"
-      //   data = <<-EOH
-      //   {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.certificate !}{! end !}
-      //   EOH
-      // }
-
       vault {
         policies      = ["ssl-certificates-policy"]
         change_mode   = "signal"
