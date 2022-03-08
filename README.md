@@ -336,6 +336,11 @@ ansible-playbook 07_nomad-demo-jobs.yml
 #### Traefik `traefik.nomad`
 
 ```hcl
+variables {
+  custom_certs = ["webapp"]
+  default_cert = ["webapp"]
+}
+
 job "traefik" {
   datacenters = ["velp"]
   type        = "service"
@@ -446,32 +451,68 @@ job "traefik" {
         EOH
       }
 
-      template {
-        destination = "local/rules/tls.yml"
-        data = <<-EOH
-        tls:
-          certificates:
-            - certFile: /etc/traefik/ssl/tls.crt
-              keyFile: /etc/traefik/ssl/tls.key
-        EOH
+      dynamic "template" {
+        for_each = var.default_cert
+        content {
+          destination = "local/rules/default_cert.yml"
+          env = false
+          change_mode = "noop"
+          data = <<-EOH
+          tls:
+            stores:
+              default:
+                defaultCertificate:
+                  certFile: /etc/traefik/ssl/${template.value}.crt
+                  keyFile: /etc/traefik/ssl/${template.value}.key
+          EOH
+        }
       }
 
-      template {
-        destination = "local/ssl/tls.key"
-        left_delimiter = "{!"
-        right_delimiter = "!}"
-        data = <<-EOH
-        {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.privatekey !}{! end !}
-        EOH
+      dynamic "template" {
+        for_each = var.custom_certs
+        content {
+          destination = "local/rules/${template.value}.yml"
+          env = false
+          change_mode = "noop"
+          data = <<-EOH
+          tls:
+            certificates:
+              - certFile: /etc/traefik/ssl/${template.value}.crt
+                keyFile: /etc/traefik/ssl/${template.value}.key
+          EOH
+        }
       }
 
-      template {
-        destination = "local/ssl/tls.crt"
-        left_delimiter = "{!"
-        right_delimiter = "!}"
-        data = <<-EOH
-        {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.certificate !}{! end !}
-        EOH
+      dynamic "template" {
+        for_each = var.custom_certs
+        content {
+          destination = "local/ssl/${template.value}.crt"
+          env = false
+          change_mode = "noop"
+          left_delimiter = "{!"
+          right_delimiter = "!}"
+          data = <<-EOH
+          {!- with secret "secret/ssl-certificates/${template.value}" -!}
+          {!.Data.data.certificate!}
+          {!- end -!}
+          EOH
+        }
+      }
+
+      dynamic "template" {
+        for_each = var.custom_certs
+        content {
+          destination = "local/ssl/${template.value}.key"
+          env = false
+          change_mode = "noop"
+          left_delimiter = "{!"
+          right_delimiter = "!}"
+          data = <<-EOH
+          {!- with secret "secret/ssl-certificates/${template.value}" -!}
+          {!.Data.data.privatekey!}
+          {!- end -!}
+          EOH
+        }
       }
 
       vault {
