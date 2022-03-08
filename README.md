@@ -556,8 +556,9 @@ job "at-demo" {
 
       driver = "docker"
       config {
-        image = "ghcr.io/chrisvanmeer/at-image:latest"
-        ports = ["at-http"]
+        image      = "ghcr.io/chrisvanmeer/at-image:latest"
+        ports      = ["at-http"]
+        force_pull = true
       }
 
       resources {
