@@ -48,8 +48,9 @@ job "{{ at_demo_name }}" {
 
       driver = "docker"
       config {
-        image = "{{ at_demo_task_config_image }}"
-        ports = ["{{ at_demo_port_name }}"]
+        image      = "{{ at_demo_task_config_image }}"
+        ports      = ["{{ at_demo_port_name }}"]
+        force_pull = {{ at_demo_force_pull }}
       }
 
       resources {

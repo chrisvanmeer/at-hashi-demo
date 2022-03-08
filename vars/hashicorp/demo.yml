@@ -13,6 +13,7 @@ at_demo_service_tag_traefik_rule: "Host(`{{ demo_fqdn }}`)"
 # at_demo_task_artifact_source: "https://github.com/chrisvanmeer/at-image/raw/main/at-image.tar"
 # at_demo_task_config_load: "at-image.tar"
 at_demo_task_config_image: "ghcr.io/chrisvanmeer/at-image:latest"
+at_demo_force_pull: true
 at_demo_task_resources_cpu_mhz: "100"
 at_demo_task_resources_mem_mb: "50"
 
