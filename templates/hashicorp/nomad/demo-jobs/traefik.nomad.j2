@@ -44,23 +44,6 @@ job "traefik" {
 
     task "traefik" {
 
-      driver = "docker"
-      config {
-        image        = "{{ traefik_demo_docker_image }}"
-        network_mode = "host"
-
-        volumes = [
-          "local/traefik.toml:/etc/traefik/traefik.toml",
-          "local/ssl:/etc/traefik/ssl",
-        ]
-      }
-
-      vault {
-        policies      = ["ssl-certificates-policy"]
-        change_mode   = "signal"
-        change_signal = "SIGHUP"
-      }
-
       template {
         destination = "local/traefik.yml"
         data = <<-EOH
@@ -151,6 +134,23 @@ job "traefik" {
         data = <<-EOH
         {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.certificate !}{! end !}
         EOH
+      }
+
+      vault {
+        policies      = ["ssl-certificates-policy"]
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
+      }
+
+      driver = "docker"
+      config {
+        image        = "{{ traefik_demo_docker_image }}"
+        network_mode = "host"
+
+        volumes = [
+          "local/traefik.yml:/etc/traefik/traefik.yml",
+          "local/ssl:/etc/traefik/ssl",
+        ]
       }
 
       resources {
