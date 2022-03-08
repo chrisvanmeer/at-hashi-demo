@@ -128,11 +128,17 @@
           when: hostvars[item].ansible_host is defined
           with_items: "{{ groups.all }}"
 
-        - name: Add the demo and vault FQDN to the first client in the host file.
+        - name: Add the demo FQDN to the first client in the host file.
           replace:
             path: /etc/hosts
             regexp: "(.*{{ multipass_instances.clients | first }})$"
-            replace: '\g<1> {{ demo_fqdn }} {{ vault_ssl_server_common_name }}'
+            replace: '\g<1> {{ demo_fqdn }}'
+
+        - name: Add the vault FQDN to the first server in the host file.
+          replace:
+            path: /etc/hosts
+            regexp: "(.*{{ multipass_instances.servers | first }})$"
+            replace: '\g<1> {{ vault_ssl_server_common_name }}'
 
       become: true
       tags: hostfile
