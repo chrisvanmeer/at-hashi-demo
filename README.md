@@ -246,12 +246,6 @@ ansible-playbook 05_nomad-deployment.yml
 
 ### Screenshot(s)
 
-![Nomad screenshot](screenshots/nomad-1.png)
-
-![Nomad screenshot](screenshots/nomad-2.png)
-
-![Nomad screenshot](screenshots/nomad-3.png)
-
 ![Nomad screenshot](screenshots/nomad-4.png)
 
 ![Nomad screenshot](screenshots/nomad-cli-1.png)
@@ -309,6 +303,24 @@ ansible-playbook 07_nomad-demo-jobs.yml
 
 ### Screenshot(s)
 
+![Vault screenshot](screenshots/vault-2.png)
+
+![Vault screenshot](screenshots/vault-3.png)
+
+![Nomad screenshot](screenshots/nomad-cli-2.png)
+
+![Nomad screenshot](screenshots/nomad-1.png)
+
+![Nomad screenshot](screenshots/nomad-2.png)
+
+![Nomad screenshot](screenshots/nomad-3.png)
+
+![Nomad screenshot](screenshots/nomad-5.png)
+
+![Nomad screenshot](screenshots/nomad-6.png)
+
+![Nomad screenshot](screenshots/nomad-7.png)
+
 ![Traefik screenshot](screenshots/traefik-1.png)
 
 ![Traefik screenshot](screenshots/traefik-2.png)
@@ -316,8 +328,6 @@ ansible-playbook 07_nomad-demo-jobs.yml
 ![Traefik screenshot](screenshots/traefik-3.png)
 
 ![Traefik screenshot](screenshots/traefik-4.png)
-
-![Nomad screenshot](screenshots/nomad-cli-2.png)
 
 ![AT-Demo screenshot](screenshots/at-demo.png)
 
@@ -373,23 +383,6 @@ job "traefik" {
     }
 
     task "traefik" {
-
-      driver = "docker"
-      config {
-        image        = "{{ traefik_demo_docker_image }}"
-        network_mode = "host"
-
-        volumes = [
-          "local/traefik.toml:/etc/traefik/traefik.toml",
-          "local/ssl:/etc/traefik/ssl",
-        ]
-      }
-
-      vault {
-        policies      = ["ssl-certificates-policy"]
-        change_mode   = "signal"
-        change_signal = "SIGHUP"
-      }
 
       template {
         destination = "local/traefik.yml"
@@ -481,6 +474,23 @@ job "traefik" {
         data = <<-EOH
         {! with secret "secret/data/ssl-certificates/webapp" !}{! .Data.data.certificate !}{! end !}
         EOH
+      }
+
+      vault {
+        policies      = ["ssl-certificates-policy"]
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
+      }
+
+      driver = "docker"
+      config {
+        image        = "{{ traefik_demo_docker_image }}"
+        network_mode = "host"
+
+        volumes = [
+          "local/traefik.yml:/etc/traefik/traefik.yml",
+          "local/ssl:/etc/traefik/ssl",
+        ]
       }
 
       resources {
