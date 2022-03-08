@@ -102,10 +102,13 @@
         mode: "0644"
 
     - name: Check if this is the first time we're running this.
-      fail:
+      debug:
         msg: "Re-run this playbook, but now add '--tags hostfile --ask-become-pass'."
       when: groups.all | length == 0
-      tags: hostfile
+
+    - name: End the playbook if this is the first run.
+      meta: end_play
+      when: groups.all | length == 0
 
     - name: Hosts file
       block:
