@@ -4,6 +4,8 @@ nomad_demo_job_local_location: "/opt/nomad/demo-jobs"
 
 traefik_demo_template_location: "templates/hashicorp/nomad/demo-jobs/traefik.nomad.j2"
 traefik_demo_docker_image: "traefik:v2.6.1"
+traefik_demo_custom_certs: "webapp"
+traefik_demo_default_cert: "webapp"
 
 at_demo_name: "at-demo"
 at_demo_port_name: "at-http"
