@@ -556,13 +556,8 @@ job "at-demo" {
 
       driver = "docker"
       config {
-        load  = "at-image.tar"
-        image = "at-image:latest"
+        image = "ghcr.io/chrisvanmeer/at-image:latest"
         ports = ["at-http"]
-      }
-
-      artifact {
-        source = "https://github.com/chrisvanmeer/at-image/raw/main/at-image.tar"
       }
 
       resources {

@@ -48,16 +48,8 @@ job "{{ at_demo_name }}" {
 
       driver = "docker"
       config {
-        load  = "{{ at_demo_task_config_load }}"
         image = "{{ at_demo_task_config_image }}"
         ports = ["{{ at_demo_port_name }}"]
-      }
-
-      artifact {
-        source = "{{ at_demo_task_artifact_source }}"
-        options {
-          archive = false
-        }
       }
 
       resources {
