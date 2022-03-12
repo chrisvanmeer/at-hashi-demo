@@ -8,9 +8,9 @@ log_rotate_duration = "{{ nomad_log_rotate_duration }}"
 log_rotate_max_files = {{ nomad_log_rotate_max_files }}
 
 consul = {
-{% if ansible_hostname in groups['servers'] %}
+{% if inventory_hostname in groups['servers'] %}
   token = "{{ nomad_server_token }}"
-{% elif ansible_hostname in groups['clients'] %}
+{% elif inventory_hostname in groups['clients'] %}
   token = "{{ nomad_client_token }}"
 {% endif %}
 }

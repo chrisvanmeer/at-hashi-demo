@@ -100,7 +100,7 @@
                         consul_tls_ca_key_content: "{{ consul_tls_ca_key_content_tmp.stdout }}"
 
                   when:
-                    - ansible_hostname in groups['servers']
+                    - inventory_hostname in groups['servers']
                     - not consul_agent_ca_file_first.stat.exists
                   delegate_to: "{{ groups['servers'] | first }}"
                   run_once: true
@@ -139,7 +139,7 @@
               args:
                 chdir: "{{ consul_etc_directory }}"
               when: not consul_server_certificate_details.stat.exists
-          when: ansible_hostname in groups['servers']
+          when: inventory_hostname in groups['servers']
 
         # CLIENT CERTIFICATES
         - name: "HashiCorp - Consul : Client Certificates."
@@ -154,7 +154,7 @@
               args:
                 chdir: "{{ consul_etc_directory }}"
               when: not consul_client_certificate_details.stat.exists
-          when: ansible_hostname in groups['clients']
+          when: inventory_hostname in groups['clients']
 
         # ENCRYPTION KEY
         - name: "HashiCorp - Consul : Check the first server if we are dealing with an already running cluster."
@@ -175,7 +175,7 @@
                   set_fact:
                     consul_ecryption_key: "{{ consul_ecryption_key_tmp.stdout }}"
               when:
-                - ansible_hostname in groups['servers']
+                - inventory_hostname in groups['servers']
                 - not consul_systemd_service_file_details.stat.exists
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
@@ -245,7 +245,7 @@
           stat:
             path: "{{ consul_bootstrapped_true_file }}"
           register: consul_bootstrapped
-          when: ansible_hostname in groups['servers']
+          when: inventory_hostname in groups['servers']
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
@@ -264,7 +264,7 @@
               delegate_to: localhost
 
           when:
-            - ansible_hostname in groups['servers']
+            - inventory_hostname in groups['servers']
             - not consul_bootstrapped.stat.exists
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
@@ -330,7 +330,7 @@
             state: absent
 
       when:
-        - ansible_hostname in groups['servers']
+        - inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
@@ -426,7 +426,7 @@
             reload: yes
           with_items: "{{ consul_cni_sysctl_settings }}"
 
-      when: ansible_hostname in groups['clients']
+      when: inventory_hostname in groups['clients']
 
   handlers:
     - name: Restart Consul

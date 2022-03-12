@@ -28,7 +28,7 @@
       with_items: "{{ vault_files.files }}"
       loop_control:
         label: "{{ item.path | basename }}"
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
@@ -82,7 +82,7 @@
             VAULT_SKIP_VERIFY: true
           changed_when: false
           register: nomad_server_token_raw
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
@@ -102,7 +102,7 @@
         paths: "{{ nomad_data_directory }}/"
         patterns: "vault-nomad-*"
         file_type: "file"
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
       register: vault_files
@@ -114,7 +114,7 @@
       with_items: "{{ vault_files.files }}"
       loop_control:
         label: "{{ item.path | basename }}"
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
@@ -147,7 +147,7 @@
             VAULT_SKIP_VERIFY: true
           changed_when: false
 
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 

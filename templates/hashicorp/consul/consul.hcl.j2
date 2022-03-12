@@ -2,9 +2,9 @@ datacenter = "{{ hashicorp_datacenter_name }}"
 data_dir = "{{ consul_data_directory }}"
 encrypt = "{{ consul_ecryption_key }}"
 ca_file = "{{ consul_etc_directory }}/consul-agent-ca.pem"
-{% if ansible_hostname in groups['servers'] %}
+{% if inventory_hostname in groups['servers'] %}
 {% set type = "server" %}
-{% elif ansible_hostname in groups['clients'] %}
+{% elif inventory_hostname in groups['clients'] %}
 {% set type = "client" %}
 {% endif %}
 cert_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-{{ type }}-consul-0.pem"
@@ -12,13 +12,14 @@ key_file = "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-{{ type }
 verify_incoming = false
 verify_outgoing = false
 verify_server_hostname = false
-retry_join = [{% for host in groups['servers'] %}{{ hostvars[host].ansible_default_ipv4.address | to_json }}{% if not loop.last %}, {% endif %}{% endfor %}]
-{% if ansible_hostname in groups['servers'] %}
+retry_join = [{% for host in groups['servers'] %}{{ hostvars[host].ansible_host | to_json }}{% if not loop.last %}, {% endif %}{% endfor %}]
+{% if inventory_hostname in groups['servers'] %}
 bind_addr = "0.0.0.0"
 client_addr = "0.0.0.0"
 ui = true
-{% elif ansible_hostname in groups['clients'] %}
-bind_addr = "{{ ansible_host }}"
+{% elif inventory_hostname in groups['clients'] %}
+advertise_host = "{{ ansible_host }}"
+bind_addr = "{{ ansible_default_ipv4.address }}"
 check_update_interval = "0s"
 {% endif %}
 
@@ -41,10 +42,10 @@ performance {
   raft_multiplier = 1
 }
 
-{% if ansible_hostname in groups['servers'] %}
+{% if inventory_hostname in groups['servers'] %}
 server = true
 bootstrap_expect = {{ groups['servers'] | length }}
-{% elif ansible_hostname in groups['clients'] %}
+{% elif inventory_hostname in groups['clients'] %}
 server = false
 {% endif %}
 rejoin_after_leave = true

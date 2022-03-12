@@ -28,6 +28,7 @@
           set_fact:
             consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
       run_once: true
+      ignore_errors: true
 
     - name: NOMAD
       tags: nomad
@@ -38,7 +39,7 @@
             state: absent
             host: localhost
             use_ssl: false
-          when: ansible_hostname in groups['servers']
+          when: inventory_hostname in groups['servers']
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
           failed_when: false
@@ -87,7 +88,7 @@
                 state: unmounted
               with_items: "{{ nomad_mounts.stdout_lines }}"
               when: nomad_mounts is defined
-          when: ansible_hostname in groups['clients']
+          when: inventory_hostname in groups['clients']
         - name: NOMAD - Delete nomad data directory.
           file:
             path: "{{ nomad_data_directory }}"
@@ -281,7 +282,7 @@
             state: absent
             force_absent: true
           loop: "{{ docker_image_info.images | map(attribute='Id') | list }}"
-      when: ansible_hostname in groups['clients']
+      when: inventory_hostname in groups['clients']
 
     - name: PKI
       tags: pki

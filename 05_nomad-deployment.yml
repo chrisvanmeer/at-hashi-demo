@@ -43,7 +43,7 @@
       stat:
         path: "{{ nomad_consul_bootstrapped_true_file }}"
       register: nomad_consul_bootstrapped
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
@@ -151,7 +151,7 @@
             - "{{ nomad_consul_client_policy_remote_file }}"
 
       when:
-        - ansible_hostname in groups['servers']
+        - inventory_hostname in groups['servers']
         - not nomad_consul_bootstrapped.stat.exists
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
@@ -173,7 +173,7 @@
         owner: "{{ nomad_data_directory_owner }}"
         group: "{{ nomad_data_directory_group }}"
       notify: Restart Nomad
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
 
     - name: "HashiCorp - Nomad : Ensure configuration is present on the client."
       template:
@@ -183,7 +183,7 @@
         owner: "{{ nomad_data_directory_owner }}"
         group: "{{ nomad_data_directory_group }}"
       notify: Restart Nomad
-      when: ansible_hostname in groups['clients']
+      when: inventory_hostname in groups['clients']
 
     - name: "HashiCorp - Nomad : Ensure Nomad is excluded from the unattended upgrades."
       lineinfile:
@@ -218,7 +218,7 @@
       stat:
         path: "{{ nomad_bootstrapped_true_file }}"
       register: nomad_bootstrapped
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
@@ -301,7 +301,7 @@
             - "{{ nomad_client_policy_remote_file }}"
 
       when:
-        - ansible_hostname in groups['servers']
+        - inventory_hostname in groups['servers']
         - not nomad_bootstrapped.stat.exists
         - nomad_use_bootstrap | lower == "true"
       delegate_to: "{{ groups['servers'] | first }}"
@@ -313,24 +313,24 @@
       environment:
         NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
       register: nomad_server_members_output
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
 
     - name: "HashiCorp - Nomad : Output the results of the nomad server members command."
       debug:
         var: nomad_server_members_output.stdout_lines
-      when: ansible_hostname in groups['servers']
+      when: inventory_hostname in groups['servers']
 
     - name: "HashiCorp - Nomad : Run nomad node status command."
       command: "{{ nomad_binary }} node status"
       environment:
         NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
       register: nomad_node_status_output
-      when: ansible_hostname in groups['clients']
+      when: inventory_hostname in groups['clients']
 
     - name: "HashiCorp - Nomad : Output the results of the nomad node status command."
       debug:
         var: nomad_node_status_output.stdout_lines
-      when: ansible_hostname in groups['clients']
+      when: inventory_hostname in groups['clients']
 
   handlers:
     - name: Restart Nomad

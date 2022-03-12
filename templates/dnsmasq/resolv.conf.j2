@@ -1,4 +1,4 @@
-{% if ansible_hostname in groups['clients'] %}
+{% if inventory_hostname in groups['clients'] %}
 nameserver 127.0.0.1
 {% else %}
 nameserver {{ ansible_host }}

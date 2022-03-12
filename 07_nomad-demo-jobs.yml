@@ -11,7 +11,6 @@
     - vars/hashicorp/ssl.yml
 
   tasks:
-
     - name: "HashiCorp - Nomad - Jobs : Retrieve Operator Secret ID."
       shell: "awk '/Secret ID/ {print $4}' {{ nomad_operator_token_local_path }}"
       changed_when: false
@@ -72,6 +71,6 @@
             force_start: true
           with_items: "{{ nomad_demo_job_names }}"
       when:
-        - ansible_hostname in groups['servers']
+        - inventory_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true

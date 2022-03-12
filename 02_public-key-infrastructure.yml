@@ -113,7 +113,7 @@
             dest: "{{ ssl_ca_certfile_path }}"
             content: "{{ ca_certificate_slurp.content | b64decode }}"
             mode: "0644"
-          when: ansible_hostname != groups['servers'] | first
+          when: inventory_hostname != groups['servers'] | first
 
     ## Create all SSL certificates for both the servers and the clients.
     - name: "HashiCorp - PKI : Create all SSL certificates for both the servers and the clients."
