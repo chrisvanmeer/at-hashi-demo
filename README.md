@@ -1,5 +1,5 @@
 
-# HashiCorp Demo Environment
+# HashiCorp Demo Environment - Terraform edition
 
 ![Products Used](https://github.com/chrisvanmeer/at-hashi-demo/blob/main/screenshots/at-hashi-products-used.png)
 
@@ -12,11 +12,19 @@
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/chrisvanmeer/at-hashi-demo?logo=github)
 ![GitHub top language](https://img.shields.io/github/languages/top/chrisvanmeer/at-hashi-demo?logo=github)
 
-This repository holds all the code you will need to spin up a cluster of (by default 7) virtual instances that will have a mixture of HashiCorp products installed.
+This repository holds all the code you will need to spin up a cluster of (by default 7) EC2 instances that will have a mixture of HashiCorp products installed.
 
-All the provisioning is done through [Ansible](https://www.ansible.com). And the virtual instances are meant to be built with [Ubuntu Multipass](https://multipass.run). During the deployment, the multipass instances will be provisioned and a new inventory file will be created.
+**Please note** that you will need a working Amazon Cloud Account and access to a valid access- and secret key. All instances default to t2.micro wich is available in the Free Tier. I am not responsible for any costs that come from running these EC2 instances.
 
-## What do the specific products do in this demo?
+All the provisioning is done through [Ansible](https://www.ansible.com). And the EC2 instances are built with [Terraform](https://terraform.io). During the deployment, the EC2 instances will be provisioned and a new inventory file will be created.
+
+## What do the specific HashiCorp products do in this demo?
+
+### Terraform
+
+> Terraform is an open-source infrastructure as code software tool that provides a consistent CLI workflow to manage hundreds of cloud services.
+
+In our demo, we will be using Terraform both both creating the EC2 instances as well as cleaning it all up afterwards.
 
 ### Consul
 
@@ -60,56 +68,46 @@ Basically, this is what we will achieve with this
     - A small PHP image that will house a logo and show the IP address and port of the client.
 - We can then play around with job properties / kill clients / down- and upgrade Nomad and see what happens.
 
-Estimated runtime to setup: 15 - 30 minutes.  
-You will be needing about 8GB of RAM to run this without annoying lagg.  
-Diskspace wise I would say about 5GB of diskspace should cover it.
+Estimated runtime to setup: 30 minutes.  
 
 ### Disclaimer
 
-This was built and tested on both macOS 12.1 (Intel chip) and Ubuntu 20.04 LTS Desktop.  
-Running the same setup on macOS with an M1-chip will fail miserably.
+This was built and tested on both macOS 12.1 (both Intel and M1 chip) and Ubuntu 20.04 LTS Desktop.  
 
 ## Step 1 - Install required software
 
 Make sure you have the following installed on your workstation:
 
 - Ansible
-- Multipass
+- [Terraform](https://www.terraform.io/downloads)
 
 ## Step 2 - Install Ansible requirements
 
-```ansible
+```bash
 ansible-galaxy install -r requirements.yml
 ```
 
-## Step 3 - Provisioning the Multipass instances and populate the inventory file
+## Step 3 - Provisioning the EC2 instances and populate the inventory file
 
 ### Most noticable / important variables
 
 | Variable            | Default value                              | Description                                                                              |
 | ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | atcomputing_user    | `atcomputing`                              | The user that will be used as admin user of on each instance.                            |
-| public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file. |
-| multipass_instances | See the multipass `main.yml` variable file | The instances that we will be using.                                                     |
+| public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `ubuntu` user's authorized_keys file. |
+| key_name | See the multipass `main.yml` variable file | The instances that we will be using.                                                     |
 
 ### Objective
 
-This playbook will spin up the Multipass instances with the cloud-init option to create the admin user. If it detects instances with the same names as in the variable file, you will be prompted to allow for deletion of all of these instances.
-
-After creating the Multipass instances, a new inventory is made in this directory with the name `inventory` and this will contain all of the servers and clients.
-
-And lastly it will add the names and IP addresses to the local `/etc/hosts` file.
+This playbook will spin up the EC2 instances. After creating the EC2 instances, a new inventory is made in main folder with the name `inventory` and this will contain all of the servers and clients.
 
 ### Run playbook
 
-```ansible
-ansible-playbook 00_prep-inventory-and-hosts.yml
-```
-
-With the second run (you will be prompted)
-
-```ansible
-ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pass
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
 ```
 
 ## Step 4 - General server configuration
@@ -124,11 +122,13 @@ ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pa
 
 ### Objective
 
-This playbook will install all the neccesairy packages on both servers and clients.
+This playbook will install all the neccesairy packages on both servers and clients.  
+And lastly it will add the names and IP addresses to the local `/etc/hosts` file.
 
 ### Run playbook
 
-```ansible
+```bash
+cd ..
 ansible-playbook 01_general-server-configuration.yml
 ```
 
@@ -153,7 +153,7 @@ This playbook will do the following:
 
 ### Run playbook
 
-```ansible
+```bash
 ansible-playbook 02_public-key-infrastructure.yml
 ```
 
@@ -177,7 +177,7 @@ After this playbook you should be able to reach the UI through `http://server1:8
 
 ### Run playbook
 
-```ansible
+```bash
 ansible-playbook 03_consul-deployment.yml
 ```
 
@@ -216,7 +216,7 @@ After this playbook you should be able to reach the UI through `https://server1:
 
 ### Run playbook
 
-```ansible
+```bash
 ansible-playbook 04_vault-deployment.yml
 ```
 
@@ -240,7 +240,7 @@ After this playbook you should be able to reach the UI through `http://server1:4
 
 ### Run playbook
 
-```ansible
+```bash
 ansible-playbook 05_nomad-deployment.yml
 ```
 
@@ -262,7 +262,7 @@ This playbook create Vault policies, roles and tokens for Nomad servers to use t
 
 ### Run playbook
 
-```ansible
+```bash
 ansible-playbook 06_nomad-vault-integration.yml
 ```
 
@@ -297,7 +297,7 @@ And you should be able to reach the AT-Demo webapp through `https://demo.atcompu
 
 ### Run playbook
 
-```ansible
+```bash
 ansible-playbook 07_nomad-demo-jobs.yml
 ```
 
@@ -683,7 +683,7 @@ After this playbook you should be able to reach the UI through `https://server1:
 
 ### Run playbook
 
-```ansible
+```bash
 ansible-playbook 97_vault-unseal.yml
 ```
 
@@ -705,13 +705,13 @@ After this playbook you can re-run one or more of the previous playbooks to re-c
 
 #### Run playbook
 
-```ansible
+```bash
 ansible-playbook 98_reset-environment.yml
 ```
 
 Example of running it selectively for just Vault
 
-```ansible
+```bash
 ansible-playbook 98_reset-environment.yml --tags vault
 ```
 
@@ -726,13 +726,14 @@ None
 Are you done with the environment and would you like to cleanup the whole lot? This playbook will do the following:
 
 - Remove all the instances from the local `/etc/hosts` file.
-- Delete all Multipass instances.
+- Terminate all the EC2 instances.
 - Deletion of the `inventory` file in this directory.
 
 #### Run playbook
 
-```ansible
-ansible-playbook 99_destroy-environment.yml --ask-become-pass
+```bash
+cd terraform
+terraform destroy
 ```
 
 ## License
