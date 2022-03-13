@@ -1,11 +1,11 @@
+variable "first_name" {
+  type    = string
+  default = "Please enter your first name. This will be used in several components."
+}
+
 variable "public_key" {
   type    = string
   default = "~/.ssh/id_rsa.pub"
-}
-
-variable "key_name" {
-  type    = string
-  default = "hashi-key-chris"
 }
 
 variable "instance_type" {

@@ -1,5 +1,5 @@
 
-# HashiCorp Demo Environment - Terraform edition
+# HashiCorp Demo Environment - Terraform EC2 edition
 
 ![Products Used](https://github.com/chrisvanmeer/at-hashi-demo/blob/main/screenshots/at-hashi-products-used.png)
 
@@ -93,13 +93,36 @@ ansible-galaxy install -r requirements.yml
 
 | Variable            | Default value                              | Description                                                                              |
 | ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| atcomputing_user    | `atcomputing`                              | The user that will be used as admin user of on each instance.                            |
 | public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `ubuntu` user's authorized_keys file. |
-| key_name | See the multipass `main.yml` variable file | The instances that we will be using.                                                     |
 
 ### Objective
 
-This playbook will spin up the EC2 instances. After creating the EC2 instances, a new inventory is made in main folder with the name `inventory` and this will contain all of the servers and clients.
+This playbook will spin up the EC2 instances. After creating the EC2 instances, a new inventory is made in main folder with the name `inventory` and this will contain all of the servers and clients. **Please note** that the default user `ubuntu` will be used in this demo.
+
+### Pre-requisites
+
+Before we can start to deploy, make sure you have your Amazon access key and secret key at hand. We will also be needing a region. You can either set them as environment variables
+
+```bash
+export AWS_REGION="eu-central-1"
+export AWS_ACCESS_KEY_ID="<ACCES_KEY>"
+export AWS_SECRET_ACCESS_KEY="<SECRET_KEY>"
+```
+
+Or enable the following settings in the `terraform/providers.tf`. Look for the following section.
+```tf
+# region     = "eu-central-1"
+# access_key = "my-access-key"
+# secret_key = "my-secret-key"
+```
+
+### Overriding variables
+
+If you look in `terraform/variables.tf` you see the variables that are used. If you for instance would like to override the `public_key` variable, then please open up the `terraform/terraform.tfvars` file and place the following in there:
+
+```tf
+public_key="~/.ssh/other_id_rsa.pub"
+```
 
 ### Run playbook
 
@@ -109,6 +132,8 @@ terraform init
 terraform plan
 terraform apply
 ```
+
+Now you will be prompted to enter your first name. This will be used as a prefix for both the EC2 instances as the generated key-pair.
 
 ## Step 4 - General server configuration
 
