@@ -1,2 +1,4 @@
 .VSCodeCounter/
 inventory
+terraform/.terraform
+*.hcl
