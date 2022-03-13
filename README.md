@@ -91,9 +91,9 @@ ansible-galaxy install -r requirements.yml
 
 ### Most noticable / important variables
 
-| Variable            | Default value                              | Description                                                                              |
-| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `ubuntu` user's authorized_keys file. |
+| Variable   | Default value       | Description                                                                    |
+| ---------- | ------------------- | ------------------------------------------------------------------------------ |
+| public_key | `~/.ssh/id_rsa.pub` | The public key that will be added to the `ubuntu` user's authorized_keys file. |
 
 ### Objective
 
@@ -109,8 +109,8 @@ export AWS_ACCESS_KEY_ID="<ACCES_KEY>"
 export AWS_SECRET_ACCESS_KEY="<SECRET_KEY>"
 ```
 
-Or enable the following settings in the `terraform/providers.tf`. Look for the following section.
-```tf
+Or enable the following settings in the `terraform/providers.tf`. Look for the following section. Uncomment them and fill in the correct values.
+```hcl
 # region     = "eu-central-1"
 # access_key = "my-access-key"
 # secret_key = "my-secret-key"
@@ -120,8 +120,8 @@ Or enable the following settings in the `terraform/providers.tf`. Look for the f
 
 If you look in `terraform/variables.tf` you see the variables that are used. If you for instance would like to override the `public_key` variable, then please open up the `terraform/terraform.tfvars` file and place the following in there:
 
-```tf
-public_key="~/.ssh/other_id_rsa.pub"
+```hcl
+public_key="~/.ssh/some_other_id_rsa.pub"
 ```
 
 ### Run playbook
@@ -755,6 +755,12 @@ Are you done with the environment and would you like to cleanup the whole lot? T
 - Deletion of the `inventory` file in this directory.
 
 #### Run playbook
+
+```bash
+ansible-playbook 99_destroy-environment.yml
+```
+
+And then destroy the EC2 instances and remove the keygen and the inventory file.
 
 ```bash
 cd terraform
