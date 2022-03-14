@@ -1,6 +1,6 @@
 variable "first_name" {
-  type    = string
-  default = "Please enter your first name. This will be used in several components."
+  type        = string
+  description = "Please enter your first name. This will be used in several components."
 }
 
 variable "public_key" {
