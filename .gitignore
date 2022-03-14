@@ -1,4 +1,4 @@
 .VSCodeCounter/
 inventory
 terraform/.terraform
-*.hcl
+terraform/.terraform.lock.hcl
