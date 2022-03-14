@@ -1,0 +1,44 @@
+digraph {
+	compound = "true"
+	newrank = "true"
+	subgraph "root" {
+		"[root] aws_instance.clients (expand)" [label = "aws_instance.clients", shape = "box"]
+		"[root] aws_instance.servers (expand)" [label = "aws_instance.servers", shape = "box"]
+		"[root] aws_key_pair.key (expand)" [label = "aws_key_pair.key", shape = "box"]
+		"[root] data.aws_ami.ubuntu (expand)" [label = "data.aws_ami.ubuntu", shape = "box"]
+		"[root] local_file.ansible_inventory (expand)" [label = "local_file.ansible_inventory", shape = "box"]
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"]" [label = "provider[\"registry.terraform.io/hashicorp/aws\"]", shape = "diamond"]
+		"[root] provider[\"registry.terraform.io/hashicorp/local\"]" [label = "provider[\"registry.terraform.io/hashicorp/local\"]", shape = "diamond"]
+		"[root] var.client_count" [label = "var.client_count", shape = "note"]
+		"[root] var.client_name_prefix" [label = "var.client_name_prefix", shape = "note"]
+		"[root] var.first_name" [label = "var.first_name", shape = "note"]
+		"[root] var.instance_type" [label = "var.instance_type", shape = "note"]
+		"[root] var.public_key" [label = "var.public_key", shape = "note"]
+		"[root] var.server_count" [label = "var.server_count", shape = "note"]
+		"[root] var.server_name_prefix" [label = "var.server_name_prefix", shape = "note"]
+		"[root] aws_instance.clients (expand)" -> "[root] aws_key_pair.key (expand)"
+		"[root] aws_instance.clients (expand)" -> "[root] local.instance_ami (expand)"
+		"[root] aws_instance.clients (expand)" -> "[root] var.client_count"
+		"[root] aws_instance.clients (expand)" -> "[root] var.client_name_prefix"
+		"[root] aws_instance.clients (expand)" -> "[root] var.instance_type"
+		"[root] aws_instance.servers (expand)" -> "[root] aws_key_pair.key (expand)"
+		"[root] aws_instance.servers (expand)" -> "[root] local.instance_ami (expand)"
+		"[root] aws_instance.servers (expand)" -> "[root] var.instance_type"
+		"[root] aws_instance.servers (expand)" -> "[root] var.server_count"
+		"[root] aws_instance.servers (expand)" -> "[root] var.server_name_prefix"
+		"[root] aws_key_pair.key (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"]"
+		"[root] aws_key_pair.key (expand)" -> "[root] var.first_name"
+		"[root] aws_key_pair.key (expand)" -> "[root] var.public_key"
+		"[root] data.aws_ami.ubuntu (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"]"
+		"[root] local.instance_ami (expand)" -> "[root] data.aws_ami.ubuntu (expand)"
+		"[root] local_file.ansible_inventory (expand)" -> "[root] aws_instance.clients (expand)"
+		"[root] local_file.ansible_inventory (expand)" -> "[root] aws_instance.servers (expand)"
+		"[root] local_file.ansible_inventory (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/local\"]"
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)" -> "[root] aws_instance.clients (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)" -> "[root] aws_instance.servers (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/local\"] (close)" -> "[root] local_file.ansible_inventory (expand)"
+		"[root] root" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)"
+		"[root] root" -> "[root] provider[\"registry.terraform.io/hashicorp/local\"] (close)"
+	}
+}
+
