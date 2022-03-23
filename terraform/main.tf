@@ -7,6 +7,11 @@ resource "docker_container" "servers" {
   name     = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
   hostname = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
   count    = var.server_count
+  command = [
+    "tail",
+    "-f",
+    "/dev/null"
+  ]
 }
 
 resource "docker_container" "clients" {
@@ -14,6 +19,11 @@ resource "docker_container" "clients" {
   name     = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
   hostname = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
   count    = var.client_count
+  command = [
+    "tail",
+    "-f",
+    "/dev/null"
+  ]
 }
 
 resource "local_file" "ansible_inventory" {
@@ -21,11 +31,11 @@ resource "local_file" "ansible_inventory" {
     {
       servers = tomap({
         for instance in docker_container.servers :
-        instance.name => instance.ip
+        instance.name => instance.ip_address
       })
       clients = tomap({
         for instance in docker_container.clients :
-        instance.name => instance.ip
+        instance.name => instance.ip_address
       })
     }
   )
