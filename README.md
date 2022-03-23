@@ -86,7 +86,7 @@ Make sure you have the following installed on your workstation:
 ansible-galaxy install -r requirements.yml
 ```
 
-## Step 3 - Provisioning the EC2 instances and populate the inventory file
+## Step 3 - Provisioning the Docker containers and populate the inventory file
 
 ### Most noticable / important variables
 
@@ -96,7 +96,7 @@ ansible-galaxy install -r requirements.yml
 
 ### Objective
 
-This playbook will spin up the EC2 instances. After creating the EC2 instances, a new inventory is made in main folder with the name `inventory` and this will contain all of the servers and clients. **Please note** that the default user `ubuntu` will be used in this demo.
+This playbook will spin up the Docker containers. After creating the Docker containers, a new inventory is made in main folder with the name `inventory` and this will contain all of the servers and clients. **Please note** that the default user `ubuntu` will be used in this demo.
 
 ### Pre-requisites
 
@@ -132,7 +132,7 @@ terraform plan
 terraform apply
 ```
 
-Now you will be prompted to enter your first name. This will be used as a prefix for both the EC2 instances as the generated key-pair.
+Now you will be prompted to enter your first name. This will be used as a prefix for both the Docker containers as the generated key-pair.
 
 ## Step 4 - General server configuration
 
@@ -750,7 +750,7 @@ None
 Are you done with the environment and would you like to cleanup the whole lot? This playbook will do the following:
 
 - Remove all the instances from the local `/etc/hosts` file.
-- Terminate all the EC2 instances.
+- Terminate all the Docker containers.
 - Deletion of the `inventory` file in this directory.
 
 #### Run playbook
@@ -759,7 +759,7 @@ Are you done with the environment and would you like to cleanup the whole lot? T
 ansible-playbook 99_destroy-environment.yml
 ```
 
-And then destroy the EC2 instances and remove the keygen and the inventory file.
+And then destroy the Docker containers and remove the keygen and the inventory file.
 
 ```bash
 cd terraform
