@@ -1,41 +1,31 @@
-resource "aws_key_pair" "key" {
-  key_name   = "${var.first_name}-hashi-key"
-  public_key = file(var.public_key)
+resource "docker_image" "ubuntu" {
+  name = "ubuntu:focal"
 }
 
-resource "aws_instance" "servers" {
-  ami           = local.instance_ami
-  instance_type = var.instance_type
-  key_name      = aws_key_pair.key.key_name
-  count         = var.server_count
-
-  tags = {
-    Name = "${var.first_name}-${var.server_name_prefix}${format("%02d", count.index + 1)}"
-  }
-
+resource "docker_container" "servers" {
+  image    = docker_image.ubuntu.latest
+  name     = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
+  hostname = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
+  count    = var.server_count
 }
 
-resource "aws_instance" "clients" {
-  ami           = local.instance_ami
-  instance_type = var.instance_type
-  key_name      = aws_key_pair.key.key_name
-  count         = var.client_count
-
-  tags = {
-    Name = "${var.first_name}-${var.client_name_prefix}${format("%02d", count.index + 1)}"
-  }
-
+resource "docker_container" "clients" {
+  image    = docker_image.ubuntu.latest
+  name     = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
+  hostname = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
+  count    = var.client_count
 }
+
 resource "local_file" "ansible_inventory" {
   content = templatefile("inventory.tmpl",
     {
       servers = tomap({
-        for instance in aws_instance.servers :
-        instance.tags.Name => instance.public_ip
+        for instance in docker_container.servers :
+        instance.name => instance.ip
       })
       clients = tomap({
-        for instance in aws_instance.clients :
-        instance.tags.Name => instance.public_ip
+        for instance in docker_container.clients :
+        instance.name => instance.ip
       })
     }
   )

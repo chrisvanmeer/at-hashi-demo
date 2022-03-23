@@ -1,5 +1,5 @@
 
-# HashiCorp Demo Environment - Terraform EC2 edition
+# HashiCorp Demo Environment - Docker edition
 
 ![Products Used](https://github.com/chrisvanmeer/at-hashi-demo/blob/main/screenshots/at-hashi-products-used.png)
 
@@ -12,11 +12,9 @@
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/chrisvanmeer/at-hashi-demo?logo=github)
 ![GitHub top language](https://img.shields.io/github/languages/top/chrisvanmeer/at-hashi-demo?logo=github)
 
-This repository holds all the code you will need to spin up a cluster of (by default 7) EC2 instances that will have a mixture of HashiCorp products installed.
+This repository holds all the code you will need to spin up a cluster of (by default 7) Docker containers that will have a mixture of HashiCorp products installed.
 
-**Please note** that you will need a working Amazon Cloud Account and access to a valid access- and secret key. All instances default to t2.micro wich is available in the Free Tier. I am not responsible for any costs that come from running these EC2 instances.
-
-All the provisioning is done through [Ansible](https://www.ansible.com). And the EC2 instances are built with [Terraform](https://terraform.io). During the deployment, the EC2 instances will be provisioned and a new inventory file will be created.
+All the provisioning is done through [Ansible](https://www.ansible.com). And the Docker containers are built with [Terraform](https://terraform.io). During the deployment, the Docker containers will be provisioned and a new inventory file will be created.
 
 ## What do the specific HashiCorp products do in this demo?
 
@@ -24,7 +22,7 @@ All the provisioning is done through [Ansible](https://www.ansible.com). And the
 
 > Terraform is an open-source infrastructure as code software tool that provides a consistent CLI workflow to manage hundreds of cloud services.
 
-In our demo, we will be using Terraform both both creating the EC2 instances as well as cleaning it all up afterwards.
+In our demo, we will be using Terraform both both creating the Docker instances as well as cleaning it all up afterwards.
 
 ### Consul
 
@@ -79,6 +77,7 @@ This was built and tested on both macOS 12.1 (both Intel and M1 chip) and Ubuntu
 Make sure you have the following installed on your workstation:
 
 - Ansible
+- Docker
 - [Terraform](https://www.terraform.io/downloads)
 
 ## Step 2 - Install Ansible requirements
