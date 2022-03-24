@@ -1,12 +1,25 @@
 resource "docker_image" "ubuntu" {
-  name = "ubuntu:focal"
+  name = "at"
+  build {
+    path = "."
+    tag  = ["at:latest"]
+
+    build_arg = {
+      ssh_prv_key : file("~/.ssh/id_rsa")
+      ssh_pub_key : file("~/.ssh/id_rsa.pub")
+    }
+    label = {
+      author : "CvM"
+    }
+  }
 }
 
 resource "docker_container" "servers" {
-  image    = docker_image.ubuntu.latest
-  name     = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
-  hostname = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
-  count    = var.server_count
+  image             = docker_image.ubuntu.latest
+  name              = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
+  hostname          = "${var.server_name_prefix}${format("%02d", count.index + 1)}"
+  count             = var.server_count
+  publish_all_ports = true
   command = [
     "tail",
     "-f",
@@ -15,10 +28,11 @@ resource "docker_container" "servers" {
 }
 
 resource "docker_container" "clients" {
-  image    = docker_image.ubuntu.latest
-  name     = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
-  hostname = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
-  count    = var.client_count
+  image             = docker_image.ubuntu.latest
+  name              = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
+  hostname          = "${var.client_name_prefix}${format("%02d", count.index + 1)}"
+  count             = var.client_count
+  publish_all_ports = true
   command = [
     "tail",
     "-f",
