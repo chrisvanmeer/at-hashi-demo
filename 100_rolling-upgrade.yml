@@ -20,9 +20,13 @@
       ansible.builtin.package_facts:
         manager: auto
 
+    - name: Set the current version as fact.
+      set_fact:
+        current_version: "{{ ansible_facts.packages.{{ product_name }}.version }}"
+
     - name: Print the package facts
       ansible.builtin.debug:
-        var: ansible_facts.packages.consul
+        var: current_version
 
     - meta: end_play
 
