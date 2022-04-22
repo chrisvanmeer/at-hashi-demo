@@ -3,7 +3,7 @@
   hosts: servers
   become: true
   serial: 1
-  sorted: inventory
+  order: inventory
 
   vars_files:
     - vars/hashicorp/general.yml
