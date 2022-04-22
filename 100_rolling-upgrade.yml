@@ -22,7 +22,7 @@
 
     - name: Print the package facts
       ansible.builtin.debug:
-        var: ansible_facts.packages
+        var: ansible_facts.packages.consul
 
     - meta: end_play
 
