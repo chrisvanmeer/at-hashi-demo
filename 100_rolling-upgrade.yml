@@ -1,0 +1,97 @@
+---
+- name: "AT Computing - HashiCorp Demo - Rolling upgrade"
+  hosts: servers
+  become: true
+  serial: 1
+  sorted: inventory
+
+  vars_files:
+    - vars/hashicorp/general.yml
+    - vars/hashicorp/vault.yml
+    - vars/hashicorp/ssl.yml
+
+  vars:
+    product_name: "consul"
+    product_port: 8500
+    product_delay: 10
+
+  tasks:
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Print the package facts
+      ansible.builtin.debug:
+        var: ansible_facts.packages
+
+    - meta: end_play
+
+    - name: Update apt cache.
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Update the binary.
+      apt:
+        name: "{{ product_name }}"
+        state: latest
+
+    - name: Restart service.
+      service:
+        name: "{{ product_name }}"
+        state: restarted
+
+
+    - name: Unseal Vault.
+      block:
+        - name: Check the Vault sealed status.
+          shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: false
+          register: vault_is_sealed
+
+        - name: Unseal
+          block:
+            - name: "HashiCorp - Vault : Retrieve local token file."
+              set_fact:
+                token_file_output: "{{ lookup('file', vault_bootstrap_init_local_path).split('\n') }}"
+              delegate_to: localhost
+              run_once: true
+
+            - name: "HashiCorp - Vault : Retrieve first unseal key from initialization info."
+              set_fact:
+                vault_unseal_key_1: "{{ token_file_output[0].split('Unseal Key 1: ')[1] }}"
+              delegate_to: localhost
+              run_once: true
+
+            - name: "HashiCorp - Vault : Retrieve second unseal key from initialization info."
+              set_fact:
+                vault_unseal_key_2: "{{ token_file_output[1].split('Unseal Key 2: ')[1] }}"
+              delegate_to: localhost
+              run_once: true
+
+            - name: "HashiCorp - Vault : Retrieve third unseal key from initialization info."
+              set_fact:
+                vault_unseal_key_3: "{{ token_file_output[2].split('Unseal Key 3: ')[1] }}"
+              delegate_to: localhost
+              run_once: true
+
+            - name: "HashiCorp - Vault : Ensure the Vault is unsealed."
+              command: "vault operator unseal {{ item }}"
+              changed_when: false
+              environment:
+                VAULT_ADDR: "{{ vault_address }}"
+                VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+                VAULT_SKIP_VERIFY: true
+              with_items:
+                - "{{ vault_unseal_key_1 }}"
+                - "{{ vault_unseal_key_2 }}"
+                - "{{ vault_unseal_key_3 }}"
+          when:
+            - vault_is_sealed.stdout == "true"
+      when:
+        - product_name == "vault"
+
