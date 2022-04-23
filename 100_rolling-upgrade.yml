@@ -22,7 +22,7 @@
 
     - name: Set the current version as fact.
       set_fact:
-        current_version: "{{ ansible_facts.packages.{{ product_name }}.version }}"
+        current_version: "{{ ansible_facts.packages.[product_name].version }}"
 
     - name: Print the package facts
       ansible.builtin.debug:
