@@ -16,20 +16,6 @@
     product_delay: 10
 
   tasks:
-    - name: Gather the package facts
-      ansible.builtin.package_facts:
-        manager: auto
-
-    - name: Set the current version as fact.
-      set_fact:
-        current_version: "{{ ansible_facts.packages.}}{{ product_name }}"
-
-    - name: Print the package facts
-      ansible.builtin.debug:
-        var: current_version
-
-    - meta: end_play
-
     - name: Update apt cache.
       apt:
         update_cache: true
@@ -39,14 +25,18 @@
       apt:
         name: "{{ product_name }}"
         state: latest
+      notify:
+        - Restart service
+        - Unseal Vault
 
-    - name: Restart service.
+  handlers:
+
+    - name: Restart service
       service:
         name: "{{ product_name }}"
         state: restarted
 
-
-    - name: Unseal Vault.
+    - name: Unseal Vault
       block:
         - name: Check the Vault sealed status.
           shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
