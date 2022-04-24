@@ -37,6 +37,4 @@
 
     - name: Unseal Vault
       import_playbook: 97_vault-unseal.yml
-      when:
-        - product_name == "vault"
 
