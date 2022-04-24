@@ -37,7 +37,7 @@
         state: restarted
 
     - name: Unseal Vault
-      include_role: 97_vault-unseal.yml
+      import_tasks: 97_vault-unseal.yml
       when:
         - product_name == "vault"
 
