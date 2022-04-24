@@ -34,7 +34,3 @@
       service:
         name: "{{ product_name }}"
         state: restarted
-
-    - name: Unseal Vault
-      import_playbook: 97_vault-unseal.yml
-
