@@ -26,16 +26,16 @@
         name: "{{ product_name }}"
         state: latest
       notify:
-        - Wait for it
         - Restart service
+        - Wait for it
 
   handlers:
-    - name: Wait for it
-      wait_for:
-        port: "{{ product_port }}"
-        delay: "{{ product_delay }}"
-
     - name: Restart service
       service:
         name: "{{ product_name }}"
         state: restarted
+
+    - name: Wait for it
+      wait_for:
+        port: "{{ product_port }}"
+        delay: "{{ product_delay }}"
