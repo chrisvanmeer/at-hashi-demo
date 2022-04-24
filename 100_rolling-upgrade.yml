@@ -27,7 +27,6 @@
         state: latest
       notify:
         - Restart service
-        - Unseal Vault
 
   handlers:
     - name: Restart service
