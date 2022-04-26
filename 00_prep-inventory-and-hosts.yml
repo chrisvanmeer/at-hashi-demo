@@ -63,7 +63,7 @@
         mode: "0644"
 
     - name: Spin up the multipass instances.
-      command: "multipass launch --name {{ item }} --cloud-init {{ cloud_init_full_path }}"
+      command: "multipass launch --name {{ item }} --cloud-init {{ cloud_init_full_path }} {{ image_name }}"
       register: multipass_output
       changed_when: multipass_output.rc == 0
       with_items:
