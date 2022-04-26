@@ -53,7 +53,7 @@
       tags: dns
 
     - name: Retrieve current DNS server
-      shell: "systemd-resolve --status | awk '/Current DNS Server:/ {print $4}'"
+      shell: "/usr/bin/resolvectl | awk '/Current DNS Server:/ {print $4}'"
       become: false
       changed_when: false
       register: current_dns_server
