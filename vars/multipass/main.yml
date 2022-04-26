@@ -10,6 +10,8 @@ multipass_instances:
     - client3
     - client4
 
+image_name: "jammy"
+
 cloud_init_location: "~"
 cloud_init_full_path: "{{ cloud_init_location }}/at-cloud-init.yml"
 public_key: "~/.ssh/id_rsa.pub"
