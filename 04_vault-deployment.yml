@@ -305,6 +305,8 @@
 
         - debug:
             msg: "{{ vault_init_output }}"
+        - debug:
+            msg: "{{ vault_init_output }}"
             run_once: true
         - debug:
             msg: "{{ vault_init_output | first }}"
