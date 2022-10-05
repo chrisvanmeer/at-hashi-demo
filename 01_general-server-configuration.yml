@@ -9,7 +9,7 @@
 
   pre_tasks:
     - name: Ensure the apt cache is updated before we are going to install.
-      apt:
+      ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
       tags: pre_apt
@@ -27,7 +27,7 @@
 
   tasks:
     - name: Install autocompletion.
-      command: "{{ item[0] }} -autocomplete-install"
+      ansible.builtin.command: "{{ item[0] }} -autocomplete-install"
       become: "{{ item[1] }}"
       with_nested:
         - "{{ hashicorp_product_selection }}"
@@ -40,32 +40,32 @@
         - not 'already installed' in autoinstall_cmd.stderr
 
     - name: Ensure hosts file has correct entry for 127.0.1.1
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/hosts
         regexp: "^127.0.1.1$"
         line: "127.0.1.1 {{ ansible_hostname }}"
       tags: hosts
 
     - name: Ensure dnsmasq is present.
-      apt:
+      ansible.builtin.apt:
         name: dnsmasq
         state: present
       tags: dns
 
     - name: Retrieve current DNS server
-      shell: "/usr/bin/resolvectl | awk '/Current DNS Server:/ {print $4}'"
+      ansible.builtin.shell: "/usr/bin/resolvectl | awk '/Current DNS Server:/ {print $4}'"
       become: false
       changed_when: false
       register: current_dns_server
       tags: dns
 
     - name: Set the current DNS server as a fact.
-      set_fact:
+      ansible.builtin.set_fact:
         dnsmasq_default_domain_server: "{{ current_dns_server.stdout_lines[0] }}"
       tags: dns
 
     - name: Ensure new default dnsmasq config is in place.
-      template:
+      ansible.builtin.template:
         src: templates/dnsmasq/dnsmasq.conf.j2
         dest: /etc/dnsmasq.conf
         backup: true
@@ -75,7 +75,7 @@
       tags: dns
 
     - name: Ensure Consul dnsmasq config is in place.
-      template:
+      ansible.builtin.template:
         src: templates/dnsmasq/dnsmasq.d/10-consul.j2
         dest: /etc/dnsmasq.d/10-consul
         force: true
@@ -84,7 +84,7 @@
       tags: dns
 
     - name: Ensure systemd-resolved is stopped.
-      service:
+      ansible.builtin.service:
         name: systemd-resolved
         state: stopped
         enabled: false
@@ -97,7 +97,7 @@
     #     state: link
 
     - name: Ensure new resolv.conf file is present.
-      template:
+      ansible.builtin.template:
         src: templates/dnsmasq/resolv.conf.j2
         dest: /etc/resolv.conf
         mode: "0644"
@@ -105,26 +105,26 @@
       tags: dns
 
     - name: Ensure dnsmasq is started and enabled.
-      service:
+      ansible.builtin.service:
         name: dnsmasq
         state: started
         enabled: true
       tags: dns
 
     - name: Ensure basic apt packages are installed.
-      apt:
+      ansible.builtin.apt:
         name: "{{ basic_apt_packages }}"
         state: present
       tags: apt
 
     - name: Ensure .hushlogin is present in atcomputing user home dir.
-      file:
+      ansible.builtin.file:
         path: "/home/{{ atcomputing_user }}/.hushlogin"
         state: touch
         mode: "0644"
 
     - name: Ensure token directory is present.
-      file:
+      ansible.builtin.file:
         path: "{{ token_directory }}/"
         state: directory
         mode: 0755
@@ -138,6 +138,6 @@
 
   handlers:
     - name: Restart dnsmasq
-      service:
+      ansible.builtin.service:
         name: dnsmasq
         state: restarted

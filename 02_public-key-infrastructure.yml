@@ -11,7 +11,7 @@
 
   tasks:
     - name: "HashiCorp - PKI : Check if CA file already exists."
-      stat:
+      ansible.builtin.stat:
         path: "{{ ssl_ca_certfile_path }}"
       register: ca_already_exists
 
@@ -55,7 +55,7 @@
             path: "{{ ssl_webapp_keyfile_path }}"
 
         - name: "HashiCorp - PKI : Retrieve private key contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ ssl_webapp_keyfile_path }}"
           register: keyfile
 
@@ -68,12 +68,12 @@
           register: csr
 
         - name: "HashiCorp - PKI : Check whether certificate exists."
-          stat:
+          ansible.builtin.stat:
             path: "{{ ssl_webapp_certfile_path }}"
           register: certificate_exists
 
         - name: "HashiCorp - PKI : Read existing certificate if exists."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ ssl_webapp_certfile_path }}"
           when: certificate_exists.stat.exists
           register: certificate
@@ -88,7 +88,7 @@
           register: certificate
 
         - name: "HashiCorp - PKI : Write certificate file."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ ssl_webapp_certfile_path }}"
             content: "{{ certificate.certificate }}"
             mode: "0644"
@@ -101,7 +101,7 @@
     - name: "HashiCorp - PKI : Distribute the CA certificate to the rest of the environment."
       block:
         - name: "HashiCorp - PKI : Retrieve CA certificate contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ ssl_ca_certfile_path }}"
           register: ca_certificate_slurp
           delegate_to: "{{ groups['servers'] | first }}"
@@ -109,7 +109,7 @@
           tags: shared
 
         - name: "HashiCorp - PKI : Place certificate in default location."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ ssl_ca_certfile_path }}"
             content: "{{ ca_certificate_slurp.content | b64decode }}"
             mode: "0644"
@@ -131,12 +131,12 @@
           register: member_csr
 
         - name: "HashiCorp - PKI : Check whether certificate exists."
-          stat:
+          ansible.builtin.stat:
             path: "{{ ssl_member_certfile_path }}"
           register: member_certificate_exists
 
         - name: "HashiCorp - PKI : Read existing certificate if exists."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ ssl_member_certfile_path }}"
           when: member_certificate_exists.stat.exists
           register: member_certificate
@@ -152,20 +152,20 @@
           delegate_to: "{{ groups['servers'] | first }}"
 
         - name: "HashiCorp - PKI : Write certificate file."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ ssl_member_certfile_path }}"
             content: "{{ member_certificate.certificate }}"
             mode: "0644"
           when: member_certificate is changed
 
     - name: "HashiCorp - PKI : Ensure the CA certificate is copied to the local certs directory."
-      copy:
+      ansible.builtin.copy:
         dest: "{{ ssl_shared_dir }}/{{ ssl_ca_filename }}.crt"
         content: "{{ ca_certificate_slurp.content | b64decode }}"
         mode: 0644
       tags: shared
 
     - name: "HashiCorp - PKI : Ensure certificate index is updated."
-      command: "/usr/sbin/update-ca-certificates -f"
+      ansible.builtin.command: "/usr/sbin/update-ca-certificates -f"
       changed_when: false
       tags: shared
