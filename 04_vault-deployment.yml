@@ -304,9 +304,9 @@
           # run_once: true
 
         - debug:
-          msg: "{{ vault_init_output }}"
+            msg: "{{ vault_init_output }}"
         - debug:
-          msg: "{{ vault_init_output | first }}"
+            msg: "{{ vault_init_output | first }}"
         - meta: end_play
 
         - name: "HashiCorp - Vault - INIT: Store Vault master keys local for safekeeping."
