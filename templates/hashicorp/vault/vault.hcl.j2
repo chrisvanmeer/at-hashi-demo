@@ -4,7 +4,7 @@ storage "raft" {
   path    = "{{ vault_data_directory }}"
   node_id = "vault_{{ ansible_hostname }}"
 
-  {% for host in group['servers'] %}
+  {% for host in groups['servers'] %}
   retry_join {
     leader_api_addr     = "https://{{ hostvars[host].ansible_default_ipv4.address }}:8200"
     leader_ca_cert_file = "{{ vault_ssl_ca_dest }}"
