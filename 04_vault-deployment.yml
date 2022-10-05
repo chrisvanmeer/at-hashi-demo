@@ -273,9 +273,9 @@
             enabled: true
             state: started
 
-        - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
-          ansible.builtin.pause:
-            seconds: 10
+        # - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
+        #   ansible.builtin.pause:
+        #     seconds: 10
 
         - name: "HashiCorp - Vault : Check the Vault initialization status."
           ansible.builtin.shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
@@ -295,7 +295,7 @@
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
-          changed_when: false
+          changed_when: true
           register: vault_init_output
           when:
             - ansible_hostname in groups['servers']
@@ -305,6 +305,7 @@
 
         - debug:
             msg: "{{ vault_init_output }}"
+            run_once: true
         - debug:
             msg: "{{ vault_init_output | first }}"
         - meta: end_play
