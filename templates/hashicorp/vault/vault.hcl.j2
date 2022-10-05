@@ -1,10 +1,22 @@
 ui = true
 
-storage "consul" {
-  address = "http://localhost:8500"
-  path    = "vault/"
-  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"
+storage "raft" {
+  path    = "{{ vault_data_directory }}"
+  node_id = "vault_{{ ansible_hostname }}"
+
+  {% for host in group ['servers'] %}
+  retry_join {
+    leader_api_addr     = "https://{{ hostvars[host].ansible_default_ipv4.address }}:8200"
+    leader_ca_cert_file = "{{ vault_ssl_ca_dest }}"
+  }
+  {% endfor %}
 }
+
+#storage "consul" {
+#  address = "http://localhost:8500"
+#  path    = "vault/"
+#  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"
+#}
 
 cluster_address = "{{ ansible_host }}:8201"
 api_address     = "{{ ansible_host }}:8200"

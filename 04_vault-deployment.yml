@@ -12,7 +12,7 @@
 
   tasks:
     - name: "HashiCorp - Vault : Ensure data directory is present."
-      file:
+      ansible.builtin.file:
         path: "{{ vault_data_directory }}"
         state: directory
         mode: "0755"
@@ -21,16 +21,16 @@
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Vault : Ensure log directory is present."
-      file:
+      ansible.builtin.file:
         path: "{{ vault_log_directory }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: "{{ vault_log_directory_user }}"
         group: "{{ vault_log_directory_group }}"
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Vault : Ensure Vault is excluded from the unattended upgrades."
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "/usr/share/unattended-upgrades/50unattended-upgrades"
         state: present
         line: '    "vault";'
@@ -40,7 +40,7 @@
     # PKI
     - name: "HashiCorp - Vault - PKI : Ensure TLS directory is present."
       become: true
-      file:
+      ansible.builtin.file:
         path: "{{ vault_tls_directory }}"
         state: directory
         recurse: true
@@ -57,7 +57,7 @@
             mode: "0640"
 
         - name: "HashiCorp - Vault - PKI : Retrieve private key contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ vault_ssl_key_dest }}"
           register: keyfile
 
@@ -69,12 +69,12 @@
           register: csr
 
         - name: "HashiCorp - Vault - PKI : Check whether certificate exists."
-          stat:
+          ansible.builtin.stat:
             path: "{{ vault_ssl_cert_dest }}"
           register: certificate_exists
 
         - name: "HashiCorp - Vault - PKI : Read existing certificate if exists."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ vault_ssl_cert_dest }}"
           when: certificate_exists.stat.exists
           register: certificate
@@ -89,7 +89,7 @@
           register: certificate
 
         - name: "HashiCorp - Vault - PKI : Write certificate file."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ vault_ssl_cert_dest }}"
             content: "{{ certificate.certificate }}"
             owner: "root"
@@ -105,22 +105,22 @@
     - name: "HashiCorp - Vault - PKI : Retrieve Content."
       block:
         - name: "HashiCorp - Vault - PKI : Retrieve CA certificate contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ ssl_ca_certfile_path }}"
           register: ca_certificate_slurp
         - name: "HashiCorp - Vault - PKI : Retrieve Server certificate contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ vault_ssl_cert_dest }}"
           register: server_certificate_slurp
         - name: "HashiCorp - Vault - PKI : Retrieve Server key contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ vault_ssl_key_dest }}"
           register: server_key_slurp
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
     - name: "HashiCorp - Vault - PKI : Place CA certificate in default location."
-      copy:
+      ansible.builtin.copy:
         dest: "{{ vault_ssl_ca_dest }}"
         content: "{{ ca_certificate_slurp.content | b64decode }}"
         owner: "root"
@@ -132,14 +132,14 @@
     - name: "HashiCorp - Vault - PKI : Place Content."
       block:
         - name: "HashiCorp - Vault - PKI : Place certificate in default location."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ vault_ssl_cert_dest }}"
             content: "{{ server_certificate_slurp.content | b64decode }}"
             owner: "root"
             group: "root"
             mode: "0644"
         - name: "HashiCorp - Vault - PKI : Place key in default location."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ vault_ssl_key_dest }}"
             content: "{{ server_key_slurp.content | b64decode }}"
             owner: "root"
@@ -153,7 +153,7 @@
     - name: "HashiCorp - Vault : Configuration."
       block:
         - name: "HashiCorp - Vault : Ensure general configuration is present."
-          template:
+          ansible.builtin.template:
             src: "templates/hashicorp/vault/vault.hcl.j2"
             dest: "{{ vault_etc_directory }}/vault.hcl"
             mode: "0644"
@@ -161,17 +161,17 @@
             group: "{{ vault_data_directory_group }}"
 
         - name: "HashiCorp - Vault : Ensure systemd service is present."
-          template:
+          ansible.builtin.template:
             src: "templates/hashicorp/vault/vault.service.j2"
             dest: "{{ vault_systemd_service_file }}"
             mode: "0644"
 
         - name: "HashiCorp - Vault : Ensure systemd is reloaded."
-          systemd:
+          ansible.builtin.systemd:
             daemon_reload: true
 
         - name: "HashiCorp - Vault - ACL : Check if system is already bootstrapped."
-          stat:
+          ansible.builtin.stat:
             path: "{{ vault_bootstrapped_true_file }}"
           register: vault_bootstrapped
           when: ansible_hostname in groups['servers']
@@ -179,7 +179,7 @@
           run_once: true
 
         - name: "HashiCorp - Vault - ACL : Check if Consul has ACL mode enabled."
-          shell: "cat {{ consul_etc_directory }}/consul.hcl | grep -a3 '^acl' | grep enabled | awk '{print $3}'"
+          ansible.builtin.shell: "cat {{ consul_etc_directory }}/consul.hcl | grep -a3 '^acl' | grep enabled | awk '{print $3}'"
           changed_when: false
           ignore_errors: true
           when: ansible_hostname in groups['servers']
@@ -191,23 +191,24 @@
         - name: "HashiCorp - Vault - ACL"
           block:
             - name: "HashiCorp - Vault - ACL : Ensure the Vault service policy file is in place."
-              copy:
+              ansible.builtin.copy:
                 src: "{{ vault_service_policy_file_local }}"
                 dest: "{{ vault_service_policy_file_remote }}"
+                mode: 0644
 
             - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
-              shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
+              ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
               changed_when: false
               become: false
               delegate_to: localhost
               register: consul_acl_bootstrap_output
 
             - name: "HashiCorp - Consul - ACL : Set the Secret ID as a fact."
-              set_fact:
+              ansible.builtin.set_fact:
                 consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
 
             - name: "HashiCorp - Vault - ACL - Consul : Ensure that the ACL is present in Consul."
-              shell: "{{ consul_binary }} acl policy create -name {{ vault_consul_service_name }} -rules @{{ vault_service_policy_file_name }}"
+              ansible.builtin.command: "{{ consul_binary }} acl policy create -name {{ vault_consul_service_name }} -rules @{{ vault_service_policy_file_name }}"
               args:
                 chdir: "{{ vault_data_directory }}/"
               environment:
@@ -215,14 +216,14 @@
               changed_when: false
 
             - name: "HashiCorp - Vault - ACL - Consul : Create ACL token using the above policy."
-              shell: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consul_service_name }}"
+              ansible.builtin.command: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consul_service_name }}"
               changed_when: false
               environment:
                 CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
               register: vault_acl_bootstrap_raw
 
             - name: "HashiCorp - Vault - ACL : Store bootstrap token local for safekeeping."
-              copy:
+              ansible.builtin.copy:
                 content: "{{ vault_acl_bootstrap_raw.stdout }}"
                 dest: "{{ vault_bootstrap_token_local_path }}"
                 mode: 0644
@@ -230,23 +231,24 @@
               delegate_to: localhost
 
             - name: "HashiCorp - Vault - ACL : Retrieve Secret ID from bootstrap output."
-              shell: "awk '/SecretID/ {print $2}' {{ vault_bootstrap_token_local_path }}"
+              ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ vault_bootstrap_token_local_path }}"
               changed_when: false
               become: false
               delegate_to: localhost
               register: vault_acl_bootstrap_output
 
             - name: "HashiCorp - Vault - ACL : Set the Secret ID as a fact."
-              set_fact:
+              ansible.builtin.set_fact:
                 vault_acl_bootstrap_secret_id: "{{ vault_acl_bootstrap_output.stdout }}"
 
             - name: "HashiCorp - Vault - ACL : Ensure bootstrap check file is in place."
-              copy:
+              ansible.builtin.copy:
                 dest: "{{ vault_bootstrapped_true_file }}"
                 content: "This cluster was bootstrapped on {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
+                mode: 0644
 
             - name: "HashiCorp - Vault - ACL : Cleanup generated files which are not needed anymore."
-              file:
+              ansible.builtin.file:
                 path: "{{ item }}"
                 state: absent
               with_items:
@@ -260,23 +262,23 @@
           run_once: true
 
         - name: "HashiCorp - Vault : Ensure Vault Service Token is set in config file."
-          lineinfile:
+          ansible.builtin.lineinfile:
             path: "{{ vault_etc_directory }}/vault.hcl"
             regexp: '  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"'
             line: '  token   = "{{ vault_acl_bootstrap_secret_id }}"'
 
         - name: "HashiCorp - Vault : Ensure systemd service is enabled and started."
-          systemd:
+          ansible.builtin.systemd:
             name: "{{ vault_service_name }}"
             enabled: true
             state: started
 
         - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
-          pause:
+          ansible.builtin.pause:
             seconds: 10
 
         - name: "HashiCorp - Vault : Check the Vault initialization status."
-          shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
+          ansible.builtin.shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
@@ -288,7 +290,7 @@
           run_once: true
 
         - name: "HashiCorp - Vault : Initialize the Vault."
-          command: "{{ vault_binary }} operator init"
+          ansible.builtin.command: "{{ vault_binary }} operator init"
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
@@ -302,7 +304,7 @@
           run_once: true
 
         - name: "HashiCorp - Vault - INIT: Store Vault master keys local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ vault_init_output.stdout }}"
             dest: "{{ vault_bootstrap_init_local_path }}"
             mode: "0644"
@@ -315,7 +317,7 @@
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Vault : Check the Vault sealed status."
-      shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
+      ansible.builtin.shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
       environment:
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
@@ -326,35 +328,36 @@
     - name: "HashiCorp - Vault - Unseal"
       block:
         - name: "HashiCorp - Vault - Unseal : Retrieve local token file."
-          set_fact:
+          ansible.builtin.set_fact:
             token_file_output: "{{ lookup('file', vault_bootstrap_init_local_path).split('\n') }}"
           delegate_to: localhost
           run_once: true
 
         - name: "HashiCorp - Vault - Unseal : Retrieve first unseal key from initialization info."
-          set_fact:
+          ansible.builtin.set_fact:
             vault_unseal_key_1: "{{ token_file_output[0].split('Unseal Key 1: ')[1] }}"
           delegate_to: localhost
           run_once: true
 
         - name: "HashiCorp - Vault - Unseal : Retrieve second unseal key from initialization info."
-          set_fact:
+          ansible.builtin.set_fact:
             vault_unseal_key_2: "{{ token_file_output[1].split('Unseal Key 2: ')[1] }}"
           delegate_to: localhost
           run_once: true
 
         - name: "HashiCorp - Vault - Unseal : Retrieve third unseal key from initialization info."
-          set_fact:
+          ansible.builtin.set_fact:
             vault_unseal_key_3: "{{ token_file_output[2].split('Unseal Key 3: ')[1] }}"
           delegate_to: localhost
           run_once: true
 
         - name: "HashiCorp - Vault - Unseal : Ensure the Vault is unsealed."
-          command: "{{ vault_binary }} operator unseal {{ item }}"
+          ansible.builtin.command: "{{ vault_binary }} operator unseal {{ item }}"
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
+          changed_when: true
           with_items:
             - "{{ vault_unseal_key_1 }}"
             - "{{ vault_unseal_key_2 }}"
@@ -363,7 +366,7 @@
         - vault_is_sealed.stdout == "true"
 
     - name: Check the Vault sealed status.
-      shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
+      ansible.builtin.shell: "{{ vault_binary }} status | grep -i sealed | awk '{print $2}'"
       environment:
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
@@ -372,7 +375,7 @@
       register: vault_is_sealed
 
     - name: Retrieve Initial Root Token from local file.
-      shell: "awk '/Initial Root Token/ {print $4}' {{ vault_bootstrap_init_local_path }}"
+      ansible.builtin.shell: "awk '/Initial Root Token/ {print $4}' {{ vault_bootstrap_init_local_path }}"
       register: vault_initial_root_token
       changed_when: false
       delegate_to: localhost
@@ -380,7 +383,7 @@
       run_once: true
 
     - name: "HashiCorp - Vault : Check if there is already a second root token."
-      stat:
+      ansible.builtin.stat:
         path: "{{ vault_bootstrap_root_true_file }}"
       register: vault_bootstrap_root_true_file_status
       when: ansible_hostname in groups['servers']
@@ -391,7 +394,7 @@
     - name: "HashiCorp - Vault : Secondary Root Token."
       block:
         - name: "HashiCorp - Vault : Create second root token."
-          command: "{{ vault_binary }} token create -policy=root"
+          ansible.builtin.command: "{{ vault_binary }} token create -policy=root"
           environment:
             VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
             VAULT_ADDR: "{{ vault_address }}"
@@ -401,7 +404,7 @@
           register: vault_second_root_token_output
 
         - name: "HashiCorp - Vault : Store second root token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ vault_second_root_token_output.stdout }}"
             dest: "{{ vault_bootstrap_root_token_local_path }}"
             mode: 0644
@@ -409,7 +412,7 @@
           become: false
 
         - name: "HashiCorp - Vault : Ensure second root check file is in place."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ vault_bootstrap_root_true_file }}"
             content: "This cluster has a second root token, generated at {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
             mode: 0644
@@ -424,7 +427,7 @@
     - name: "HashiCorp - Vault : Content creation."
       block:
         - name: "HashiCorp - Vault : Ensure admin-policy is in place."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/sys/policy/{{ vault_admin_policy_name }}"
             method: PUT
             headers:
@@ -437,7 +440,7 @@
             validate_certs: false
 
         - name: "HashiCorp - Vault : Ensure userpass auth engine is enabled and mounted."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/sys/auth/userpass"
             method: POST
             headers:
@@ -450,12 +453,12 @@
             validate_certs: false
 
         - name: "HashiCorp - Vault : Create a random password."
-          set_fact:
+          ansible.builtin.set_fact:
             random_password: "{{ lookup('password', '{{ vault_admin_local_path }} chars=ascii_letters,digits length=20') }}"
           become: false
 
         - name: "HashiCorp - Vault : Ensure admin user is created."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/auth/userpass/users/{{ vault_admin_username }}"
             method: POST
             headers:
@@ -468,7 +471,7 @@
             validate_certs: false
 
         - name: "HashiCorp - Vault : Retrieve userpass mount accessor."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/sys/auth"
             method: GET
             headers:
@@ -479,11 +482,11 @@
           register: mount_accessor_raw
 
         - name: "HashiCorp - Vault : Set a fact with the mount accessor."
-          set_fact:
+          ansible.builtin.set_fact:
             mount_accessor: "{{ mount_accessor_raw['json']['data']['userpass/']['accessor'] }}"
 
         - name: "HashiCorp - Vault : Create the admin-user entity."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/identity/entity"
             method: POST
             headers:
@@ -498,11 +501,11 @@
           register: entity_raw
 
         - name: "HashiCorp - Vault : Set a fact with the entity ID."
-          set_fact:
+          ansible.builtin.set_fact:
             entity_id: "{{ entity_raw['json']['data']['id'] }}"
 
         - name: "HashiCorp - Vault : Create the admin-user-entity alias."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/identity/entity-alias"
             method: POST
             headers:
@@ -517,7 +520,7 @@
           register: entity_alias_raw
 
         - name: "HashiCorp - Vault : Ensure admin-group is present."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/identity/group"
             method: POST
             headers:
@@ -530,7 +533,7 @@
             validate_certs: false
 
         - name: "HashiCorp - Vault : Ensure that the KV secret engine is enabled and mounted."
-          uri:
+          ansible.builtin.uri:
             url: "{{ vault_address }}/v1/sys/mounts/{{ vault_kv_path }}"
             method: POST
             headers:
@@ -547,14 +550,14 @@
       tags: content
 
     - name: "HashiCorp - Vault - Logging: Ensure logrotate file for Vault is present."
-      template:
+      ansible.builtin.template:
         src: "{{ vault_log_template_local }}"
         dest: "{{ vault_log_rotate_dir }}/{{ vault_log_rotate_filename }}"
         mode: 0644
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Vault - Logging : Ensure file auditing is enabled."
-      command: "{{ vault_binary }} audit enable file file_path={{ vault_log_location }}"
+      ansible.builtin.command: "{{ vault_binary }} audit enable file file_path={{ vault_log_location }}"
       environment:
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
@@ -568,6 +571,6 @@
 
   handlers:
     - name: Restart Vault
-      service:
+      ansible.builtin.service:
         name: "{{ vault_service_name }}"
         state: restarted
