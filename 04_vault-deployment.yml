@@ -306,8 +306,8 @@
         - debug:
             msg: "{{ vault_init_output }}"
         - debug:
-            msg: "{{ vault_init_output }}"
-            run_once: true
+            msg: "{{ item | first }}"
+            with_items: vault_init_output
         - debug:
             msg: "{{ vault_init_output | first }}"
         - meta: end_play
