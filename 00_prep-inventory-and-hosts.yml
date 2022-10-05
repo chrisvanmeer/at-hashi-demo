@@ -25,6 +25,11 @@
       ansible.builtin.set_fact:
         client_names: "{{ multipass_instances.clients | join('\\|') }}"
 
+    - name: Authenticate against Multipass.
+      ansible_builtin.command: "multipass authenticate {{ multipass_passphrase }}"
+      no_log: true
+      changed_when: false
+
     - name: Check if there are already multipass instances on this machine.
       ansible.builtin.shell: "multipass list | grep '{{ client_names }}\\|{{ server_names }}'"
       changed_when: false
