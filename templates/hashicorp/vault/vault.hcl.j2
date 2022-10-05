@@ -12,7 +12,7 @@ storage "raft" {
     leader_api_addr     = "https://{{ hostvars[host].ansible_default_ipv4.address }}:8200"
     leader_ca_cert_file = "{{ vault_ssl_ca_dest }}"
   }
-  {% endfor %}
+  {% endfor -%}
 }
 
 #storage "consul" {
