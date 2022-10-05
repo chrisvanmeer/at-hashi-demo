@@ -43,6 +43,11 @@
     - name: MULTIPASS
       tags: multipass
       block:
+        - name: Auth against Multipass.
+          command: "multipass authenticate {{ multipass_passphrase }}"
+          no_log: true
+          changed_when: false
+
         - name: Delete existing instances.
           command: "multipass delete {{ item }}"
           ignore_errors: true
