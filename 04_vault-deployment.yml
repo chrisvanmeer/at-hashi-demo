@@ -303,8 +303,11 @@
           # delegate_to: "{{ groups['servers'] | first }}"
           # run_once: true
 
-        - debug: var=vault_init_output
-        - fail:
+        - debug:
+          msg: "{{ vault_init_output }}"
+        - debug:
+          msg: "{{ vault_init_output | first }}"
+        - meta: end_play
 
         - name: "HashiCorp - Vault - INIT: Store Vault master keys local for safekeeping."
           ansible.builtin.copy:
