@@ -261,11 +261,11 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-        - name: "HashiCorp - Vault : Ensure Vault Service Token is set in config file."
-          ansible.builtin.lineinfile:
-            path: "{{ vault_etc_directory }}/vault.hcl"
-            regexp: '  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"'
-            line: '  token   = "{{ vault_acl_bootstrap_secret_id }}"'
+        # - name: "HashiCorp - Vault : Ensure Vault Service Token is set in config file."
+        #   ansible.builtin.lineinfile:
+        #     path: "{{ vault_etc_directory }}/vault.hcl"
+        #     regexp: '  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"'
+        #     line: '  token   = "{{ vault_acl_bootstrap_secret_id }}"'
 
         - name: "HashiCorp - Vault : Ensure systemd service is enabled and started."
           ansible.builtin.systemd:
