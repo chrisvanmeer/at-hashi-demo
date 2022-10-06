@@ -89,6 +89,7 @@
             ownca_path: "{{ ssl_ca_certfile_path }}"
             ownca_privatekey_path: "{{ ssl_ca_keyfile_path }}"
           register: certificate
+          delegate_to: "{{ groups['servers'] | first }}"
 
         - name: "HashiCorp - Vault - PKI : Write certificate file."
           ansible.builtin.copy:
