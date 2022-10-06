@@ -313,8 +313,8 @@
           when:
             - ansible_hostname in groups['servers']
             - vault_is_initialized.stdout == "false"
-          # delegate_to: "{{ groups['servers'] | first }}"
-          # run_once: true
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
 
         - debug:
             msg: "{{ vault_init_output }}"
