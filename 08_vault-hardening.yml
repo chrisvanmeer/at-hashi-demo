@@ -8,7 +8,7 @@
   tasks:
     - name: "HashiCorp - Vault - Create fact of admin password."
       set_fact:
-        admin_password: "{{ lookup('file', vault_admin_local_path) }}""
+        admin_password: "{{ lookup('file', vault_admin_local_path) }}"
 
     - name: "HashiCorp - Vault - Revoke root token."
       block:
@@ -31,4 +31,3 @@
         - name: "HashiCorp - Vault - Revoke root token - debug."
           debug: var=vault_admin_login_response
           tags: revoke
-
