@@ -34,3 +34,11 @@
         - name: "HashiCorp - Vault - Revoke root token - debug."
           debug: var=vault_admin_login_response
           tags: revoke
+
+        - name: "HashiCorp - Vault - Revoke root token - Set fact of client token."
+          ansible.builtin.set_fact:
+            admin_token: "{{ vault_admin_login_response.json.auth.client_token }}"
+
+        - name: "HashiCorp - Vault - Revoke root token - debug."
+          debug: var=admin_token
+          tags: revoke
