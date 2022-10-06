@@ -64,7 +64,9 @@
         - name: "HashiCorp - Vault - PKI : Create certificate signing request (CSR) for server certificate."
           community.crypto.openssl_csr_pipe:
             privatekey_path: "{{ vault_ssl_key_dest }}"
-            common_name: "{{ vault_ssl_server_common_name }}"
+            common_name:
+              - "{{ vault_ssl_server_common_name }}"
+              - "IP:{{ ansible_host }}"
             subject_alt_name: "{{ vault_ssl_server_subject_alt_names }}"
           register: csr
 
@@ -97,9 +99,9 @@
             mode: "0644"
           when: certificate is changed
 
-      delegate_to: "{{ groups['servers'] | first }}"
+      # delegate_to: "{{ groups['servers'] | first }}"
       when: ansible_hostname in groups['servers']
-      run_once: true
+      # run_once: true
 
     # Distribute the CA certificate to the rest of the environment
     - name: "HashiCorp - Vault - PKI : Retrieve Content."
@@ -129,25 +131,25 @@
       when:
         - ansible_hostname in groups['servers']
 
-    - name: "HashiCorp - Vault - PKI : Place Content."
-      block:
-        - name: "HashiCorp - Vault - PKI : Place certificate in default location."
-          ansible.builtin.copy:
-            dest: "{{ vault_ssl_cert_dest }}"
-            content: "{{ server_certificate_slurp.content | b64decode }}"
-            owner: "root"
-            group: "root"
-            mode: "0644"
-        - name: "HashiCorp - Vault - PKI : Place key in default location."
-          ansible.builtin.copy:
-            dest: "{{ vault_ssl_key_dest }}"
-            content: "{{ server_key_slurp.content | b64decode }}"
-            owner: "root"
-            group: "vault"
-            mode: "0640"
-      when:
-        - ansible_hostname in groups['servers']
-        - ansible_hostname != groups['servers'] | first
+    # - name: "HashiCorp - Vault - PKI : Place Content."
+    #   block:
+    #     - name: "HashiCorp - Vault - PKI : Place certificate in default location."
+    #       ansible.builtin.copy:
+    #         dest: "{{ vault_ssl_cert_dest }}"
+    #         content: "{{ server_certificate_slurp.content | b64decode }}"
+    #         owner: "root"
+    #         group: "root"
+    #         mode: "0644"
+    #     - name: "HashiCorp - Vault - PKI : Place key in default location."
+    #       ansible.builtin.copy:
+    #         dest: "{{ vault_ssl_key_dest }}"
+    #         content: "{{ server_key_slurp.content | b64decode }}"
+    #         owner: "root"
+    #         group: "vault"
+    #         mode: "0640"
+    #   when:
+    #     - ansible_hostname in groups['servers']
+    #     - ansible_hostname != groups['servers'] | first
 
     # VAULT CONFIGURATION
     - name: "HashiCorp - Vault : Configuration."
