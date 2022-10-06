@@ -11,9 +11,8 @@
     - vars/hashicorp/ssl.yml
 
   tasks:
-
     - name: "HashiCorp - Nomad - Jobs : Retrieve Operator Secret ID."
-      shell: "awk '/Secret ID/ {print $4}' {{ nomad_operator_token_local_path }}"
+      ansible.builtin.shell: "awk '/Secret ID/ {print $4}' {{ nomad_operator_token_local_path }}"
       changed_when: false
       become: false
       delegate_to: localhost
@@ -21,7 +20,7 @@
       register: nomad_operator_token
 
     - name: "HashiCorp - Nomad - Jobs : Register the Node ID from the first client for constraints demo."
-      shell: "{{ nomad_binary }} node status -self -short | grep ID -m1 | awk '{print $3}'"
+      ansible.builtin.shell: "{{ nomad_binary }} node status -self -short | grep ID -m1 | awk '{print $3}'"
       environment:
         NOMAD_TOKEN: "{{ nomad_operator_token.stdout }}"
       changed_when: false
@@ -33,21 +32,21 @@
       block:
         - name: "HashiCorp - Nomad - Jobs : Ensure job directory is present on the first server."
           become: true
-          file:
+          ansible.builtin.file:
             path: "{{ nomad_demo_job_remote_location }}"
             state: directory
             recurse: true
 
         - name: "HashiCorp - Nomad - Jobs : Ensure job directory is present on this client."
           become: true
-          file:
+          ansible.builtin.file:
             path: "{{ nomad_demo_job_local_location }}"
             state: directory
             mode: "0777"
           delegate_to: localhost
 
         - name: "HashiCorp - Nomad - Jobs : Ensure demo jobs are templated and in place."
-          template:
+          ansible.builtin.template:
             src: "{{ item.template }}"
             dest: "{{ item.destination }}"
             mode: "0666"
@@ -55,7 +54,7 @@
           when: nomad_first_client_node_id is defined
 
         - name: "HashiCorp - Nomad : Retrieve job content."
-          fetch:
+          ansible.builtin.fetch:
             src: "{{ item.destination }}"
             dest: "{{ nomad_demo_job_local_location }}/"
             flat: yes
