@@ -85,9 +85,10 @@ ansible-galaxy install -r requirements.yml
 
 ## Step 3 - Provision the instances
 
-**You can either provision the instances locally with Multipass, or in the AWS cloud with Terraform. You decide.**  
+You can either provision the instances locally with Multipass, or in the AWS cloud with Terraform. You decide.  
 If you want to provision with Multipass, go for step 3a.  
-If you want to provision with Terraform, go for step 3b.
+If you want to provision with Terraform, go for step 3b.  
+**Beware that you must choose the one or the other, do not execute 3a AND 3b.**
 
 ### Step 3a - Multipass
 
@@ -110,13 +111,13 @@ And lastly it will add the names and IP addresses to the local `/etc/hosts` file
 ### Run playbook
 
 ```ansible
-ansible-playbook 00_prep-inventory-and-hosts.yml
+ansible-playbook 00_multipass-prep-inventory-and-hosts.yml
 ```
 
 With the second run (you will be prompted)
 
 ```ansible
-ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pass
+ansible-playbook 00_multipass-prep-inventory-and-hosts.yml --tags hostfile --ask-become-pass
 ```
 
 ### Step 3b - Terraform
