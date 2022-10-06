@@ -110,9 +110,7 @@
             mode: "0644"
           when: certificate is changed
 
-      # delegate_to: "{{ groups['servers'] | first }}"
       when: ansible_hostname in groups['servers']
-      # run_once: true
 
     # Distribute the CA certificate to the rest of the environment
     - name: "HashiCorp - Vault - PKI : Retrieve Content."
@@ -141,26 +139,6 @@
         mode: "0644"
       when:
         - ansible_hostname in groups['servers']
-
-    # - name: "HashiCorp - Vault - PKI : Place Content."
-    #   block:
-    #     - name: "HashiCorp - Vault - PKI : Place certificate in default location."
-    #       ansible.builtin.copy:
-    #         dest: "{{ vault_ssl_cert_dest }}"
-    #         content: "{{ server_certificate_slurp.content | b64decode }}"
-    #         owner: "root"
-    #         group: "root"
-    #         mode: "0644"
-    #     - name: "HashiCorp - Vault - PKI : Place key in default location."
-    #       ansible.builtin.copy:
-    #         dest: "{{ vault_ssl_key_dest }}"
-    #         content: "{{ server_key_slurp.content | b64decode }}"
-    #         owner: "root"
-    #         group: "vault"
-    #         mode: "0640"
-    #   when:
-    #     - ansible_hostname in groups['servers']
-    #     - ansible_hostname != groups['servers'] | first
 
     # VAULT CONFIGURATION
     - name: "HashiCorp - Vault : Configuration."
@@ -274,21 +252,11 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-        # - name: "HashiCorp - Vault : Ensure Vault Service Token is set in config file."
-        #   ansible.builtin.lineinfile:
-        #     path: "{{ vault_etc_directory }}/vault.hcl"
-        #     regexp: '  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"'
-        #     line: '  token   = "{{ vault_acl_bootstrap_secret_id }}"'
-
         - name: "HashiCorp - Vault : Ensure systemd service is enabled and started."
           ansible.builtin.systemd:
             name: "{{ vault_service_name }}"
             enabled: true
             state: started
-
-        # - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
-        #   ansible.builtin.pause:
-        #     seconds: 10
 
         - name: "HashiCorp - Vault : Check the Vault initialization status."
           ansible.builtin.shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
@@ -422,39 +390,6 @@
       when: ansible_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
-
-    # # SECONDARY ROOT TOKEN
-    # - name: "HashiCorp - Vault : Secondary Root Token."
-    #   block:
-    #     - name: "HashiCorp - Vault : Create second root token."
-    #       ansible.builtin.command: "{{ vault_binary }} token create -policy=root"
-    #       environment:
-    #         VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
-    #         VAULT_ADDR: "{{ vault_address }}"
-    #         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-    #         VAULT_SKIP_VERIFY: true
-    #       changed_when: false
-    #       register: vault_second_root_token_output
-
-    #     - name: "HashiCorp - Vault : Store second root token local for safekeeping."
-    #       ansible.builtin.copy:
-    #         content: "{{ vault_second_root_token_output.stdout }}"
-    #         dest: "{{ vault_bootstrap_root_token_local_path }}"
-    #         mode: 0644
-    #       delegate_to: localhost
-    #       become: false
-
-    #     - name: "HashiCorp - Vault : Ensure second root check file is in place."
-    #       ansible.builtin.copy:
-    #         dest: "{{ vault_bootstrap_root_true_file }}"
-    #         content: "This cluster has a second root token, generated at {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
-    #         mode: 0644
-
-    #   when:
-    #     - not vault_bootstrap_root_true_file_status.stat.exists
-    #     - vault_is_sealed.stdout == "false"
-    #     - ansible_hostname in groups['servers']
-    #   run_once: true
 
     # VAULT CONTENT CONFIGURATION
     - name: "HashiCorp - Vault : Content creation."

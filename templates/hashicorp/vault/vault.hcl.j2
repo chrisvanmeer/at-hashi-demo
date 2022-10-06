@@ -1,31 +1,26 @@
+# Enable UI for demo purposes
 ui = true
 
+# Cluster addresses
 cluster_addr = "https://{{ ansible_host }}:8201"
 api_addr     = "https://{{ ansible_host }}:8200"
 
+# Raft storage backend
 storage "raft" {
   path    = "{{ vault_data_directory }}"
   node_id = "vault_{{ ansible_hostname }}"
 
 {% for host in groups['servers'] %}
   retry_join {
-    leader_api_addr     = "https://{{ hostvars[host].ansible_default_ipv4.address }}:8200"
-    # leader_ca_cert_file = "{{ vault_ssl_ca_dest }}"
+    leader_api_addr = "https://{{ hostvars[host].ansible_default_ipv4.address }}:8200"
   }
 {% endfor %}
 }
 
-#storage "consul" {
-#  address = "http://localhost:8500"
-#  path    = "vault/"
-#  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"
-#}
-
-
+# TLS Listener
 listener "tcp" {
   address            = "0.0.0.0:8200"
   tls_cert_file      = "{{ vault_ssl_cert_dest }}"
   tls_key_file       = "{{ vault_ssl_key_dest }}"
   tls_client_ca_file = "{{ vault_ssl_ca_dest }}"
-  # tls_disable        = 1
 }
