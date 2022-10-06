@@ -1,0 +1,34 @@
+---
+- name: "AT Computing - HashiCorp Demo - Vault Hardening"
+  hosts: servers
+
+  vars_files:
+    - vars/hashicorp/vault.yml
+
+  tasks:
+    - name: "HashiCorp - Vault - Create fact of admin password."
+      set_fact:
+        admin_password: "{{ lookup('file', vault_admin_local_path) }}""
+
+    - name: "HashiCorp - Vault - Revoke root token."
+      block:
+        - name: "HashiCorp - Vault - Revoke root token - log in as admin."
+          ansible.builtin.uri:
+            url: "{{ vault_address }}/v1/auth/userpass/login/{{ vault_admin_username }}"
+            method: POST
+            headers:
+              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            body_format: json
+            body: '{ "password": "{{ admin_password }}" }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
+          register: vault_admin_login_response
+          run_once: true
+          tags: revoke
+
+        - name: "HashiCorp - Vault - Revoke root token - debug."
+          debug: var=vault_admin_login_response
+          tags: revoke
+
