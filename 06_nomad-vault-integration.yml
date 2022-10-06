@@ -12,7 +12,7 @@
 
   tasks:
     - name: "HashiCorp - Nomad / Vault : Find all vault-nomad-server- files."
-      find:
+      ansible.builtin.find:
         paths: "files/hashicorp/vault/"
         patterns: "vault-nomad-*"
         file_type: "file"
@@ -21,7 +21,7 @@
       register: vault_files
 
     - name: "HashiCorp - Nomad / Vault : Ensure vault-nomad-server- files are present."
-      copy:
+      ansible.builtin.copy:
         src: "{{ item.path }}"
         dest: "{{ nomad_data_directory }}/{{ item.path | basename }}"
         mode: 0644
@@ -34,71 +34,90 @@
 
     - name: "HashiCorp - Nomad / Vault : Enable integration."
       block:
-        - name: "HashiCorp - Nomad / Vault : Retrieve Initial Root Token from local file."
-          shell: "awk '/Initial Root Token/ {print $4}' {{ vault_bootstrap_init_local_path }}"
-          register: vault_initial_root_token
-          changed_when: false
+        - name: "HashiCorp - Nomad / Vault : Create fact of admin password."
+          ansible.builtin.set_fact:
+            admin_password: "{{ lookup('file', vault_admin_local_path) }}"
           delegate_to: localhost
-          become: false
           run_once: true
+
+        - name: "HashiCorp - Nomad / Vault : Retrieve client token."
+          ansible.builtin.uri:
+            url: "{{ vault_address }}/v1/auth/userpass/login/{{ vault_admin_username }}"
+            method: POST
+            body_format: json
+            body: '{ "password": "{{ admin_password }}" }'
+            status_code:
+              - 200
+              - 204
+            validate_certs: false
+          register: vault_admin_login_response
+
+        - name: "HashiCorp - Nomad / Vault : Set fact of client token."
+          ansible.builtin.set_fact:
+            admin_token: "{{ vault_admin_login_response.json.auth.client_token }}"
+
         - name: "HashiCorp - Nomad / Vault : Ensure ssl-certificates-policy is present."
-          command: "{{ vault_binary }} policy write ssl-certificates-policy vault-nomad-ssl-certificates-policy.hcl"
+          ansible.builtin.command: "{{ vault_binary }} policy write ssl-certificates-policy vault-nomad-ssl-certificates-policy.hcl"
           args:
             chdir: "{{ nomad_data_directory }}"
           environment:
-            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
           changed_when: false
+
         - name: "HashiCorp - Nomad / Vault : Ensure nomad-server-policy is present."
-          command: "{{ vault_binary }} policy write nomad-server vault-nomad-server-policy.hcl"
+          ansible.builtin.command: "{{ vault_binary }} policy write nomad-server vault-nomad-server-policy.hcl"
           args:
             chdir: "{{ nomad_data_directory }}"
           environment:
-            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
           changed_when: false
+
         - name: "HashiCorp - Nomad / Vault : Ensure nomad-cluster-role is present."
-          command: "{{ vault_binary }} write /auth/token/roles/nomad-cluster @vault-nomad-cluster-role.json"
+          ansible.builtin.command: "{{ vault_binary }} write /auth/token/roles/nomad-cluster @vault-nomad-cluster-role.json"
           args:
             chdir: "{{ nomad_data_directory }}"
           environment:
-            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
           changed_when: false
+
         - name: "HashiCorp - Nomad / Vault : Ensure nomad token is generated."
-          shell: "{{ vault_binary }} token create -policy nomad-server -period 72h -orphan -format=json | jq -r .auth.client_token"
+          ansible.builtin.shell: "{{ vault_binary }} token create -policy nomad-server -period 72h -orphan -format=json | jq -r .auth.client_token"
           args:
             chdir: "{{ nomad_data_directory }}"
           environment:
-            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
           changed_when: false
           register: nomad_server_token_raw
+
       when: ansible_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
     - name: "HashiCorp - Nomad / Vault : Set a fact of the nomad token."
-      set_fact:
+      ansible.builtin.set_fact:
         nomad_server_vault_token: "{{ nomad_server_token_raw.stdout }}"
 
     - name: "HashiCorp - Nomad / Vault : Ensure vault integration is part of the Nomad config directory."
-      template:
+      ansible.builtin.template:
         src: templates/hashicorp/vault/vault-nomad-server.hcl.j2
         dest: "{{ nomad_etc_directory }}/vault.hcl"
         mode: 0644
       notify: Restart Nomad
 
     - name: "HashiCorp - Nomad / Vault : Find all vault-nomad-server- files."
-      find:
+      ansible.builtin.find:
         paths: "{{ nomad_data_directory }}/"
         patterns: "vault-nomad-*"
         file_type: "file"
@@ -108,7 +127,7 @@
       register: vault_files
 
     - name: "HashiCorp - Nomad / Vault : Clean up files."
-      file:
+      ansible.builtin.file:
         path: "{{ item.path }}"
         state: absent
       with_items: "{{ vault_files.files }}"
@@ -121,27 +140,27 @@
     - name: "HashiCorp - Nomad / Vault : Certificate collection."
       block:
         - name: "HashiCorp - Nomad / Vault : Retrieve private key contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ ssl_webapp_keyfile_path }}"
           register: keyfile
 
         - name: "HashiCorp - Nomad / Vault : Retrieve public key contents."
-          slurp:
+          ansible.builtin.slurp:
             src: "{{ ssl_webapp_certfile_path }}"
           register: certificate
 
         - name: "HashiCorp - Nomad / Vault : Set the webapp keyfile contents as a fact."
-          set_fact:
+          ansible.builtin.set_fact:
             webapp_key: "{{ keyfile.content | b64decode }}"
 
         - name: "HashiCorp - Nomad / Vault : Set the webapp certfile contents as a fact."
-          set_fact:
+          ansible.builtin.set_fact:
             webapp_cert: "{{ certificate.content | b64decode }}"
 
         - name: "HashiCorp - Nomad / Vault : Ensure webapp certificate contents are present."
-          command: '{{ vault_binary }} kv put {{ vault_kv_path }}/ssl-certificates/webapp privatekey="{{ webapp_key }}" certificate="{{ webapp_cert }}"'
+          ansible.builtin.command: '{{ vault_binary }} kv put {{ vault_kv_path }}/ssl-certificates/webapp privatekey="{{ webapp_key }}" certificate="{{ webapp_cert }}"'
           environment:
-            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+            VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: true
@@ -153,6 +172,6 @@
 
   handlers:
     - name: Restart Nomad
-      service:
+      ansible.builtin.service:
         name: "{{ nomad_service_name }}"
         state: restarted

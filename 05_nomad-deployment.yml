@@ -11,7 +11,7 @@
   tasks:
     # GENERAL
     - name: "HashiCorp - Nomad : Ensure data directory is present."
-      file:
+      ansible.builtin.file:
         path: "{{ nomad_data_directory }}"
         state: directory
         mode: "0755"
@@ -19,7 +19,7 @@
         group: "{{ nomad_data_directory_group }}"
 
     - name: "HashiCorp - Nomad : Ensure log directory is present."
-      file:
+      ansible.builtin.file:
         path: "{{ nomad_log_directory }}"
         state: directory
         mode: "0755"
@@ -28,7 +28,7 @@
 
     # CONSUL ACL
     - name: "HashiCorp - Nomad - Consul : Retrieve Consul Secret ID from bootstrap output."
-      shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
+      ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
       changed_when: false
       become: false
       delegate_to: localhost
@@ -36,11 +36,11 @@
       run_once: true
 
     - name: "HashiCorp - Nomad - Consul : Set the Consul Secret ID as a fact."
-      set_fact:
+      ansible.builtin.set_fact:
         consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
 
     - name: "HashiCorp - Nomad - Check if system is already Consul bootstrapped."
-      stat:
+      ansible.builtin.stat:
         path: "{{ nomad_consul_bootstrapped_true_file }}"
       register: nomad_consul_bootstrapped
       when: ansible_hostname in groups['servers']
@@ -50,7 +50,7 @@
     - name: "HashiCorp - Nomad - Consul Policies"
       block:
         - name: "HashiCorp - Nomad - Consul - Ensure the Nomad policy files are in place."
-          copy:
+          ansible.builtin.copy:
             src: "{{ item.local }}"
             dest: "{{ item.remote }}"
             mode: 0644
@@ -61,18 +61,18 @@
               remote: "{{ nomad_consul_client_policy_remote_file }}"
 
         - name: "HashiCorp - Nomad - Consul - Retrieve Consul Secret ID from bootstrap output."
-          shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
+          ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
           changed_when: false
           become: false
           delegate_to: localhost
           register: consul_acl_bootstrap_output
 
         - name: "HashiCorp - Nomad - Consul - Set the Consul Secret ID as a fact."
-          set_fact:
+          ansible.builtin.set_fact:
             consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
 
         - name: "HashiCorp - Nomad - Consul - Ensure that the ACL is present in Consul."
-          command: "{{ consul_binary }} acl policy create -name {{ item.service }} -rules @{{ item.policyfile }}"
+          ansible.builtin.command: "{{ consul_binary }} acl policy create -name {{ item.service }} -rules @{{ item.policyfile }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           args:
@@ -85,14 +85,14 @@
               policyfile: "{{ nomad_consul_client_policy_remote_file }}"
 
         - name: "HashiCorp - Nomad - Consul - Create ACL token for Nomad Servers."
-          command: "{{ consul_binary }} acl token create -description '{{ nomad_consul_server_token_description }}' -policy-name {{ nomad_consul_server_service_name }}"
+          ansible.builtin.command: "{{ consul_binary }} acl token create -description '{{ nomad_consul_server_token_description }}' -policy-name {{ nomad_consul_server_service_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           changed_when: false
           register: nomad_server_token_creation_raw
 
         - name: "HashiCorp - Nomad - Consul - Store Nomad Server token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ nomad_server_token_creation_raw.stdout }}"
             dest: "{{ nomad_consul_server_token_local_path }}"
             mode: 0644
@@ -100,25 +100,25 @@
           delegate_to: localhost
 
         - name: "HashiCorp - Nomad - Consul - Retrieve Secret ID from Nomad Server token output."
-          shell: "awk '/SecretID/ {print $2}' {{ nomad_consul_server_token_local_path }}"
+          ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ nomad_consul_server_token_local_path }}"
           changed_when: false
           become: false
           delegate_to: localhost
           register: nomad_server_token_output
 
         - name: "HashiCorp - Nomad - Consul - Set the Secret ID as a fact."
-          set_fact:
+          ansible.builtin.set_fact:
             nomad_server_token: "{{ nomad_server_token_output.stdout }}"
 
         - name: "HashiCorp - Nomad - Consul - Create ACL token for Nomad Clients."
-          command: "{{ consul_binary }} acl token create -description '{{ nomad_consul_client_token_description }}' -policy-name {{ nomad_consul_client_service_name }}"
+          ansible.builtin.command: "{{ consul_binary }} acl token create -description '{{ nomad_consul_client_token_description }}' -policy-name {{ nomad_consul_client_service_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           changed_when: false
           register: nomad_client_token_creation_raw
 
         - name: "HashiCorp - Nomad - Consul - Store Nomad Client token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ nomad_client_token_creation_raw.stdout }}"
             dest: "{{ nomad_consul_client_token_local_path }}"
             mode: 0644
@@ -126,24 +126,24 @@
           delegate_to: localhost
 
         - name: "HashiCorp - Nomad - Consul - Retrieve Secret ID from Nomad Client token output."
-          shell: "awk '/SecretID/ {print $2}' {{ nomad_consul_client_token_local_path }}"
+          ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ nomad_consul_client_token_local_path }}"
           changed_when: false
           become: false
           delegate_to: localhost
           register: nomad_client_token_output
 
         - name: "HashiCorp - Nomad - Consul - Set the Secret ID as a fact."
-          set_fact:
+          ansible.builtin.set_fact:
             nomad_client_token: "{{ nomad_client_token_output.stdout }}"
 
         - name: "HashiCorp - Nomad - Consul - Ensure Consul bootstrap check file is in place."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ nomad_consul_bootstrapped_true_file }}"
             content: "This cluster was Consul bootstrapped on {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
             mode: 0644
 
         - name: "HashiCorp - Nomad - Consul - Cleanup generated files which are not needed anymore."
-          file:
+          ansible.builtin.file:
             path: "{{ item }}"
             state: absent
           with_items:
@@ -158,7 +158,7 @@
 
     # GENERAL
     - name: "HashiCorp - Nomad : Ensure general configuration is present."
-      template:
+      ansible.builtin.template:
         src: "templates/hashicorp/nomad/nomad.hcl.j2"
         dest: "{{ nomad_etc_directory }}/nomad.hcl"
         mode: "0644"
@@ -166,7 +166,7 @@
         group: "{{ nomad_data_directory_group }}"
 
     - name: "HashiCorp - Nomad : Ensure configuration is present on the server."
-      template:
+      ansible.builtin.template:
         src: "templates/hashicorp/nomad/server.hcl.j2"
         dest: "{{ nomad_etc_directory }}/server.hcl"
         mode: "0644"
@@ -176,7 +176,7 @@
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Nomad : Ensure configuration is present on the client."
-      template:
+      ansible.builtin.template:
         src: "templates/hashicorp/nomad/client.hcl.j2"
         dest: "{{ nomad_etc_directory }}/client.hcl"
         mode: "0644"
@@ -186,7 +186,7 @@
       when: ansible_hostname in groups['clients']
 
     - name: "HashiCorp - Nomad : Ensure Nomad is excluded from the unattended upgrades."
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "/usr/share/unattended-upgrades/50unattended-upgrades"
         state: present
         line: '    "nomad";'
@@ -194,17 +194,17 @@
         backup: true
 
     - name: "HashiCorp - Nomad : Ensure systemd service is present."
-      template:
+      ansible.builtin.template:
         src: "templates/hashicorp/nomad/nomad.service.j2"
         dest: "{{ nomad_systemd_service_file }}"
         mode: "0644"
 
     - name: "HashiCorp - Nomad : Ensure systemd is reloaded."
-      systemd:
+      ansible.builtin.systemd:
         daemon_reload: true
 
     - name: "HashiCorp - Nomad : Ensure systemd service is enabled and started."
-      systemd:
+      ansible.builtin.systemd:
         name: "{{ nomad_service_name }}"
         enabled: true
         state: started
@@ -215,7 +215,7 @@
 
     # NOMAD ACL
     - name: "HashiCorp - Nomad - ACL : Check if system is already bootstrapped."
-      stat:
+      ansible.builtin.stat:
         path: "{{ nomad_bootstrapped_true_file }}"
       register: nomad_bootstrapped
       when: ansible_hostname in groups['servers']
@@ -225,12 +225,12 @@
     - name: "HashiCorp - Nomad - Bootstrap ACL."
       block:
         - name: "HashiCorp - Nomad - ACL : Run nomad acl bootstrap command."
-          command: "{{ nomad_binary }} acl bootstrap"
+          ansible.builtin.command: ansible.builtin."{{ nomad_binary }} acl bootstrap"
           changed_when: false
           register: nomad_acl_bootstrap_raw
 
         - name: "HashiCorp - Nomad - ACL : Store bootstrap token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ nomad_acl_bootstrap_raw.stdout }}"
             dest: "{{ nomad_bootstrap_token_local_path }}"
             mode: "0644"
@@ -238,24 +238,24 @@
           delegate_to: localhost
 
         - name: "HashiCorp - Nomad - ACL : Retrieve Secret ID from bootstrap output."
-          shell: "awk '/Secret ID/ {print $4}' {{ nomad_bootstrap_token_local_path }}"
+          ansible.builtin.shell: "awk '/Secret ID/ {print $4}' {{ nomad_bootstrap_token_local_path }}"
           changed_when: false
           become: false
           delegate_to: localhost
           register: nomad_acl_bootstrap_output
 
         - name: "HashiCorp - Nomad - ACL : Set the Secret ID as a fact."
-          set_fact:
+          ansible.builtin.set_fact:
             nomad_acl_bootstrap_secret_id: "{{ nomad_acl_bootstrap_output.stdout }}"
 
         - name: "HashiCorp - Nomad - ACL : Create Operator token."
-          command: "{{ nomad_binary }} acl token create -name='{{ nomad_operator_token_name }}' -global -type='management'"
+          ansible.builtin.command: "{{ nomad_binary }} acl token create -name='{{ nomad_operator_token_name }}' -global -type='management'"
           register: nomad_operator_token_output
           environment:
             NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
 
         - name: "HashiCorp - Nomad - ACL : Store Operator token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ nomad_operator_token_output.stdout }}"
             dest: "{{ nomad_operator_token_local_path }}"
             mode: 0644
@@ -263,13 +263,13 @@
           delegate_to: localhost
 
         - name: "HashiCorp - Nomad - ACL : Create Client token."
-          command: "{{ nomad_binary }} acl token create -name='{{ nomad_client_token_name }}' -global -policy='{{ nomad_client_policy_name }}'"
+          ansible.builtin.command: "{{ nomad_binary }} acl token create -name='{{ nomad_client_token_name }}' -global -policy='{{ nomad_client_policy_name }}'"
           register: nomad_client_token_output
           environment:
             NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
 
         - name: "HashiCorp - Nomad - ACL : Store Client token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ nomad_client_token_output.stdout }}"
             dest: "{{ nomad_client_token_local_path }}"
             mode: 0644
@@ -277,24 +277,24 @@
           delegate_to: localhost
 
         - name: "HashiCorp - Nomad - ACL : Ensure client policy file is in place."
-          copy:
+          ansible.builtin.copy:
             src: "{{ nomad_client_policy_local_file }}"
             dest: "{{ nomad_client_policy_remote_file }}"
             mode: "0644"
 
         - name: "HashiCorp - Nomad - ACL : Ensure the client policy is registered."
-          command: "{{ nomad_binary }} acl policy apply -description '{{ nomad_client_policy_description }}' {{ nomad_client_policy_name}} {{ nomad_client_policy_remote_file }}"
+          ansible.builtin.command: "{{ nomad_binary }} acl policy apply -description '{{ nomad_client_policy_description }}' {{ nomad_client_policy_name}} {{ nomad_client_policy_remote_file }}"
           environment:
             NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
 
         - name: "HashiCorp - Nomad - ACL : Ensure bootstrap check file is in place."
-          copy:
+          ansible.builtin.copy:
             dest: "{{ nomad_bootstrapped_true_file }}"
             content: "This cluster was bootstrapped on {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
             mode: 0644
 
         - name: "HashiCorp - Nomad - ACL : Cleanup nomad client policy file which is not needed anymore."
-          file:
+          ansible.builtin.file:
             path: "{{ item }}"
             state: absent
           with_items:
@@ -309,31 +309,31 @@
 
     # POST ACL
     - name: "HashiCorp - Nomad : Run nomad server members command."
-      command: "{{ nomad_binary }} server members"
+      ansible.builtin.command: "{{ nomad_binary }} server members"
       environment:
         NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
       register: nomad_server_members_output
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Nomad : Output the results of the nomad server members command."
-      debug:
+      ansible.builtin.debug:
         var: nomad_server_members_output.stdout_lines
       when: ansible_hostname in groups['servers']
 
     - name: "HashiCorp - Nomad : Run nomad node status command."
-      command: "{{ nomad_binary }} node status"
+      ansible.builtin.command: "{{ nomad_binary }} node status"
       environment:
         NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
       register: nomad_node_status_output
       when: ansible_hostname in groups['clients']
 
     - name: "HashiCorp - Nomad : Output the results of the nomad node status command."
-      debug:
+      ansible.builtin.debug:
         var: nomad_node_status_output.stdout_lines
       when: ansible_hostname in groups['clients']
 
   handlers:
     - name: Restart Nomad
-      service:
+      ansible.builtin.service:
         name: "{{ nomad_service_name }}"
         state: restarted
