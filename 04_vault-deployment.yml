@@ -316,15 +316,6 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-        - debug:
-            msg: "{{ vault_init_output }}"
-        # - debug:
-        #     msg: "{{ item | first }}"
-        #     with_items: "{{ vault_init_output.results }}"
-        # - debug:
-        #     msg: "{{ vault_init_output | first }}"
-        # - meta: end_play
-
         - name: "HashiCorp - Vault - INIT: Store Vault master keys local for safekeeping."
           ansible.builtin.copy:
             content: "{{ vault_init_output.stdout }}"
@@ -373,7 +364,7 @@
           delegate_to: localhost
           run_once: true
 
-        - name: "HashiCorp - Vault - Unseal : Ensure the Vault is unsealed."
+        - name: "HashiCorp - Vault - Unseal : Ensure first Vault is unsealed."
           ansible.builtin.command: "{{ vault_binary }} operator unseal {{ item }}"
           environment:
             VAULT_ADDR: "{{ vault_address }}"
@@ -384,6 +375,26 @@
             - "{{ vault_unseal_key_1 }}"
             - "{{ vault_unseal_key_2 }}"
             - "{{ vault_unseal_key_3 }}"
+          when:
+            - ansible_hostname in groups['servers']
+            - ansible_hostname == groups['servers'] | first
+          run_once: true
+
+        - name: "HashiCorp - Vault - Unseal : Ensure other Vaults are unsealed."
+          ansible.builtin.command: "{{ vault_binary }} operator unseal {{ item }}"
+          environment:
+            VAULT_ADDR: "{{ vault_address }}"
+            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+            VAULT_SKIP_VERIFY: true
+          changed_when: true
+          with_items:
+            - "{{ vault_unseal_key_1 }}"
+            - "{{ vault_unseal_key_2 }}"
+            - "{{ vault_unseal_key_3 }}"
+          when:
+            - ansible_hostname in groups['servers']
+            - ansible_hostname != groups['servers'] | first
+
       when:
         - vault_is_sealed.stdout == "true"
 
@@ -412,38 +423,38 @@
       delegate_to: "{{ groups['servers'] | first }}"
       run_once: true
 
-    # SECONDARY ROOT TOKEN
-    - name: "HashiCorp - Vault : Secondary Root Token."
-      block:
-        - name: "HashiCorp - Vault : Create second root token."
-          ansible.builtin.command: "{{ vault_binary }} token create -policy=root"
-          environment:
-            VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
-            VAULT_ADDR: "{{ vault_address }}"
-            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
-          changed_when: false
-          register: vault_second_root_token_output
+    # # SECONDARY ROOT TOKEN
+    # - name: "HashiCorp - Vault : Secondary Root Token."
+    #   block:
+    #     - name: "HashiCorp - Vault : Create second root token."
+    #       ansible.builtin.command: "{{ vault_binary }} token create -policy=root"
+    #       environment:
+    #         VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+    #         VAULT_ADDR: "{{ vault_address }}"
+    #         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
+    #         VAULT_SKIP_VERIFY: true
+    #       changed_when: false
+    #       register: vault_second_root_token_output
 
-        - name: "HashiCorp - Vault : Store second root token local for safekeeping."
-          ansible.builtin.copy:
-            content: "{{ vault_second_root_token_output.stdout }}"
-            dest: "{{ vault_bootstrap_root_token_local_path }}"
-            mode: 0644
-          delegate_to: localhost
-          become: false
+    #     - name: "HashiCorp - Vault : Store second root token local for safekeeping."
+    #       ansible.builtin.copy:
+    #         content: "{{ vault_second_root_token_output.stdout }}"
+    #         dest: "{{ vault_bootstrap_root_token_local_path }}"
+    #         mode: 0644
+    #       delegate_to: localhost
+    #       become: false
 
-        - name: "HashiCorp - Vault : Ensure second root check file is in place."
-          ansible.builtin.copy:
-            dest: "{{ vault_bootstrap_root_true_file }}"
-            content: "This cluster has a second root token, generated at {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
-            mode: 0644
+    #     - name: "HashiCorp - Vault : Ensure second root check file is in place."
+    #       ansible.builtin.copy:
+    #         dest: "{{ vault_bootstrap_root_true_file }}"
+    #         content: "This cluster has a second root token, generated at {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
+    #         mode: 0644
 
-      when:
-        - not vault_bootstrap_root_true_file_status.stat.exists
-        - vault_is_sealed.stdout == "false"
-        - ansible_hostname in groups['servers']
-      run_once: true
+    #   when:
+    #     - not vault_bootstrap_root_true_file_status.stat.exists
+    #     - vault_is_sealed.stdout == "false"
+    #     - ansible_hostname in groups['servers']
+    #   run_once: true
 
     # VAULT CONTENT CONFIGURATION
     - name: "HashiCorp - Vault : Content creation."
