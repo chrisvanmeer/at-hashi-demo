@@ -193,12 +193,10 @@ ansible-playbook 03_consul-deployment.yml
 
 ### Most noticable / important variables
 
-| Variable                              | Default value                               | Description                                                                                                   |
-| ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| vault_bootstrap_token_local_path      | `~/hashi-tokens/vault.consul.token`         | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_bootstrap_init_local_path       | `~/hashi-tokens/vault.master.keys`          | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_bootstrap_root_token_local_path | `~/hashi-tokens/management.vault.token`     | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_admin_local_path                | `~/hashi-tokens/atcomputing.vault.password` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| Variable                        | Default value                               | Description                                                                                                   |
+| ------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| vault_bootstrap_init_local_path | `~/hashi-tokens/vault.master.keys`          | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_admin_local_path          | `~/hashi-tokens/atcomputing.vault.password` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
 
