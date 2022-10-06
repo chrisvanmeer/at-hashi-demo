@@ -61,6 +61,18 @@
             src: "{{ vault_ssl_key_dest }}"
           register: keyfile
 
+        - name: "HashiCorp - Vault - PKI : Retrieve server IP addresses."
+          ansible.builtin.set_fact:
+            servers: "{% set comma = joiner(',') %}{% for host in groups['servers'] %}{{ comma() }}IP:{{ hostvars[host]['ansible_host'] }}{% endfor %}"
+
+        - name: "HashiCorp - Vault - PKI : Convert server fact to list."
+          ansible.builtin.set_fact:
+            servers: "{{ servers.split(',') }}"
+
+        - name: "HashiCorp - Vault - PKI : Append the existing list of SAN attributes."
+          ansible.builtin.set_fact:
+            vault_ssl_server_subject_alt_names: "{{ vault_ssl_server_subject_alt_names + servers }}"
+
         - name: "HashiCorp - Vault - PKI : Create certificate signing request (CSR) for server certificate."
           community.crypto.openssl_csr_pipe:
             privatekey_path: "{{ vault_ssl_key_dest }}"
