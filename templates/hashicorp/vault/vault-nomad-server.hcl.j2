@@ -1,6 +1,6 @@
 vault {
   enabled = true
-  address = "https://{{ ansible_host }}:8200"
+  address = "https://active.vault.service.consul:8200"
 {% if ansible_hostname in groups['servers'] %}
 
   task_token_ttl = "1h"

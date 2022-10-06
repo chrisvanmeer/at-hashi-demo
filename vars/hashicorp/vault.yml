@@ -23,6 +23,8 @@ vault_log_directory_group: "vault"
 
 vault_address: "https://127.0.0.1:8200"
 
+vault_bootstrapped_true_file: "{{ vault_data_directory }}/bootstrapped.true"
+vault_bootstrap_token_local_path: "{{ token_directory }}/vault-service.consul.token"
 vault_bootstrap_init_local_path: "{{ token_directory }}/vault.master.keys"
 
 vault_ssl_cert_filename: "vault-cert.pem"
