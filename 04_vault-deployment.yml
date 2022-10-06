@@ -417,7 +417,7 @@
       run_once: true
       tags: content
 
-    - name: "HashiCorp - Vault - Create fact of admin password."
+    - name: "HashiCorp - Vault : Create fact of admin password."
       ansible.builtin.set_fact:
         admin_password: "{{ lookup('file', vault_admin_local_path) }}"
       delegate_to: localhost
@@ -425,7 +425,7 @@
 
     - name: "HashiCorp - Vault - Revoke root token."
       block:
-        - name: "HashiCorp - Vault - Retrieve client token."
+        - name: "HashiCorp - Vault : Retrieve client token."
           ansible.builtin.uri:
             url: "{{ vault_address }}/v1/auth/userpass/login/{{ vault_admin_username }}"
             method: POST
@@ -437,11 +437,11 @@
             validate_certs: false
           register: vault_admin_login_response
 
-        - name: "HashiCorp - Vault -Set fact of client token."
+        - name: "HashiCorp - Vault : Set fact of client token."
           ansible.builtin.set_fact:
             admin_token: "{{ vault_admin_login_response.json.auth.client_token }}"
 
-        - name: "HashiCorp - Vault - Revoke root token."
+        - name: "HashiCorp - Vault : Revoke root token."
           ansible.builtin.uri:
             url: "{{ vault_address }}/v1/auth/token/revoke"
             method: POST
@@ -472,7 +472,7 @@
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
         VAULT_SKIP_VERIFY: true
-        VAULT_TOKEN: "{{ vault_initial_root_token.stdout }}"
+        VAULT_TOKEN: "{{ admin_token }}"
       changed_when: false
       when: ansible_hostname in groups['servers']
       delegate_to: "{{ groups['servers'] | first }}"
