@@ -14,7 +14,7 @@
 
   tasks:
     - name: "HashiCorp - Consul : Ensure data directory is present."
-      file:
+      ansible.builtin.file:
         path: "{{ consul_data_directory }}"
         state: directory
         mode: "0755"
@@ -22,7 +22,7 @@
         group: "{{ consul_data_directory_group }}"
 
     - name: "HashiCorp - Consul : Ensure etc directory is present."
-      file:
+      ansible.builtin.file:
         path: "{{ consul_etc_directory }}"
         state: directory
         mode: "0755"
@@ -30,7 +30,7 @@
         group: "{{ consul_data_directory_group }}"
 
     - name: "HashiCorp - Consul : Ensure log directory is present."
-      file:
+      ansible.builtin.file:
         path: "{{ consul_log_directory }}"
         state: directory
         mode: "0755"
@@ -38,7 +38,7 @@
         group: "{{ consul_data_directory_group }}"
 
     - name: "HashiCorp - Consul : Ensure Consul is excluded from the unattended upgrades."
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "/usr/share/unattended-upgrades/50unattended-upgrades"
         state: present
         line: '    "consul";'
@@ -55,48 +55,49 @@
             - name: "HashiCorp - Consul : First server actions."
               block:
                 - name: "HashiCorp - Consul : Register first server as a fact."
-                  set_fact:
+                  ansible.builtin.set_fact:
                     consul_first_server_hostname: "{{ inventory_hostname }}"
                   delegate_to: "{{ groups['servers'] | first }}"
                   run_once: true
 
                 - name: "HashiCorp - Consul : Look for existing CA certificate on first server as benchmark."
-                  stat:
+                  ansible.builtin.stat:
                     path: "{{ consul_etc_directory }}/consul-agent-ca.pem"
                   register: consul_agent_ca_file_first
 
                 - name: "HashiCorp - Consul : CA Certificate creation."
                   block:
                     - name: "HashiCorp - Consul : Create CA Certificate if not exists."
-                      shell: "{{ consul_binary }} tls ca create -days {{ consul_tls_ca_certificate_days }}"
+                      ansible.builtin.command: "{{ consul_binary }} tls ca create -days {{ consul_tls_ca_certificate_days }}"
                       args:
                         chdir: "{{ consul_etc_directory }}"
+                      changed_when: true
                       register: consul_tls_ca_certificate_create
 
                     - name: "HashiCorp - Consul : Get file location of CA Certificate."
-                      set_fact:
+                      ansible.builtin.set_fact:
                         consul_tls_ca_certificate_file: "{{ consul_etc_directory }}/{{ consul_tls_ca_certificate_create.stdout_lines[0].split('==> Saved ')[1] }}"
 
                     - name: "HashiCorp - Consul : Get contents of CA Certificate."
-                      shell: "cat {{ consul_tls_ca_certificate_file }}"
+                      ansible.builtin.command: "cat {{ consul_tls_ca_certificate_file }}"
                       register: consul_tls_ca_certificate_content_tmp
                       changed_when: false
 
                     - name: "HashiCorp - Consul : Register contents of CA Certificate as a fact."
-                      set_fact:
+                      ansible.builtin.set_fact:
                         consul_tls_ca_certificate_content: "{{ consul_tls_ca_certificate_content_tmp.stdout }}"
 
                     - name: "HashiCorp - Consul : Get file location of CA key."
-                      set_fact:
+                      ansible.builtin.set_fact:
                         consul_tls_ca_key_file: "{{ consul_etc_directory }}/{{ consul_tls_ca_certificate_create.stdout_lines[1].split('==> Saved ')[1] }}"
 
                     - name: "HashiCorp - Consul : Get contents of CA key."
-                      shell: "cat {{ consul_tls_ca_key_file }}"
+                      ansible.builtin.command: "cat {{ consul_tls_ca_key_file }}"
                       register: consul_tls_ca_key_content_tmp
                       changed_when: false
 
                     - name: "HashiCorp - Consul : Register contents of CA key as a fact."
-                      set_fact:
+                      ansible.builtin.set_fact:
                         consul_tls_ca_key_content: "{{ consul_tls_ca_key_content_tmp.stdout }}"
 
                   when:
@@ -107,7 +108,7 @@
 
             # OTHER NODES
             - name: "HashiCorp - Consul - CA : Ensure CA certificate and key are present on all other nodes."
-              copy:
+              ansible.builtin.copy:
                 dest: "{{ consul_etc_directory }}/{{ item.dest }}"
                 content: "{{ item.content }}"
                 owner: "{{ consul_data_directory_user }}"
@@ -130,12 +131,12 @@
         - name: "HashiCorp - Consul : Server Certificates."
           block:
             - name: "HashiCorp - Consul : Look for existing server certificate."
-              stat:
+              ansible.builtin.stat:
                 path: "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-server-consul-0.pem"
               register: consul_server_certificate_details
 
             - name: "HashiCorp - Consul : Create server certificate."
-              shell: "{{ consul_binary }} tls cert create -server -dc {{ hashicorp_datacenter_name }} -days {{ consul_tls_server_certificate_days }}"
+              ansible.builtin.command: "{{ consul_binary }} tls cert create -server -dc {{ hashicorp_datacenter_name }} -days {{ consul_tls_server_certificate_days }}"
               args:
                 chdir: "{{ consul_etc_directory }}"
               when: not consul_server_certificate_details.stat.exists
@@ -145,12 +146,12 @@
         - name: "HashiCorp - Consul : Client Certificates."
           block:
             - name: "HashiCorp - Consul : Look for existing client certificate."
-              stat:
+              ansible.builtin.stat:
                 path: "{{ consul_etc_directory }}/{{ hashicorp_datacenter_name }}-client-consul-0.pem"
               register: consul_client_certificate_details
 
             - name: "HashiCorp - Consul : Create client certificate."
-              shell: "{{ consul_binary }} tls cert create -client -dc {{ hashicorp_datacenter_name }} -days {{ consul_tls_client_certificate_days }}"
+              ansible.builtin.command: "{{ consul_binary }} tls cert create -client -dc {{ hashicorp_datacenter_name }} -days {{ consul_tls_client_certificate_days }}"
               args:
                 chdir: "{{ consul_etc_directory }}"
               when: not consul_client_certificate_details.stat.exists
@@ -158,7 +159,7 @@
 
         # ENCRYPTION KEY
         - name: "HashiCorp - Consul : Check the first server if we are dealing with an already running cluster."
-          stat:
+          ansible.builtin.stat:
             path: "{{ consul_systemd_service_file }}"
           register: consul_systemd_service_file_details
 
@@ -167,12 +168,12 @@
             - name: "HashiCorp - Consul : Generate encryption key when cluster is not running yet."
               block:
                 - name: "HashiCorp - Consul : Run the consul keygen command."
-                  shell: "consul keygen"
+                  ansible.builtin.command: "consul keygen"
                   register: consul_ecryption_key_tmp
                   changed_when: false
 
                 - name: "HashiCorp - Consul : Retrieve encryption key and store it as a fact."
-                  set_fact:
+                  ansible.builtin.set_fact:
                     consul_ecryption_key: "{{ consul_ecryption_key_tmp.stdout }}"
               when:
                 - ansible_hostname in groups['servers']
@@ -182,14 +183,14 @@
           when: consul_ecryption_key is not defined
 
         - name: "HashiCorp - Consul : Find all certificates."
-          find:
+          ansible.builtin.find:
             paths: "{{ consul_etc_directory }}"
             patterns: "*.pem"
           register: consul_certificate_files
           tags: chown
 
         - name: "HashiCorp - Consul : Ensure the correct file owner / group is set for all certificates."
-          file:
+          ansible.builtin.file:
             path: "{{ item.path }}"
             owner: "{{ consul_data_directory_user }}"
             group: "{{ consul_data_directory_group }}"
@@ -202,7 +203,7 @@
     - name: "HashiCorp - Consul : Configuration."
       block:
         - name: "HashiCorp - Consul : Ensure configuration is present."
-          template:
+          ansible.builtin.template:
             src: "templates/hashicorp/consul/consul.hcl.j2"
             dest: "{{ consul_etc_directory }}/consul.hcl"
             mode: "0644"
@@ -211,38 +212,38 @@
           notify: Restart Consul
 
         - name: "HashiCorp - Consul : Ensure systemd service is present."
-          template:
+          ansible.builtin.template:
             src: "templates/hashicorp/consul/consul.service.j2"
             dest: "{{ consul_systemd_service_file }}"
             mode: "0644"
 
         - name: "HashiCorp - Consul : Ensure systemd is reloaded."
-          systemd:
+          ansible.builtin.systemd:
             daemon_reload: true
 
         - name: "HashiCorp - Consul : Ensure systemd service is enabled and started."
-          systemd:
+          ansible.builtin.systemd:
             name: "{{ consul_service_name }}"
             enabled: true
             state: started
 
         - name: "HashiCorp - Consul : A little pause to allow for the consul members to find each other. You could check with 'consul members' on a random server to see if there is output."
-          pause:
+          ansible.builtin.pause:
             seconds: "{{ consul_pause_seconds }}"
 
         - name: "HashiCorp - Consul : Run consul members command."
-          command: "{{ consul_binary }} members"
+          ansible.builtin.command: "{{ consul_binary }} members"
           changed_when: false
           ignore_errors: true
           register: consul_members_output
 
         - name: "HashiCorp - Consul : Ouput the results of the consul members command."
-          debug:
+          ansible.builtin.debug:
             var: consul_members_output.stdout_lines
 
         # CONSUL ACL BOOTSTRAPPING
         - name: "HashiCorp - Consul - ACL : Check if system is already bootstrapped."
-          stat:
+          ansible.builtin.stat:
             path: "{{ consul_bootstrapped_true_file }}"
           register: consul_bootstrapped
           when: ansible_hostname in groups['servers']
@@ -252,14 +253,15 @@
         - name: "HashiCorp - Consul - Bootstrap ACL."
           block:
             - name: "HashiCorp - Consul - ACL : Run consul acl bootstrap command."
-              shell: "{{ consul_binary }} acl bootstrap"
+              ansible.builtin.command: "{{ consul_binary }} acl bootstrap"
               changed_when: false
               register: consul_acl_bootstrap_raw
 
             - name: "HashiCorp - Consul - ACL : Store bootstrap token local for safekeeping."
-              copy:
+              ansible.builtin.copy:
                 content: "{{ consul_acl_bootstrap_raw.stdout }}"
                 dest: "{{ consul_bootstrap_token_local_path }}"
+                mode: "0600"
               become: false
               delegate_to: localhost
 
@@ -270,27 +272,27 @@
           run_once: true
 
     - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
-      shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
+      ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
       changed_when: false
       become: false
       delegate_to: localhost
       register: consul_acl_bootstrap_output
 
     - name: "HashiCorp - Consul - ACL : Set the Secret ID as a fact."
-      set_fact:
+      ansible.builtin.set_fact:
         consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
 
     # AGENT TOKEN
     - name: "HashiCorp - Consul - Agent."
       block:
         - name: "HashiCorp - Consul - Agent : Ensure consul-agent-policy file is present on the system."
-          copy:
+          ansible.builtin.copy:
             src: "{{ consul_agent_policy_file_local }}"
             dest: "{{ consul_agent_policy_file_remote }}"
             mode: 0644
 
         - name: "HashiCorp - Consul - Agent : Ensure consul-agent policy is registered."
-          command: "{{ consul_binary }} acl policy create -name {{ consul_agent_policy_name }} -rules @{{ consul_agent_policy_file_name }}"
+          ansible.builtin.command: "{{ consul_binary }} acl policy create -name {{ consul_agent_policy_name }} -rules @{{ consul_agent_policy_file_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           args:
@@ -299,14 +301,14 @@
           ignore_errors: true
 
         - name: "HashiCorp - Consul - Agent : Ensure consul agent token is generated."
-          command: "{{ consul_binary }} acl token create -description '{{ consul_agent_policy_description }}' -policy-name {{ consul_agent_policy_name }}"
+          ansible.builtin.command: "{{ consul_binary }} acl token create -description '{{ consul_agent_policy_description }}' -policy-name {{ consul_agent_policy_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           changed_when: false
           register: agent_policy_token_output_raw
 
         - name: "HashiCorp - Consul - Agent : Store consul agent token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ agent_policy_token_output_raw.stdout }}"
             dest: "{{ consul_agent_token_local_path }}"
             mode: 0644
@@ -314,18 +316,18 @@
           delegate_to: localhost
 
         - name: "HashiCorp - Consul - Agent : Retrieve Secret ID from agent token output."
-          shell: "awk '/SecretID/ {print $2}' {{ consul_agent_token_local_path }}"
+          ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_agent_token_local_path }}"
           changed_when: false
           become: false
           delegate_to: localhost
           register: consul_agent_token_output
 
         - name: "HashiCorp - Consul - Agent : Create a fact of the agent token."
-          set_fact:
+          ansible.builtin.set_fact:
             consul_agent_token: "{{ consul_agent_token_output.stdout }}"
 
         - name: "HashiCorp - Consul - Agent : Cleanup the placed policy file."
-          file:
+          ansible.builtin.file:
             path: "{{ consul_agent_policy_file_remote }}"
             state: absent
 
@@ -335,7 +337,7 @@
       run_once: true
 
     - name: "HashiCorp - Consul - Agent : Ensure agent token is part of the configuration."
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "{{ consul_etc_directory }}/consul.hcl"
         regexp: '#agent = "<WILL BE FILLED LATER>"'
         line: '    agent = "{{ consul_agent_token }}"'
@@ -343,7 +345,7 @@
 
     # DEFAULT DENY
     - name: "HashiCorp - Consul - ACL : Ensure default ACL is set to deny."
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "{{ consul_etc_directory }}/consul.hcl"
         regexp: 'default_policy = "allow"'
         line: '  default_policy = "deny"'
@@ -351,7 +353,7 @@
 
     # DNS REQUESTS
     - name: "HashiCorp - Consul - ACL : Ensure the DNS request policy file is in place."
-      copy:
+      ansible.builtin.copy:
         src: "{{ consul_dns_policy_file_local }}"
         dest: "{{ consul_dns_policy_file_remote }}"
         mode: 0644
@@ -359,7 +361,7 @@
     - name: "HashiCorp - Consul - ACL : DNS requests."
       block:
         - name: "HashiCorp - Consul - ACL : Ensure that the policy is present in Consul."
-          command: "{{ consul_binary }} acl policy create -name {{ consul_dns_policy_name }} -rules @{{ consul_dns_policy_file_name }}"
+          ansible.builtin.command: "{{ consul_binary }} acl policy create -name {{ consul_dns_policy_name }} -rules @{{ consul_dns_policy_file_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           args:
@@ -367,14 +369,14 @@
           changed_when: false
 
         - name: "HashiCorp - Consul - ACL : Create ACL token using the above policy."
-          command: "{{ consul_binary }} acl token create -description '{{ consul_dns_policy_description }}' -policy-name {{ consul_dns_policy_name }}"
+          ansible.builtin.command: "{{ consul_binary }} acl token create -description '{{ consul_dns_policy_description }}' -policy-name {{ consul_dns_policy_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           changed_when: false
           register: dns_policy_token_output_raw
 
         - name: "HashiCorp - Consul - ACL : Store bootstrap token local for safekeeping."
-          copy:
+          ansible.builtin.copy:
             content: "{{ dns_policy_token_output_raw.stdout }}"
             dest: "{{ consul_dns_token_local_path }}"
             mode: 0644
@@ -382,14 +384,14 @@
           delegate_to: localhost
 
         - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
-          shell: "awk '/SecretID/ {print $2}' {{ consul_dns_token_local_path }}"
+          ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_dns_token_local_path }}"
           changed_when: false
           become: false
           delegate_to: localhost
           register: dns_token_output
 
         - name: "HashiCorp - Consul - ACL : Cleanup the placed policy file."
-          file:
+          ansible.builtin.file:
             path: "{{ consul_dns_policy_file_remote }}"
             state: absent
 
@@ -397,7 +399,7 @@
       run_once: true
 
     - name: "HashiCorp - Consul - ACL : Set the DNS token as default for the Consul agent."
-      command: "{{ consul_binary }} acl set-agent-token default '{{ dns_token_output.stdout }}'"
+      ansible.builtin.command: "{{ consul_binary }} acl set-agent-token default '{{ dns_token_output.stdout }}'"
       environment:
         CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
       changed_when: false
@@ -406,13 +408,13 @@
     - name: "HashiCorp - Consul - Service Mesh"
       block:
         - name: "HashiCorp - Consul - Service Mesh : Ensure CNI directory exists."
-          file:
+          ansible.builtin.file:
             path: "{{ consul_cni_target_directory }}"
             state: directory
             mode: "0644"
 
         - name: "HashiCorp - Consul - Service Mesh : Ensure CNI plugins exist in the CNI directory."
-          unarchive:
+          ansible.builtin.unarchive:
             src: "{{ consul_cni_plugin_url }}"
             dest: "{{ consul_cni_target_directory }}"
             remote_src: yes
@@ -430,6 +432,6 @@
 
   handlers:
     - name: Restart Consul
-      service:
+      ansible.builtin.service:
         name: "{{ consul_service_name }}"
         state: restarted

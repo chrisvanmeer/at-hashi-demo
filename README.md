@@ -75,6 +75,7 @@ Make sure you have the following installed on your workstation:
 
 - Ansible
 - Multipass
+- Terraform (optional)
 
 ## Step 2 - Install Ansible requirements
 
@@ -82,9 +83,16 @@ Make sure you have the following installed on your workstation:
 ansible-galaxy install -r requirements.yml
 ```
 
-## Step 3 - Provisioning the Multipass instances and populate the inventory file
+## Step 3 - Provision the instances
 
-### Most noticable / important variables
+You can either provision the instances locally with Multipass, or in the AWS cloud with Terraform. You decide.  
+If you want to provision with Multipass, go for step 3a.  
+If you want to provision with Terraform, go for step 3b.  
+**Beware that you must choose the one or the other, do not execute 3a AND 3b.**
+
+### Step 3a - Multipass
+
+#### Most noticable / important variables
 
 | Variable            | Default value                              | Description                                                                              |
 | ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
@@ -92,7 +100,7 @@ ansible-galaxy install -r requirements.yml
 | public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file. |
 | multipass_instances | See the multipass `main.yml` variable file | The instances that we will be using.                                                     |
 
-### Objective
+#### Objective
 
 This playbook will spin up the Multipass instances with the cloud-init option to create the admin user. If it detects instances with the same names as in the variable file, you will be prompted to allow for deletion of all of these instances.
 
@@ -103,14 +111,63 @@ And lastly it will add the names and IP addresses to the local `/etc/hosts` file
 ### Run playbook
 
 ```ansible
-ansible-playbook 00_prep-inventory-and-hosts.yml
+ansible-playbook 00_multipass-prep-inventory-and-hosts.yml
 ```
 
 With the second run (you will be prompted)
 
 ```ansible
-ansible-playbook 00_prep-inventory-and-hosts.yml --tags hostfile --ask-become-pass
+ansible-playbook 00_multipass-prep-inventory-and-hosts.yml --tags hostfile --ask-become-pass
 ```
+
+### Step 3b - Terraform
+
+#### Most noticable / important variables
+
+| Variable   | Default value       | Description                                                                    |
+| ---------- | ------------------- | ------------------------------------------------------------------------------ |
+| public_key | `~/.ssh/id_rsa.pub` | The public key that will be added to the `ubuntu` user's authorized_keys file. |
+
+#### Objective
+
+This playbook will spin up the EC2 instances. After creating the EC2 instances, a new inventory is made in main folder with the name `inventory` and this will contain all of the servers and clients. **Please note** that the default user `ubuntu` will be used in this demo.
+
+#### Pre-requisites
+
+Before we can start to deploy, make sure you have your Amazon access key and secret key at hand. We will also be needing a region. You can either set them as environment variables
+
+```bash
+export AWS_REGION="eu-central-1"
+export AWS_ACCESS_KEY_ID="<ACCES_KEY>"
+export AWS_SECRET_ACCESS_KEY="<SECRET_KEY>"
+```
+
+Or enable the following settings in the `terraform/providers.tf`. Look for the following section. Uncomment them and fill in the correct values.
+
+```hcl
+# region     = "eu-central-1"
+# access_key = "my-access-key"
+# secret_key = "my-secret-key"
+```
+
+#### Overriding variables
+
+If you look in `terraform/variables.tf` you see the variables that are used. If you for instance would like to override the `public_key` variable, then please open up the `terraform/terraform.tfvars` file and place the following in there:
+
+```hcl
+public_key="~/.ssh/some_other_id_rsa.pub"
+```
+
+#### Run playbook
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+Now you will be prompted to enter your first name. This will be used as a prefix for both the EC2 instances as the generated key-pair.
 
 ## Step 4 - General server configuration
 
@@ -193,12 +250,10 @@ ansible-playbook 03_consul-deployment.yml
 
 ### Most noticable / important variables
 
-| Variable                              | Default value                               | Description                                                                                                   |
-| ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| vault_bootstrap_token_local_path      | `~/hashi-tokens/vault.consul.token`         | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_bootstrap_init_local_path       | `~/hashi-tokens/vault.master.keys`          | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_bootstrap_root_token_local_path | `~/hashi-tokens/management.vault.token`     | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
-| vault_admin_local_path                | `~/hashi-tokens/atcomputing.vault.password` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| Variable                        | Default value                               | Description                                                                                                   |
+| ------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| vault_bootstrap_init_local_path | `~/hashi-tokens/vault.master.keys`          | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
+| vault_admin_local_path          | `~/hashi-tokens/atcomputing.vault.password` | After bootstrapping, this will be saved to the local workstation at this location. **Don't loose this file!** |
 
 ### Objective
 
@@ -726,13 +781,20 @@ None
 Are you done with the environment and would you like to cleanup the whole lot? This playbook will do the following:
 
 - Remove all the instances from the local `/etc/hosts` file.
-- Delete all Multipass instances.
+- Delete all deployed instances.
 - Deletion of the `inventory` file in this directory.
 
 #### Run playbook
 
 ```ansible
 ansible-playbook 99_destroy-environment.yml --ask-become-pass
+```
+
+If you used Terraform, then perform the following to destroy the EC2 instances, remove the keygen and remove the inventory file.
+
+```bash
+cd terraform
+terraform destroy
 ```
 
 ## License

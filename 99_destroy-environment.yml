@@ -14,7 +14,7 @@
       tags: localhost
       block:
         - name: Remove the comment block from the hosts file.
-          blockinfile:
+          ansible.builtin.blockinfile:
             backup: true
             path: /etc/hosts
             state: absent
@@ -22,19 +22,19 @@
               # Added for the AT HashiCorp Demo - discard afterwards
 
         - name: Remove the instances from the hosts file.
-          lineinfile:
+          ansible.builtin.lineinfile:
             dest: /etc/hosts
             regexp: ".*{{ hostvars[item].ansible_host }} {{ item }}"
             state: absent
           with_items: "{{ groups.all }}"
 
         - name: Remove items from known hosts file based on IP.
-          command: 'ssh-keygen -f "~/.ssh/known_hosts" -R "{{ hostvars[item].ansible_host }}"'
+          ansible.builtin.command: 'ssh-keygen -f "~/.ssh/known_hosts" -R "{{ hostvars[item].ansible_host }}"'
           become: false
           with_items: "{{ groups.all }}"
 
         - name: Remove items from known hosts file based on hostname.
-          command: 'ssh-keygen -f "~/.ssh/known_hosts" -R "{{ item }}"'
+          ansible.builtin.command: 'ssh-keygen -f "~/.ssh/known_hosts" -R "{{ item }}"'
           become: false
           with_items:
             - "{{ multipass_instances.clients }}"
@@ -43,20 +43,25 @@
     - name: MULTIPASS
       tags: multipass
       block:
+        - name: Auth against Multipass.
+          ansible.builtin.command: "multipass authenticate {{ multipass_passphrase }}"
+          no_log: true
+          changed_when: false
+
         - name: Delete existing instances.
-          command: "multipass delete {{ item }}"
+          ansible.builtin.command: "multipass delete {{ item }}"
           ignore_errors: true
           with_items:
             - "{{ multipass_instances.clients }}"
             - "{{ multipass_instances.servers }}"
 
         - name: Purge the multipass inventory after deletion.
-          command: "multipass purge"
+          ansible.builtin.command: "multipass purge"
           changed_when: false
 
     - name: Remove inventory
       tags: inventory
-      file:
+      ansible.builtin.file:
         path: inventory
         state: absent
       delegate_to: localhost
@@ -65,7 +70,7 @@
     - name: Remove tokens
       tags: tokens
       become: false
-      file:
+      ansible.builtin.file:
         path: "{{ token_directory }}"
         state: absent
       delegate_to: localhost
