@@ -23,7 +23,7 @@
 
     - name: "HashiCorp - Vault - Revoke root token."
       block:
-        - name: "HashiCorp - Vault - Revoke root token - log in as admin."
+        - name: "HashiCorp - Vault - Revoke root token - Retrieve client token."
           ansible.builtin.uri:
             url: "{{ vault_address }}/v1/auth/userpass/login/{{ vault_admin_username }}"
             method: POST
@@ -52,8 +52,6 @@
               - 204
             validate_certs: false
           register: vault_revoke_response
-
-        - debug: var=vault_revoke_response
 
       tags: revoke
       delegate_to: "{{ groups['servers'] | first }}"
