@@ -7,7 +7,7 @@
 
   tasks:
     - name: "HashiCorp - Vault - Create fact of admin password."
-      set_fact:
+      ansible.builtin.set_fact:
         admin_password: "{{ lookup('file', vault_admin_local_path) }}"
 
     - name: "HashiCorp - Vault - Revoke root token."
