@@ -186,31 +186,6 @@
           file:
             path: "{{ vault_tls_directory }}"
             state: absent
-        - name: VAULT - Remove Vault data from Consul.
-          command: "{{ consul_binary }} kv delete -recurse {{ vault_service_name }}/"
-          environment:
-            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
-          failed_when: false
-        - name: VAULT - Remove Policy data from Consul.
-          command: "{{ consul_binary }} acl policy delete -name {{ vault_consul_service_name }}"
-          environment:
-            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
-          ignore_errors: true
-          run_once: true
-        - name: VAULT - Get AccessorID of Vault Token.
-          shell: "{{ consul_binary }} acl token list | grep -B2 '{{ vault_consul_service_description }}' | awk '/AccessorID/ {print $2}'"
-          environment:
-            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
-          register: consul_vault_token
-          run_once: true
-          ignore_errors: true
-          changed_when: false
-        - name: VAULT - Delete Vault Token.
-          environment:
-            CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
-          command: "{{ consul_binary }} acl token delete -id {{ consul_vault_token.stdout }}"
-          run_once: true
-          ignore_errors: true
 
     - name: CONSUL
       tags: consul
