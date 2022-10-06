@@ -225,7 +225,7 @@
     - name: "HashiCorp - Nomad - Bootstrap ACL."
       block:
         - name: "HashiCorp - Nomad - ACL : Run nomad acl bootstrap command."
-          ansible.builtin.command: ansible.builtin."{{ nomad_binary }} acl bootstrap"
+          ansible.builtin.command: "{{ nomad_binary }} acl bootstrap"
           changed_when: false
           register: nomad_acl_bootstrap_raw
 
