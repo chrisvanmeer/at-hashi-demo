@@ -53,8 +53,8 @@
             validate_certs: false
           register: vault_revoke_response
 
-          - debug: var=vault_revoke_response
+        - debug: var=vault_revoke_response
 
-        tags: revoke
-        delegate_to: "{{ groups['servers'] | first }}"
-        run_once: true
+      tags: revoke
+      delegate_to: "{{ groups['servers'] | first }}"
+      run_once: true
