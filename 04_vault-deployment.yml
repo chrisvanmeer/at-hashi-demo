@@ -160,13 +160,112 @@
           ansible.builtin.systemd:
             daemon_reload: true
 
+        - name: "HashiCorp - Vault - ACL : Check if system is already bootstrapped."
+          ansible.builtin.stat:
+            path: "{{ vault_bootstrapped_true_file }}"
+          register: vault_bootstrapped
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+        - name: "HashiCorp - Vault - ACL : Check if Consul has ACL mode enabled."
+          ansible.builtin.shell: "cat {{ consul_etc_directory }}/consul.hcl | grep -a3 '^acl' | grep enabled | awk '{print $3}'"
+          changed_when: false
+          ignore_errors: true
+          when: ansible_hostname in groups['servers']
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+          register: consul_acl_enabled
+
+        # VAULT ACL
+        - name: "HashiCorp - Vault - ACL"
+          block:
+            - name: "HashiCorp - Vault - ACL : Ensure the Vault service policy file is in place."
+              ansible.builtin.copy:
+                src: "{{ vault_service_policy_file_local }}"
+                dest: "{{ vault_service_policy_file_remote }}"
+
+            - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
+              ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
+              changed_when: false
+              become: false
+              delegate_to: localhost
+              register: consul_acl_bootstrap_output
+
+            - name: "HashiCorp - Consul - ACL : Set the Secret ID as a fact."
+              ansible.builtin.set_fact:
+                consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
+
+            - name: "HashiCorp - Vault - ACL - Consul : Ensure that the ACL is present in Consul."
+              ansible.builtin.shell: "{{ consul_binary }} acl policy create -name {{ vault_consul_service_name }} -rules @{{ vault_service_policy_file_name }}"
+              args:
+                chdir: "{{ vault_data_directory }}/"
+              environment:
+                CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+              changed_when: false
+
+            - name: "HashiCorp - Vault - ACL - Consul : Create ACL token using the above policy."
+              ansible.builtin.shell: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consul_service_name }}"
+              changed_when: false
+              environment:
+                CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+              register: vault_acl_bootstrap_raw
+
+            - name: "HashiCorp - Vault - ACL : Store bootstrap token local for safekeeping."
+              ansible.builtin.copy:
+                content: "{{ vault_acl_bootstrap_raw.stdout }}"
+                dest: "{{ vault_bootstrap_token_local_path }}"
+                mode: 0644
+              become: false
+              delegate_to: localhost
+
+            - name: "HashiCorp - Vault - ACL : Retrieve Secret ID from bootstrap output."
+              ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ vault_bootstrap_token_local_path }}"
+              changed_when: false
+              become: false
+              delegate_to: localhost
+              register: vault_acl_bootstrap_output
+
+            - name: "HashiCorp - Vault - ACL : Set the Secret ID as a fact."
+              ansible.builtin.set_fact:
+                vault_acl_bootstrap_secret_id: "{{ vault_acl_bootstrap_output.stdout }}"
+
+            - name: "HashiCorp - Vault - ACL : Ensure bootstrap check file is in place."
+              ansible.builtin.copy:
+                dest: "{{ vault_bootstrapped_true_file }}"
+                content: "This cluster was bootstrapped on {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
+
+            - name: "HashiCorp - Vault - ACL : Cleanup generated files which are not needed anymore."
+              ansible.builtin.file:
+                path: "{{ item }}"
+                state: absent
+              with_items:
+                - "{{ vault_service_policy_file_remote }}"
+
+          when:
+            - ansible_hostname in groups['servers']
+            - consul_acl_enabled.stdout == "true"
+            - not vault_bootstrapped.stat.exists
+          delegate_to: "{{ groups['servers'] | first }}"
+          run_once: true
+
+        - name: "HashiCorp - Vault : Ensure Vault Service Token is set in config file."
+          ansible.builtin.lineinfile:
+            path: "{{ vault_etc_directory }}/vault.hcl"
+            regexp: '  # token   = "<VAULT_SERVICE_TOKEN_WILL_BE_FILLED_LATER>"'
+            line: '  token   = "{{ vault_acl_bootstrap_secret_id }}"'
+
         - name: "HashiCorp - Vault : Ensure systemd service is enabled and started."
           ansible.builtin.systemd:
             name: "{{ vault_service_name }}"
             enabled: true
             state: started
 
-        - name: "HashiCorp - Vault : Check the Vault initialization status of the first server."
+        - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
+          ansible.builtin.pause:
+            seconds: 10
+
+        - name: "HashiCorp - Vault : Check the Vault initialization status."
           ansible.builtin.shell: "{{ vault_binary }} status | grep -i initialized | awk '{print $2}'"
           environment:
             VAULT_ADDR: "{{ vault_address }}"
@@ -178,7 +277,7 @@
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
 
-        - name: "HashiCorp - Vault : Initialize the Vault on the first server."
+        - name: "HashiCorp - Vault : Initialize the Vault."
           ansible.builtin.command: "{{ vault_binary }} operator init"
           environment:
             VAULT_ADDR: "{{ vault_address }}"
@@ -251,25 +350,6 @@
             - "{{ vault_unseal_key_1 }}"
             - "{{ vault_unseal_key_2 }}"
             - "{{ vault_unseal_key_3 }}"
-          when:
-            - ansible_hostname in groups['servers']
-            - ansible_hostname == groups['servers'] | first
-          run_once: true
-
-        - name: "HashiCorp - Vault - Unseal : Ensure other Vaults are unsealed."
-          ansible.builtin.command: "{{ vault_binary }} operator unseal {{ item }}"
-          environment:
-            VAULT_ADDR: "{{ vault_address }}"
-            VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
-          changed_when: true
-          with_items:
-            - "{{ vault_unseal_key_1 }}"
-            - "{{ vault_unseal_key_2 }}"
-            - "{{ vault_unseal_key_3 }}"
-          when:
-            - ansible_hostname in groups['servers']
-            - ansible_hostname != groups['servers'] | first
 
       when:
         - vault_is_sealed.stdout == "true"
