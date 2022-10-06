@@ -77,18 +77,7 @@
           community.crypto.openssl_csr_pipe:
             privatekey_path: "{{ vault_ssl_key_dest }}"
             common_name: "{{ vault_ssl_server_common_name }}"
-            subject_alt_name:
-              - "DNS:{{ vault_ssl_server_common_name }}"
-              - "DNS:vault.service.consul"
-              - "DNS:active.vault.service.consul"
-              - "DNS:standby.vault.service.consul"
-              - "DNS:*.vault.service.consul"
-              - "DNS:vault.service.{{ hashicorp_datacenter_name }}.consul"
-              - "DNS:active.vault.service.{{ hashicorp_datacenter_name }}.consul"
-              - "DNS:standby.vault.service.{{ hashicorp_datacenter_name }}.consul"
-              - "DNS:*.vault.service.{{ hashicorp_datacenter_name }}.consul"
-              - "IP:127.0.0.1"
-              - "IP:{{ ansible_host }}"
+            subject_alt_name: "{{ vault_ssl_server_subject_alt_names }}"
           register: csr
 
         - name: "HashiCorp - Vault - PKI : Check whether certificate exists."
