@@ -64,10 +64,10 @@
         - name: "HashiCorp - Vault - PKI : Create certificate signing request (CSR) for server certificate."
           community.crypto.openssl_csr_pipe:
             privatekey_path: "{{ vault_ssl_key_dest }}"
-            common_name:
-              - "{{ vault_ssl_server_common_name }}"
+            common_name: "{{ vault_ssl_server_common_name }}"
+            subject_alt_name:
+              - "{{ vault_ssl_server_subject_alt_names }}"
               - "IP:{{ ansible_host }}"
-            subject_alt_name: "{{ vault_ssl_server_subject_alt_names }}"
           register: csr
 
         - name: "HashiCorp - Vault - PKI : Check whether certificate exists."
