@@ -17,12 +17,12 @@
 
   tasks:
     - name: Update apt cache.
-      apt:
+      ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
 
     - name: Update the binary.
-      apt:
+      ansible.builtin.apt:
         name: "{{ product_name }}"
         state: latest
       notify:
@@ -31,11 +31,11 @@
 
   handlers:
     - name: Restart service
-      service:
+      ansible.builtin.service:
         name: "{{ product_name }}"
         state: restarted
 
     - name: Wait for it
-      wait_for:
+      ansible.builtin.wait_for:
         port: "{{ product_port }}"
         delay: "{{ product_delay }}"
