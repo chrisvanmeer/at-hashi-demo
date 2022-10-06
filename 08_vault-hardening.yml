@@ -10,6 +10,8 @@
     - name: "HashiCorp - Vault - Create fact of admin password."
       ansible.builtin.set_fact:
         admin_password: "{{ lookup('file', vault_admin_local_path) }}"
+      delegate_to: localhost
+      run_once: true
 
     - name: "HashiCorp - Vault - Revoke root token."
       block:
@@ -17,8 +19,8 @@
           ansible.builtin.uri:
             url: "{{ vault_address }}/v1/auth/userpass/login/{{ vault_admin_username }}"
             method: POST
-            headers:
-              X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
+            # headers:
+            #   X-Vault-Token: "{{ vault_initial_root_token.stdout }}"
             body_format: json
             body: '{ "password": "{{ admin_password }}" }'
             status_code:
