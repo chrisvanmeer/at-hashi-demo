@@ -18,6 +18,18 @@ All the provisioning is done through [Ansible](https://www.ansible.com). And the
 
 ## What do the specific products do in this demo?
 
+### Multipass
+
+> Multipass is a CLI to launch and manage VMs on Windows, Mac and Linux that simulates a cloud environment with support for cloud-init. 
+
+Multipass is one of the two choices you have to deploy this demo environment.
+
+### Terraform
+
+> Terraform is an open-source infrastructure as code software tool that enables you to safely and predictably create, change, and improve infrastructure.
+
+Terraform is the other of the two choices you have to deploy this demo environment.
+
 ### Consul
 
 > Consul is a service networking solution to automate network configurations, discover services, and enable secure connectivity across any cloud or runtime.
@@ -83,11 +95,11 @@ Make sure you have the following installed on your workstation:
 ansible-galaxy install -r requirements.yml
 ```
 
-## Step 3 - Provision the instances
+## Step 3 - Deploy the instances
 
-You can either provision the instances locally with Multipass, or in the AWS cloud with Terraform. You decide.  
-If you want to provision with Multipass, go for step 3a.  
-If you want to provision with Terraform, go for step 3b.  
+You can either deploy the instances locally with Multipass, or in the AWS cloud with Terraform. You decide.  
+If you want to deploy with Multipass, go for step 3a.  
+If you want to deploy with Terraform, go for step 3b.  
 **Beware that you must choose the one or the other, do not execute 3a AND 3b.**
 
 ### Step 3a - Multipass
