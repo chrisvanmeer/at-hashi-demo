@@ -102,12 +102,14 @@
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           run_once: true
           ignore_errors: true
+          changed_when: true
         - name: NOMAD - Remove Nomad Client policy from Consul.
           ansible.builtin.command: "{{ consul_binary }} acl policy delete -name {{ nomad_consul_client_service_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           run_once: true
           ignore_errors: true
+          changed_when: true
         - name: NOMAD - Get AccessorID of Nomad Server Token.
           ansible.builtin.shell: "{{ consul_binary }} acl token list | grep -B2 '{{ nomad_consul_server_token_description }}' | awk '/AccessorID/ {print $2}'"
           environment:
@@ -122,6 +124,7 @@
           ansible.builtin.command: "{{ consul_binary }} acl token delete -id {{ consul_nomad_server_token.stdout }}"
           run_once: true
           ignore_errors: true
+          changed_when: true
         - name: NOMAD - Get AccessorID of Nomad Client Token.
           ansible.builtin.shell: "{{ consul_binary }} acl token list | grep -B2 '{{ nomad_consul_client_token_description }}' | awk '/AccessorID/ {print $2}'"
           environment:
@@ -135,6 +138,7 @@
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           ansible.builtin.command: "{{ consul_binary }} acl token delete -id {{ consul_nomad_client_token.stdout }}"
           run_once: true
+          changed_when: true
           ignore_errors: true
 
     - name: VAULT
@@ -190,12 +194,14 @@
           ansible.builtin.command: "{{ consul_binary }} kv delete -recurse {{ vault_service_name }}/"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
+          changed_when: true
           failed_when: false
         - name: VAULT - Remove Policy data from Consul.
           ansible.builtin.command: "{{ consul_binary }} acl policy delete -name {{ vault_consul_service_name }}"
           environment:
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           ignore_errors: true
+          changed_when: true
           run_once: true
         - name: VAULT - Get AccessorID of Vault Token.
           ansible.builtin.shell: "{{ consul_binary }} acl token list | grep -B2 '{{ vault_consul_service_description }}' | awk '/AccessorID/ {print $2}'"
@@ -210,6 +216,7 @@
             CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
           ansible.builtin.command: "{{ consul_binary }} acl token delete -id {{ consul_vault_token.stdout }}"
           run_once: true
+          changed_when: true
           ignore_errors: true
 
     - name: CONSUL

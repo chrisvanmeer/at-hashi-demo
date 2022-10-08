@@ -64,7 +64,7 @@
             VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: false
 
         - name: "HashiCorp - Nomad / Vault : Ensure nomad-server-policy is present."
@@ -75,7 +75,7 @@
             VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: false
 
         - name: "HashiCorp - Nomad / Vault : Ensure nomad-cluster-role is present."
@@ -86,7 +86,7 @@
             VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: false
 
         - name: "HashiCorp - Nomad / Vault : Ensure nomad token is generated."
@@ -97,7 +97,7 @@
             VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: false
           register: nomad_server_token_raw
 
@@ -163,7 +163,7 @@
             VAULT_TOKEN: "{{ admin_token }}"
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: false
 
       when: ansible_hostname in groups['servers']

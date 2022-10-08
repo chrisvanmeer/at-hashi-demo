@@ -7,10 +7,10 @@
     - vars/hashicorp/general.yml
     - vars/hashicorp/consul.yml
 
-  vars:
-    # Uncomment and fill the variables below if you need to run the playbook again.
-    # You can find the relevant data on any of the hosts in /etc/consul.d/consul.hcl
-    # consul_ecryption_key: "<ENCRYPTION KEY>"
+  # vars:
+  # Uncomment and fill the variables below if you need to run the playbook again.
+  # You can find the relevant data on any of the hosts in /etc/consul.d/consul.hcl
+  # consul_ecryption_key: "<ENCRYPTION KEY>"
 
   tasks:
     - name: "HashiCorp - Consul : Ensure data directory is present."

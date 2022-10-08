@@ -14,7 +14,7 @@
       environment:
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-        VAULT_SKIP_VERIFY: true
+        VAULT_SKIP_VERIFY: "true"
       changed_when: false
       register: vault_is_sealed
 
@@ -50,7 +50,7 @@
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           with_items:
             - "{{ vault_unseal_key_1 }}"
             - "{{ vault_unseal_key_2 }}"

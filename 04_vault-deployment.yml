@@ -185,6 +185,7 @@
               ansible.builtin.copy:
                 src: "{{ vault_service_policy_file_local }}"
                 dest: "{{ vault_service_policy_file_remote }}"
+                mode: 0644
 
             - name: "HashiCorp - Consul - ACL : Retrieve Secret ID from bootstrap output."
               ansible.builtin.shell: "awk '/SecretID/ {print $2}' {{ consul_bootstrap_token_local_path }}"
@@ -198,7 +199,7 @@
                 consul_acl_bootstrap_secret_id: "{{ consul_acl_bootstrap_output.stdout }}"
 
             - name: "HashiCorp - Vault - ACL - Consul : Ensure that the ACL is present in Consul."
-              ansible.builtin.shell: "{{ consul_binary }} acl policy create -name {{ vault_consul_service_name }} -rules @{{ vault_service_policy_file_name }}"
+              ansible.builtin.command: "{{ consul_binary }} acl policy create -name {{ vault_consul_service_name }} -rules @{{ vault_service_policy_file_name }}"
               args:
                 chdir: "{{ vault_data_directory }}/"
               environment:
@@ -206,7 +207,7 @@
               changed_when: false
 
             - name: "HashiCorp - Vault - ACL - Consul : Create ACL token using the above policy."
-              ansible.builtin.shell: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consul_service_name }}"
+              ansible.builtin.command: "{{ consul_binary }} acl token create -description 'Vault Service Token' -policy-name {{ vault_consul_service_name }}"
               changed_when: false
               environment:
                 CONSUL_HTTP_TOKEN: "{{ consul_acl_bootstrap_secret_id }}"
@@ -235,6 +236,7 @@
               ansible.builtin.copy:
                 dest: "{{ vault_bootstrapped_true_file }}"
                 content: "This cluster was bootstrapped on {{ ansible_date_time.date }} {{ ansible_date_time.time }}{{ ansible_date_time.tz }}.\n"
+                mode: 0644
 
             - name: "HashiCorp - Vault - ACL : Cleanup generated files which are not needed anymore."
               ansible.builtin.file:
@@ -261,7 +263,6 @@
             name: "{{ vault_service_name }}"
             enabled: true
             state: started
-
         - name: "HashiCorp - Vault : Pause for a few seconds to allow the service to come up."
           ansible.builtin.pause:
             seconds: 10
@@ -271,7 +272,7 @@
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: false
           register: vault_is_initialized
           when: ansible_hostname in groups['servers']
@@ -283,7 +284,7 @@
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: true
           register: vault_init_output
           when:
@@ -310,7 +311,7 @@
       environment:
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-        VAULT_SKIP_VERIFY: true
+        VAULT_SKIP_VERIFY: "true"
       changed_when: false
       register: vault_is_sealed
 
@@ -345,7 +346,7 @@
           environment:
             VAULT_ADDR: "{{ vault_address }}"
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-            VAULT_SKIP_VERIFY: true
+            VAULT_SKIP_VERIFY: "true"
           changed_when: true
           with_items:
             - "{{ vault_unseal_key_1 }}"
@@ -360,7 +361,7 @@
       environment:
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-        VAULT_SKIP_VERIFY: true
+        VAULT_SKIP_VERIFY: "true"
       changed_when: false
       register: vault_is_sealed
 
@@ -552,7 +553,7 @@
       environment:
         VAULT_ADDR: "{{ vault_address }}"
         VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
-        VAULT_SKIP_VERIFY: true
+        VAULT_SKIP_VERIFY: "true"
         VAULT_TOKEN: "{{ admin_token }}"
       changed_when: false
       when: ansible_hostname in groups['servers']

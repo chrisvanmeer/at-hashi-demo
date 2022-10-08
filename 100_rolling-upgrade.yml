@@ -3,7 +3,6 @@
   hosts: servers
   become: true
   serial: 1
-  order: inventory
 
   vars_files:
     - vars/hashicorp/general.yml
@@ -24,7 +23,7 @@
     - name: Update the binary.
       ansible.builtin.apt:
         name: "{{ product_name }}"
-        state: latest
+        state: present
       notify:
         - Restart service
         - Wait for it

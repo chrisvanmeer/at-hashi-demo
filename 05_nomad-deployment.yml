@@ -210,7 +210,7 @@
         state: started
 
     - name: "HashiCorp - Nomad : Take a break to allow for the servers to find each other. Keep your eye on the Consul services screen for nomad and nomad-client to go green."
-      pause:
+      ansible.builtin.pause:
         seconds: "{{ nomad_pause_seconds }}"
 
     # NOMAD ACL
@@ -251,6 +251,7 @@
         - name: "HashiCorp - Nomad - ACL : Create Operator token."
           ansible.builtin.command: "{{ nomad_binary }} acl token create -name='{{ nomad_operator_token_name }}' -global -type='management'"
           register: nomad_operator_token_output
+          changed_when: true
           environment:
             NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
 
@@ -264,6 +265,7 @@
 
         - name: "HashiCorp - Nomad - ACL : Create Client token."
           ansible.builtin.command: "{{ nomad_binary }} acl token create -name='{{ nomad_client_token_name }}' -global -policy='{{ nomad_client_policy_name }}'"
+          changed_when: true
           register: nomad_client_token_output
           environment:
             NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
@@ -283,7 +285,8 @@
             mode: "0644"
 
         - name: "HashiCorp - Nomad - ACL : Ensure the client policy is registered."
-          ansible.builtin.command: "{{ nomad_binary }} acl policy apply -description '{{ nomad_client_policy_description }}' {{ nomad_client_policy_name}} {{ nomad_client_policy_remote_file }}"
+          ansible.builtin.command: "{{ nomad_binary }} acl policy apply -description '{{ nomad_client_policy_description }}' {{ nomad_client_policy_name }} {{ nomad_client_policy_remote_file }}"
+          changed_when: true
           environment:
             NOMAD_TOKEN: "{{ nomad_acl_bootstrap_secret_id }}"
 
