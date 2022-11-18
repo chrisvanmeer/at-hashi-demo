@@ -348,6 +348,7 @@
             VAULT_CACERT: "{{ vault_ssl_ca_dest }}"
             VAULT_SKIP_VERIFY: "true"
           changed_when: true
+          no_log: true
           with_items:
             - "{{ vault_unseal_key_1 }}"
             - "{{ vault_unseal_key_2 }}"
