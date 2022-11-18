@@ -28,6 +28,15 @@
       delegate_to: "{{ groups['clients'] | first }}"
       run_once: true
 
+    - name: "HashiCorp - Nomad - Jobs : Ensure FQDN in first server."
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars[item].ansible_host }} {{ demo_fqdn }}"
+      delegate_to: "{{ groups['servers'] | first }}"
+      with_items: "{{ groups.['clients'] | first }}"
+      run_once: true
+      tags: demo-fqdn
+
     - name: "HashiCorp - Nomad - Jobs : Deployment."
       block:
         - name: "HashiCorp - Nomad - Jobs : Ensure job directory is present on the first server."
