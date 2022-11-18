@@ -31,6 +31,7 @@
     - name: "HashiCorp - Nomad - Jobs : Ensure FQDN in first server."
       ansible.builtin.lineinfile:
         path: /etc/hosts
+        regexp: "{{ hostvars[item].ansible_host }} {{ demo_fqdn }}"
         line: "{{ hostvars[item].ansible_host }} {{ demo_fqdn }}"
       delegate_to: "{{ groups['servers'] | first }}"
       with_items: "{{ groups.clients | first }}"
