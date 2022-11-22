@@ -133,7 +133,7 @@
       run_once: true
 
     - name: Ensure the correct timezone is used.
-      timezone:
+      community.general.system.timezone:
         name: "{{ timezone }}"
 
   handlers:
