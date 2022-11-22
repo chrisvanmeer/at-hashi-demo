@@ -106,11 +106,15 @@ If you want to deploy with Terraform, go for step 3b.
 
 #### Most noticable / important variables
 
-| Variable            | Default value                              | Description                                                                              |
-| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| atcomputing_user    | `atcomputing`                              | The user that will be used as admin user of on each instance.                            |
-| public_key          | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file. |
-| multipass_instances | See the multipass `main.yml` variable file | The instances that we will be using.                                                     |
+| Variable             | Default value                              | Description                                                                              |
+| -------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| atcomputing_user     | `atcomputing`                              | The user that will be used as admin user of on each instance.                            |
+| public_key           | `~/.ssh/id_rsa.pub`                        | The public key that will be added to the `atcomputing_user` user's authorized_keys file. |
+| multipass_instances  | See the multipass `main.yml` variable file | The instances that we will be using.                                                     |
+| multipass_passphrase | `atcomputing`                              | The passphrase used to authenticate against Multipass.                                   |
+
+**Please make sure you have updated your Multipass passphrase accordingly**  
+Use the `multipass set local.passphrase` command.
 
 #### Objective
 
