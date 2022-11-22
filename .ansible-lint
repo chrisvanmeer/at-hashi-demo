@@ -3,3 +3,4 @@ skip_list:
   - ignore-errors
   - yaml
   - no-handler
+  - run-once
