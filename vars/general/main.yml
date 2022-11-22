@@ -11,27 +11,11 @@ pip_install_packages:
 basic_apt_packages:
   - atop
   - curl
-  - git
-  - htop
-  - iotop
-  - iperf3
   - jq
-  - less
   - lynx
-  - mailutils
-  - mlocate
-  - multitail
-  - neofetch
-  - net-tools
-  - nload
-  - sysstat
-  - telnet
-  - tmux
   - tree
   - unattended-upgrades
   - vim
-  - wget
-  - whois
 
 timezone: "Europe/Amsterdam"
 
