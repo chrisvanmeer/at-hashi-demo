@@ -25,10 +25,16 @@
       ansible.builtin.set_fact:
         client_names: "{{ multipass_instances.clients | join('\\|') }}"
 
-    - name: Authenticate against Multipass.
-      ansible.builtin.command: "multipass authenticate {{ multipass_passphrase }}"
-      no_log: true
-      changed_when: false
+    - name: Authentication.
+      block:
+        - name: Authenticate against Multipass.
+          ansible.builtin.command: "multipass authenticate {{ multipass_passphrase }}"
+          no_log: true
+          changed_when: false
+      rescue:
+        - name: Guide message for Multipass authentication.
+          ansible.builtin.fail:
+            msg: "Please make sure you have set the local passphrase to the correct one with: multipass set local.passphrase"
 
     - name: Check if there are already multipass instances on this machine.
       ansible.builtin.shell: "multipass list | grep '{{ client_names }}\\|{{ server_names }}'"
@@ -116,6 +122,8 @@
       when: groups.all | length == 0
 
     - name: Hosts file
+      become: true
+      tags: hostfile
       block:
         - name: Add a comment block in the hosts file.
           ansible.builtin.blockinfile:
@@ -144,6 +152,3 @@
             path: /etc/hosts
             regexp: "(.*{{ multipass_instances.servers | first }})$"
             replace: '\g<1> {{ vault_ssl_server_common_name }}'
-
-      become: true
-      tags: hostfile
