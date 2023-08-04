@@ -1,6 +1,6 @@
 datacenter = "{{ hashicorp_datacenter_name }}"
 data_dir = "{{ consul_data_directory }}"
-encrypt = "{{ consul_ecryption_key }}"
+encrypt = "{{ consul_encryption_key }}"
 ca_file = "{{ consul_etc_directory }}/consul-agent-ca.pem"
 {% if ansible_hostname in groups['servers'] %}
 {% set type = "server" %}

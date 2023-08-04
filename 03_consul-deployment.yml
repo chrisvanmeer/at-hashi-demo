@@ -10,7 +10,7 @@
   # vars:
   # Uncomment and fill the variables below if you need to run the playbook again.
   # You can find the relevant data on any of the hosts in /etc/consul.d/consul.hcl
-  # consul_ecryption_key: "<ENCRYPTION KEY>"
+  # consul_encryption_key: "<ENCRYPTION KEY>"
 
   tasks:
     - name: "HashiCorp - Consul : Ensure data directory is present."
@@ -64,8 +64,15 @@
                   ansible.builtin.stat:
                     path: "{{ consul_etc_directory }}/consul-agent-ca.pem"
                   register: consul_agent_ca_file_first
+                  delegate_to: "{{ groups['servers'] | first }}"
+                  run_once: true
 
                 - name: "HashiCorp - Consul : CA Certificate creation."
+                  when:
+                    - inventory_hostname in groups['servers']
+                    - consul_agent_ca_file_first.stat.exists == False
+                  delegate_to: "{{ groups['servers'] | first }}"
+                  run_once: true
                   block:
                     - name: "HashiCorp - Consul : Create CA Certificate if not exists."
                       ansible.builtin.command: "{{ consul_binary }} tls ca create -days {{ consul_tls_ca_certificate_days }}"
@@ -99,12 +106,6 @@
                     - name: "HashiCorp - Consul : Register contents of CA key as a fact."
                       ansible.builtin.set_fact:
                         consul_tls_ca_key_content: "{{ consul_tls_ca_key_content_tmp.stdout }}"
-
-                  when:
-                    - ansible_hostname in groups['servers']
-                    - not consul_agent_ca_file_first.stat.exists
-                  delegate_to: "{{ groups['servers'] | first }}"
-                  run_once: true
 
             # OTHER NODES
             - name: "HashiCorp - Consul - CA : Ensure CA certificate and key are present on all other nodes."
@@ -169,18 +170,18 @@
               block:
                 - name: "HashiCorp - Consul : Run the consul keygen command."
                   ansible.builtin.command: "consul keygen"
-                  register: consul_ecryption_key_tmp
+                  register: consul_encryption_key_tmp
                   changed_when: false
 
                 - name: "HashiCorp - Consul : Retrieve encryption key and store it as a fact."
                   ansible.builtin.set_fact:
-                    consul_ecryption_key: "{{ consul_ecryption_key_tmp.stdout }}"
+                    consul_encryption_key: "{{ consul_encryption_key_tmp.stdout }}"
               when:
                 - ansible_hostname in groups['servers']
                 - not consul_systemd_service_file_details.stat.exists
           delegate_to: "{{ groups['servers'] | first }}"
           run_once: true
-          when: consul_ecryption_key is not defined
+          when: consul_encryption_key is not defined
 
         - name: "HashiCorp - Consul : Find all certificates."
           ansible.builtin.find:
