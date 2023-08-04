@@ -3,9 +3,20 @@ variable "first_name" {
   description = "Please enter your first name. This will be used in several components."
 }
 
+variable "atcomputing_user" {
+  type        = string
+  description = "The user created on the EC2 instance."
+  default     = "atcomputing"
+}
+
 variable "public_key" {
   type    = string
   default = "~/.ssh/id_rsa.pub"
+}
+
+variable "private_key" {
+  type    = string
+  default = "~/.ssh/id_rsa"
 }
 
 variable "instance_type" {
